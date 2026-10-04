@@ -3,24 +3,41 @@ import type { Vehicle } from '../../types';
 import { vehicleService } from '../../lib/database';
 import { XMarkIcon, ArrowPathIcon, CheckIcon } from '@heroicons/react/24/outline';
 
-interface EditVehicleModalProps {
-  vehicle: Vehicle;
+interface VehicleFormModalProps {
+  vehicle?: Vehicle | null;
   onClose: () => void;
-  onSaved: (updated: Vehicle) => void;
+  onSaved: (vehicle: Vehicle) => void;
 }
 
-const EditVehicleModal: React.FC<EditVehicleModalProps> = ({ vehicle, onClose, onSaved }) => {
-  const [form, setForm] = useState({
-    plate: vehicle.plate,
-    brand: vehicle.brand,
-    model: vehicle.model,
-    category: vehicle.category,
-    year: vehicle.year,
-    transmission: vehicle.transmission,
-    fuel_type: vehicle.fuel_type,
-    insurance_expiry: vehicle.insurance_expiry || '',
-    inspection_expiry: vehicle.inspection_expiry || '',
-  });
+const DEFAULT_FORM = {
+  plate: '',
+  brand: '',
+  model: '',
+  category: 'B' as Vehicle['category'],
+  year: new Date().getFullYear(),
+  transmission: 'manual' as Vehicle['transmission'],
+  fuel_type: 'petrol' as Vehicle['fuel_type'],
+  insurance_expiry: '',
+  inspection_expiry: '',
+};
+
+const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, onSaved }) => {
+  const isEdit = !!vehicle;
+  const [form, setForm] = useState(
+    vehicle
+      ? {
+          plate: vehicle.plate,
+          brand: vehicle.brand,
+          model: vehicle.model,
+          category: vehicle.category,
+          year: vehicle.year,
+          transmission: vehicle.transmission,
+          fuel_type: vehicle.fuel_type,
+          insurance_expiry: vehicle.insurance_expiry || '',
+          inspection_expiry: vehicle.inspection_expiry || '',
+        }
+      : DEFAULT_FORM
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -37,7 +54,7 @@ const EditVehicleModal: React.FC<EditVehicleModalProps> = ({ vehicle, onClose, o
     setSaving(true);
     setError('');
     try {
-      const updates: Partial<Vehicle> = {
+      const payload = {
         plate: form.plate.trim(),
         brand: form.brand.trim(),
         model: form.model.trim(),
@@ -45,14 +62,17 @@ const EditVehicleModal: React.FC<EditVehicleModalProps> = ({ vehicle, onClose, o
         year: Number(form.year),
         transmission: form.transmission,
         fuel_type: form.fuel_type,
+        status: 'available' as Vehicle['status'],
         insurance_expiry: form.insurance_expiry || null,
         inspection_expiry: form.inspection_expiry || null,
       };
-      const updated = await vehicleService.update(vehicle.id, updates);
-      onSaved(updated);
+      const saved = isEdit
+        ? await vehicleService.update(vehicle!.id, payload)
+        : await vehicleService.create(payload);
+      onSaved(saved);
       onClose();
     } catch (err) {
-      console.error('Failed to update vehicle:', err);
+      console.error('Failed to save vehicle:', err);
       setError('Αποτυχία αποθήκευσης οχήματος.');
     } finally {
       setSaving(false);
@@ -68,7 +88,9 @@ const EditVehicleModal: React.FC<EditVehicleModalProps> = ({ vehicle, onClose, o
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">Επεξεργασία Οχήματος</h2>
+          <h2 className="text-lg font-semibold text-gray-900">
+            {isEdit ? 'Επεξεργασία Οχήματος' : 'Προσθήκη Οχήματος'}
+          </h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
             <XMarkIcon className="h-6 w-6" />
           </button>
@@ -205,4 +227,4 @@ const EditVehicleModal: React.FC<EditVehicleModalProps> = ({ vehicle, onClose, o
   );
 };
 
-export default EditVehicleModal;
+export default VehicleFormModal;

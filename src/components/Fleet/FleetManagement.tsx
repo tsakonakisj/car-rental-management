@@ -69,6 +69,7 @@ const FleetManagement: React.FC = () => {
   const [filter, setFilter] = useState<FleetFilter>('active');
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+  const [addingVehicle, setAddingVehicle] = useState(false);
 
   const fetchVehicles = useCallback(async () => {
     setLoading(true);
@@ -200,6 +201,7 @@ const FleetManagement: React.FC = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-semibold text-gray-900">{t('fleet')}</h1>
         <button
+          onClick={() => setAddingVehicle(true)}
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
         >
           <PlusIcon className="h-4 w-4 mr-2" />
@@ -238,6 +240,18 @@ const FleetManagement: React.FC = () => {
               : 'Δεν υπάρχουν οχήματα ακόμα. Προσθέστε το πρώτο όχημα του στόλου σας.'}
           </p>
         </div>
+      )}
+
+      {/* Add Vehicle Modal */}
+      {addingVehicle && (
+        <EditVehicleModal
+          vehicle={null}
+          onClose={() => setAddingVehicle(false)}
+          onSaved={(created) => {
+            setVehicles(prev => [...prev, created]);
+            setAddingVehicle(false);
+          }}
+        />
       )}
 
       {/* Edit Vehicle Modal */}
