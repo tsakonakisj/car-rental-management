@@ -21,6 +21,8 @@ interface CompanySettings {
   website: string;
   tax_number: string;
   registration_number: string;
+  contractHeader: string;
+  contractSubheader: string;
 }
 
 interface FinancialSettings {
@@ -55,6 +57,8 @@ const SettingsPage: React.FC = () => {
     website: '',
     tax_number: '',
     registration_number: '',
+    contractHeader: '',
+    contractSubheader: '',
   });
 
   const [stations, setStations] = useState<Station[]>([]);
@@ -91,6 +95,8 @@ const SettingsPage: React.FC = () => {
             website: (v.website as string) || '',
             tax_number: (v.taxNumber as string) || '',
             registration_number: (v.registrationNumber as string) || '',
+            contractHeader: (v.contractHeader as string) || '',
+            contractSubheader: (v.contractSubheader as string) || '',
           });
         }
 
@@ -143,6 +149,8 @@ const SettingsPage: React.FC = () => {
         website: companySettings.website,
         taxNumber: companySettings.tax_number,
         registrationNumber: companySettings.registration_number,
+        contractHeader: companySettings.contractHeader,
+        contractSubheader: companySettings.contractSubheader,
       };
 
       const { error: companyError } = await supabase
