@@ -49,6 +49,11 @@ export interface Season {
   start_date: string;
   end_date: string;
   multiplier: number;
+  start_month?: number | null;
+  start_day?: number | null;
+  end_month?: number | null;
+  end_day?: number | null;
+  priority?: number | null;
 }
 
 export interface Pricing {
