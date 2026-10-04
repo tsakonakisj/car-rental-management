@@ -324,6 +324,54 @@ export const stationService = {
   }
 };
 
+// Shared season-matching + rate resolution logic
+function dateMatchesSeason(month: number, day: number, season: Season): boolean {
+  const sm = season.start_month;
+  const sd = season.start_day;
+  const em = season.end_month;
+  const ed = season.end_day;
+  if (sm == null || sd == null || em == null || ed == null) return false;
+
+  const startMd = sm * 100 + sd;
+  const endMd = em * 100 + ed;
+  const checkMd = month * 100 + day;
+
+  if (startMd <= endMd) {
+    return checkMd >= startMd && checkMd <= endMd;
+  }
+  // Season crosses year-end
+  return checkMd >= startMd || checkMd <= endMd;
+}
+
+export function resolveDailyRate(
+  pickupDate: string,
+  category: string,
+  seasons: Season[],
+  pricing: Pricing[]
+): { rate: number; season: Season | null } {
+  if (!pickupDate || !category) return { rate: 0, season: null };
+
+  const parts = pickupDate.split('T')[0].split('-');
+  const month = parseInt(parts[1], 10);
+  const day = parseInt(parts[2], 10);
+  if (!month || !day) return { rate: 0, season: null };
+
+  const matching = seasons.filter(s => dateMatchesSeason(month, day, s));
+  if (matching.length === 0) return { rate: 0, season: null };
+
+  const bestSeason = matching.reduce((best, s) =>
+    (s.priority ?? 0) > (best.priority ?? 0) ? s : best
+  );
+
+  const row = pricing.find(
+    p => p.category === category && p.season_id === bestSeason.id
+  );
+
+  if (!row) return { rate: 0, season: bestSeason };
+
+  return { rate: Number(row.daily_rate), season: bestSeason };
+}
+
 // Seasons & Pricing
 export const pricingService = {
   async getSeasons(): Promise<Season[]> {

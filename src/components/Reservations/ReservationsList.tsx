@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { reservationService, customerService, stationService, vehicleService, pricingService } from '../../lib/database';
+import { reservationService, customerService, stationService, vehicleService, pricingService, resolveDailyRate } from '../../lib/database';
 import {
   EyeIcon,
   TruckIcon,
@@ -14,7 +14,7 @@ import {
 import ContractGenerator from '../PDF/ContractGenerator';
 import CheckOutForm from '../CheckOut/CheckOutForm';
 import CheckInForm from '../CheckIn/CheckInForm';
-import type { Station, Vehicle, Pricing, Reservation } from '../../types';
+import type { Station, Vehicle, Pricing, Season, Reservation } from '../../types';
 
 interface ReservationRow {
   id: string;
@@ -140,6 +140,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
   const [stations, setStations] = useState<Station[]>([]);
   const [editVehicles, setEditVehicles] = useState<Vehicle[]>([]);
   const [editPricing, setEditPricing] = useState<Pricing[]>([]);
+  const [editSeasons, setEditSeasons] = useState<Season[]>([]);
 
   const fetchReservations = useCallback(async () => {
     setLoading(true);
@@ -237,8 +238,8 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
   const startEditing = (reservation: ReservationRow) => {
     const pickup = splitDateTime(reservation.pickup_date);
     const ret = splitDateTime(reservation.return_date);
-    Promise.all([vehicleService.getAll(), pricingService.getPricing()])
-      .then(([v, p]) => { setEditVehicles(v); setEditPricing(p); })
+    Promise.all([vehicleService.getAll(), pricingService.getPricing(), pricingService.getSeasons()])
+      .then(([v, p, s]) => { setEditVehicles(v); setEditPricing(p); setEditSeasons(s); })
       .catch(() => {});
     setEditForm({
       customerName: reservation.customer?.name || '',
@@ -288,7 +289,18 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
 
       // Recalculate pricing
       const days = calcDaysBetween(editForm.pickupDate, editForm.returnDate);
-      const dailyRate = editForm.dailyRate || 0;
+      const { rate: resolvedRate } = resolveDailyRate(
+        editForm.pickupDate || '',
+        editForm.category || '',
+        editSeasons,
+        editPricing
+      );
+      if (resolvedRate <= 0) {
+        setSaveError('Δεν έχει οριστεί τιμή για αυτή την κατηγορία και σεζόν. Ορίστε την τιμή στη σελίδα Τιμολόγηση.');
+        setSaving(false);
+        return;
+      }
+      const dailyRate = resolvedRate;
       const insuranceRate = editForm.insuranceType === 'full'
         ? getSeasonalInsuranceRate(editForm.pickupDate)
         : 0;
@@ -940,12 +952,24 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                             onChange={(e) => {
                               const selectedVehicle = editVehicles.find(v => v.id === e.target.value);
                               if (selectedVehicle) {
-                                const rate = editPricing.find(p => p.category === selectedVehicle.category);
+                                const { rate, season } = resolveDailyRate(
+                                  editForm.pickupDate || '',
+                                  selectedVehicle.category,
+                                  editSeasons,
+                                  editPricing
+                                );
+                                if (rate <= 0) {
+                                  setSaveError(
+                                    `Δεν έχει οριστεί τιμή για την κατηγορία ${selectedVehicle.category}${season ? ` (${season.name})` : ''}. `
+                                  );
+                                } else {
+                                  setSaveError('');
+                                }
                                 setEditForm({
                                   ...editForm,
                                   vehicleId: selectedVehicle.id,
                                   category: selectedVehicle.category,
-                                  dailyRate: rate ? Number(rate.daily_rate) : editForm.dailyRate
+                                  dailyRate: rate
                                 });
                               } else {
                                 setEditForm({ ...editForm, vehicleId: '', category: '', dailyRate: 0 });
@@ -970,10 +994,15 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                                 });
                               })();
                               const isUnavailable = (v.status !== 'available' && !isCurrentVehicle) || hasOverlap;
-                              const rate = editPricing.find(p => p.category === v.category);
+                              const { rate: vRate } = resolveDailyRate(
+                                editForm.pickupDate || '',
+                                v.category,
+                                editSeasons,
+                                editPricing
+                              );
                               return (
                                 <option key={v.id} value={v.id} disabled={isUnavailable}>
-                                  {v.plate} - {v.brand} {v.model} ({v.category}) - {'\u20AC'}{rate ? Number(rate.daily_rate) : 0}/ημ.{isUnavailable ? ' [Μη διαθέσιμο]' : ''}
+                                  {v.plate} - {v.brand} {v.model} ({v.category}) - {vRate > 0 ? `\u20AC${vRate}/\u03b7\u03bc.` : '\u0391\u03c0\u03cc\u03c1\u03b9\u03c3\u03c4\u03b7 \u03c4\u03b9\u03bc\u03ae'}{isUnavailable ? ' [\u039c\u03b7 \u03b4\u03b9\u03b1\u03b8\u03ad\u03c3\u03b9\u03bc\u03bf]' : ''}
                                 </option>
                               );
                             })}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { vehicleService, pricingService, reservationService } from '../../lib/database';
-import type { Vehicle, Pricing, Reservation } from '../../types';
+import { vehicleService, pricingService, reservationService, resolveDailyRate } from '../../lib/database';
+import type { Vehicle, Pricing, Season, Reservation } from '../../types';
 import { TruckIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
 interface BookingStep2Props {
@@ -13,6 +13,7 @@ const BookingStep2: React.FC<BookingStep2Props> = ({ data, updateData }) => {
   const { t } = useLanguage();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [pricing, setPricing] = useState<Pricing[]>([]);
+  const [seasons, setSeasons] = useState<Season[]>([]);
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -22,13 +23,15 @@ const BookingStep2: React.FC<BookingStep2Props> = ({ data, updateData }) => {
       setLoading(true);
       setError('');
       try {
-        const [vehicleData, pricingData, reservationData] = await Promise.all([
+        const [vehicleData, pricingData, seasonData, reservationData] = await Promise.all([
           vehicleService.getAll(),
           pricingService.getPricing(),
+          pricingService.getSeasons(),
           reservationService.getAll()
         ]);
         setVehicles(vehicleData.filter(v => v.status !== 'inactive'));
         setPricing(pricingData);
+        setSeasons(seasonData);
         setReservations(reservationData);
       } catch (err) {
         console.error('Failed to load vehicles:', err);
@@ -53,9 +56,9 @@ const BookingStep2: React.FC<BookingStep2Props> = ({ data, updateData }) => {
     });
   };
 
-  const getDailyRate = (category: string): number => {
-    const found = pricing.find(p => p.category === category);
-    return found ? Number(found.daily_rate) : 0;
+  const getDailyRate = (category: string): { rate: number; seasonName: string | null } => {
+    const { rate, season } = resolveDailyRate(data.pickupDate || '', category, seasons, pricing);
+    return { rate, seasonName: season?.name ?? null };
   };
 
   const getStatusLabel = (status: string) => {
@@ -77,7 +80,8 @@ const BookingStep2: React.FC<BookingStep2Props> = ({ data, updateData }) => {
   };
 
   const handleVehicleSelect = (vehicle: Vehicle) => {
-    const rate = getDailyRate(vehicle.category);
+    const { rate } = getDailyRate(vehicle.category);
+    if (rate <= 0) return;
     updateData({
       vehicleId: vehicle.id,
       vehiclePlate: vehicle.plate,
@@ -121,10 +125,11 @@ const BookingStep2: React.FC<BookingStep2Props> = ({ data, updateData }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {vehicles.map((vehicle) => {
-          const rate = getDailyRate(vehicle.category);
+          const { rate, seasonName } = getDailyRate(vehicle.category);
           const isSelected = data.vehicleId === vehicle.id;
           const hasOverlap = isVehicleOverlapping(vehicle.id);
-          const isAvailable = vehicle.status === 'available' && !hasOverlap;
+          const hasRate = rate > 0;
+          const isAvailable = vehicle.status === 'available' && !hasOverlap && hasRate;
 
           return (
             <div
@@ -177,9 +182,20 @@ const BookingStep2: React.FC<BookingStep2Props> = ({ data, updateData }) => {
               </div>
 
               <div className="flex items-center justify-between">
-                <p className="text-lg font-semibold text-green-600">
-                  {rate > 0 ? `\u20AC${rate}/ημέρα` : 'Τιμή μη διαθέσιμη'}
-                </p>
+                <div>
+                  {rate > 0 ? (
+                    <p className="text-lg font-semibold text-green-600">
+                      {`\u20AC${rate}/ημέρα`}
+                      {seasonName && (
+                        <span className="text-xs font-normal text-gray-500 ml-1">({seasonName})</span>
+                      )}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-red-600">
+                      Δεν έχει οριστεί τιμή για αυτή την κατηγορία και σεζόν
+                    </p>
+                  )}
+                </div>
                 {isSelected && (
                   <span className="text-sm font-medium text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
                     Επιλεγμένο
