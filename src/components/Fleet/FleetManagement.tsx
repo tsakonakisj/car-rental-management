@@ -15,6 +15,7 @@ import {
   NoSymbolIcon
 } from '@heroicons/react/24/outline';
 import VehicleReservationsModal from './VehicleReservationsModal';
+import EditVehicleModal from './EditVehicleModal';
 
 type FleetFilter = 'active' | 'inactive' | 'all';
 
@@ -67,6 +68,7 @@ const FleetManagement: React.FC = () => {
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [filter, setFilter] = useState<FleetFilter>('active');
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
 
   const fetchVehicles = useCallback(async () => {
     setLoading(true);
@@ -238,6 +240,18 @@ const FleetManagement: React.FC = () => {
         </div>
       )}
 
+      {/* Edit Vehicle Modal */}
+      {editingVehicle && (
+        <EditVehicleModal
+          vehicle={editingVehicle}
+          onClose={() => setEditingVehicle(null)}
+          onSaved={(updated) => {
+            setVehicles(prev => prev.map(v => v.id === updated.id ? updated : v));
+            setEditingVehicle(null);
+          }}
+        />
+      )}
+
       {/* Vehicle Reservations Modal */}
       {selectedVehicle && (
         <VehicleReservationsModal
@@ -323,7 +337,11 @@ const FleetManagement: React.FC = () => {
                     </button>
                     {!isInactive && (
                       <>
-                        <button className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                        <button
+                          onClick={() => setEditingVehicle(vehicle)}
+                          className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                          title="Επεξεργασία"
+                        >
                           <PencilIcon className="h-4 w-4" />
                         </button>
                         <button
