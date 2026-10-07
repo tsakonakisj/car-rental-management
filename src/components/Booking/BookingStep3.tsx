@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { insuranceService, pricingService } from '../../lib/database';
+import type { Insurance, Extra } from '../../types';
 
 interface Pricing {
   days: number;
@@ -18,11 +20,41 @@ interface BookingStep3Props {
 
 const BookingStep3: React.FC<BookingStep3Props> = ({ data, pricing, updateData }) => {
   const { t } = useLanguage();
+  const [insurances, setInsurances] = useState<Insurance[]>([]);
+  const [extras, setExtras] = useState<Extra[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const extrasDef = {
-    childSeat: { nameEl: 'Παιδικό Κάθισμα', nameEn: 'Child Seat', price: 5, type: 'daily' as const },
-    additionalDriver: { nameEl: 'Δεύτερος Οδηγός', nameEn: 'Additional Driver', price: 25, type: 'one-time' as const }
-  };
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [insData, extData] = await Promise.all([
+          insuranceService.getAll(),
+          pricingService.getExtras()
+        ]);
+        if (cancelled) return;
+        setInsurances(insData);
+        setExtras(extData);
+      } catch (err) {
+        console.error('Failed to load insurance/extras:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Auto-select first insurance when data loads if none selected
+  useEffect(() => {
+    if (insurances.length > 0 && !data.insuranceType) {
+      const first = insurances[0];
+      updateData({
+        insuranceType: first.name,
+        insuranceRate: Number(first.daily_rate) || 0,
+        insuranceId: first.id
+      });
+    }
+  }, [insurances, data.insuranceType]);
 
   const updateCustomer = (field: string, value: string) => {
     updateData({
@@ -33,27 +65,25 @@ const BookingStep3: React.FC<BookingStep3Props> = ({ data, pricing, updateData }
     });
   };
 
-  const updateExtra = (key: string, quantity: number) => {
+  const updateExtra = (extraId: string, quantity: number) => {
+    const current = { ...data.extras };
+    if (quantity <= 0) {
+      delete current[extraId];
+    } else {
+      current[extraId] = quantity;
+    }
+    updateData({ extras: current });
+  };
+
+  const selectInsurance = (ins: Insurance) => {
     updateData({
-      extras: {
-        ...data.extras,
-        [key]: quantity
-      }
+      insuranceType: ins.name,
+      insuranceRate: Number(ins.daily_rate) || 0,
+      insuranceId: ins.id
     });
   };
 
-  const getFullInsuranceRate = (): number => {
-    if (!data.pickupDate) return 10;
-    const month = parseInt(data.pickupDate.split('-')[1], 10);
-    if (month === 7 || month === 8) return 15;
-    return 10;
-  };
-
-  const fullInsuranceRate = getFullInsuranceRate();
-
-  const updateInsurance = (type: 'basic' | 'full') => {
-    updateData({ insuranceType: type });
-  };
+  const selectedInsurance = insurances.find(i => i.id === data.insuranceId);
 
   return (
     <div className="space-y-8">
@@ -131,65 +161,72 @@ const BookingStep3: React.FC<BookingStep3Props> = ({ data, pricing, updateData }
             <span>{t('dailyRate')} ({pricing.days} {t('days')})</span>
             <span>€{pricing.dailyTotal.toFixed(2)}</span>
           </div>
-          
+
+          {/* Insurance from DB */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <span>{t('insurance')}</span>
-              <div className="flex space-x-2">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="insurance"
-                    value="basic"
-                    checked={data.insuranceType === 'basic'}
-                    onChange={() => updateInsurance('basic')}
-                    className="mr-1"
-                  />
-                  {t('basic')} (€0)
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="insurance"
-                    value="full"
-                    checked={data.insuranceType === 'full'}
-                    onChange={() => updateInsurance('full')}
-                    className="mr-1"
-                  />
-                  {t('full')} (€{fullInsuranceRate}/ημέρα)
-                </label>
-              </div>
             </div>
-            {data.insuranceType === 'full' && (
-              <div className="flex justify-between text-sm">
-                <span>Πλήρης Ασφάλεια ({pricing.days} ημέρες)</span>
-                <span>€{pricing.insuranceTotal.toFixed(2)}</span>
+            {loading ? (
+              <div className="text-sm text-gray-500">Φόρτωση ασφαλίσεων...</div>
+            ) : insurances.length === 0 ? (
+              <div className="text-sm text-gray-500">Δεν βρέθηκαν ασφαλίσεις</div>
+            ) : (
+              <div className="space-y-2">
+                {insurances.map(ins => (
+                  <label key={ins.id} className="flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      name="insurance"
+                      checked={data.insuranceId === ins.id}
+                      onChange={() => selectInsurance(ins)}
+                      className="mr-2"
+                    />
+                    <span className="flex-1">{ins.name}</span>
+                    <span className="text-sm text-gray-600">
+                      €{Number(ins.daily_rate).toFixed(2)}/ημέρα
+                    </span>
+                  </label>
+                ))}
+                {selectedInsurance && Number(selectedInsurance.daily_rate) > 0 && (
+                  <div className="flex justify-between text-sm pl-6">
+                    <span>{selectedInsurance.name} ({pricing.days} ημέρες)</span>
+                    <span>€{pricing.insuranceTotal.toFixed(2)}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
-          
+
+          {/* Extras from DB */}
           <div>
             <h4 className="font-medium mb-2">{t('extras')}</h4>
-            {Object.entries(extrasDef).map(([key, extra]) => (
-              <div key={key} className="flex items-center justify-between mb-2">
-                <span>{extra.nameEl}</span>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="number"
-                    min="0"
-                    max="10"
-                    value={data.extras?.[key] || 0}
-                    onChange={(e) => updateExtra(key, parseInt(e.target.value) || 0)}
-                    className="w-16 border border-gray-300 rounded px-2 py-1"
-                  />
-                  <span className="text-sm text-gray-600">
-                    €{extra.price}/{extra.type === 'daily' ? 'ημέρα' : 'εφάπαξ'}
-                  </span>
+            {loading ? (
+              <div className="text-sm text-gray-500">Φόρτωση έξτρα...</div>
+            ) : extras.length === 0 ? (
+              <div className="text-sm text-gray-500">Δεν βρέθηκαν έξτρα</div>
+            ) : (
+              extras.map(extra => (
+                <div key={extra.id} className="flex items-center justify-between mb-2">
+                  <span>{extra.name}</span>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="number"
+                      min="0"
+                      max="10"
+                      value={data.extras?.[extra.id] || 0}
+                      onChange={(e) => updateExtra(extra.id, parseInt(e.target.value) || 0)}
+                      className="w-16 border border-gray-300 rounded px-2 py-1"
+                    />
+                    <span className="text-sm text-gray-600">
+                      €{Number(extra.price).toFixed(2)}/{extra.type === 'daily' ? 'ημέρα' : 'εφάπαξ'}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
-          
+
           <div className="border-t pt-4">
             <div className="flex justify-between font-bold text-lg">
               <span>{t('total')}</span>

@@ -6,7 +6,9 @@ import type {
   Season,
   Pricing,
   Extra,
-  Station
+  Insurance,
+  Station,
+  ReservationExtra
 } from '../types';
 
 // Demo mode fallback when Supabase is not configured
@@ -457,6 +459,66 @@ export const pricingService = {
 
     if (error) throw error;
     return data || [];
+  }
+};
+
+// Insurance types
+export const insuranceService = {
+  async getAll(): Promise<Insurance[]> {
+    if (isDemo) {
+      return Promise.resolve([
+        { id: '1', name: 'Βασική Ασφάλεια', name_en: 'Basic Insurance', daily_rate: 0, category: 'all' },
+        { id: '2', name: 'Πλήρης Ασφάλεια', name_en: 'Full Insurance', daily_rate: 15, category: 'all' }
+      ]);
+    }
+
+    const { data, error } = await supabase!
+      .from('insurance_types')
+      .select('*')
+      .eq('active', true)
+      .order('daily_rate');
+
+    if (error) throw error;
+    return (data || []).map(row => ({
+      ...row,
+      daily_rate: Number(row.daily_rate) || 0
+    }));
+  }
+};
+
+// Reservation extras
+export const reservationExtrasService = {
+  async createMany(reservationId: string, extras: Array<{ extra_id: string; quantity: number; daily_rate: number }>): Promise<void> {
+    if (isDemo) return Promise.resolve();
+    if (extras.length === 0) return;
+
+    const rows = extras.map(e => ({
+      reservation_id: reservationId,
+      extra_id: e.extra_id,
+      quantity: e.quantity,
+      daily_rate: e.daily_rate
+    }));
+
+    const { error } = await supabase!
+      .from('reservation_extras')
+      .insert(rows);
+
+    if (error) throw error;
+  },
+
+  async getByReservationId(reservationId: string): Promise<ReservationExtra[]> {
+    if (isDemo) return Promise.resolve([]);
+
+    const { data, error } = await supabase!
+      .from('reservation_extras')
+      .select('*')
+      .eq('reservation_id', reservationId);
+
+    if (error) throw error;
+    return (data || []).map(row => ({
+      ...row,
+      daily_rate: Number(row.daily_rate) || 0
+    }));
   }
 };
 

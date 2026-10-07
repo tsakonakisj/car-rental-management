@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { reservationService, customerService } from '../../lib/database';
-import type { Customer, Reservation } from '../../types';
+import { reservationService, customerService, insuranceService, pricingService, reservationExtrasService } from '../../lib/database';
+import type { Customer, Reservation, Insurance, Extra } from '../../types';
 import BookingStep1 from './BookingStep1';
 import BookingStep2 from './BookingStep2';
 import BookingStep3 from './BookingStep3';
@@ -22,15 +22,6 @@ const daysBetweenUTC = (start: string, end: string) => {
   return Math.max(1, Math.round((e - s) / 86400000));
 };
 
-// Seasonal full-insurance rate based on pickup month
-// Apr-Jun, Sep-Oct = €10/day; Jul-Aug = €15/day
-const getFullInsuranceRate = (pickupDate: string): number => {
-  if (!pickupDate) return 10;
-  const month = parseInt(pickupDate.split('-')[1], 10);
-  if (month === 7 || month === 8) return 15;
-  return 10;
-};
-
 interface BookingData {
   pickupDate: string;
   returnDate: string;
@@ -44,8 +35,9 @@ interface BookingData {
   vehicleBrand?: string;
   vehicleModel?: string;
   dailyRate: number;
-  insuranceType: 'basic' | 'full';
+  insuranceType: string;
   insuranceRate: number;
+  insuranceId?: string;
   extras: { [key: string]: number };
   customer: {
     name: string;
@@ -67,9 +59,32 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
   const { t } = useLanguage();
   const [currentStep, setCurrentStep] = useState(1);
 
+  // DB-loaded insurance and extras
+  const [insurances, setInsurances] = useState<Insurance[]>([]);
+  const [extrasList, setExtrasList] = useState<Extra[]>([]);
+
   // Scroll to top when wizard opens
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  // Load insurance and extras from DB on mount
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [insData, extData] = await Promise.all([
+          insuranceService.getAll(),
+          pricingService.getExtras()
+        ]);
+        if (cancelled) return;
+        setInsurances(insData);
+        setExtrasList(extData);
+      } catch (err) {
+        console.error('Failed to load insurance/extras:', err);
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   // Σήμερα & Αύριο
@@ -88,8 +103,9 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
       returnStation: '',
       category: '',
       dailyRate: 0,
-      insuranceType: 'full',
-      insuranceRate: getFullInsuranceRate(pickupStr),
+      insuranceType: '',
+      insuranceRate: 0,
+      insuranceId: undefined,
       extras: {},
       customer: {
         name: '',
@@ -118,39 +134,30 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
           ...(updates.extras || {})
         }
       };
-      // Recalculate insurance rate when pickupDate or insuranceType changes
-      if (updates.pickupDate || updates.insuranceType) {
-        const rate = getFullInsuranceRate(next.pickupDate);
-        next.insuranceRate = next.insuranceType === 'full' ? rate : 0;
-      }
       return next;
     });
   };
 
-  // Pricing calculations with useMemo
+  // Pricing calculations with useMemo — uses DB-loaded extras
   const pricing = useMemo(() => {
     const days = daysBetweenUTC(bookingData.pickupDate, bookingData.returnDate);
     const rate = Number.isFinite(bookingData.dailyRate) ? bookingData.dailyRate : 0;
 
     let dailyTotal = rate * days;
     let insuranceTotal = 0;
-    if (bookingData.insuranceType === 'full') {
-      const insuranceRate = Number.isFinite(bookingData.insuranceRate) ? bookingData.insuranceRate : 0;
-      insuranceTotal = insuranceRate * days;
+    if (bookingData.insuranceRate > 0) {
+      insuranceTotal = bookingData.insuranceRate * days;
     }
 
-    const extrasDef = {
-      childSeat: { price: 5, type: 'daily' as const },
-      additionalDriver: { price: 25, type: 'one-time' as const }
-    };
-    
     let extrasTotal = 0;
-    Object.entries(bookingData.extras || {}).forEach(([key, quantity]) => {
-      const def = (extrasDef as any)[key];
+    const extrasMap = new Map(extrasList.map(e => [e.id, e]));
+    Object.entries(bookingData.extras || {}).forEach(([extraId, quantity]) => {
+      const def = extrasMap.get(extraId);
       if (!def || !quantity) return;
-      extrasTotal += def.type === 'daily' 
-        ? def.price * (quantity as number) * days 
-        : def.price * (quantity as number);
+      const price = Number(def.price) || 0;
+      extrasTotal += def.type === 'daily'
+        ? price * quantity * days
+        : price * quantity;
     });
 
     return {
@@ -161,7 +168,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
       extrasTotal,
       grandTotal: dailyTotal + insuranceTotal + extrasTotal
     };
-  }, [bookingData.pickupDate, bookingData.returnDate, bookingData.dailyRate, bookingData.insuranceType, bookingData.insuranceRate, bookingData.extras]);
+  }, [bookingData.pickupDate, bookingData.returnDate, bookingData.dailyRate, bookingData.insuranceRate, bookingData.extras, extrasList]);
 
   const canProceed = () => {
     switch (currentStep) {
@@ -273,15 +280,31 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
         pickup_station_id: bookingData.pickupStation,
         return_station_id: bookingData.returnStation,
         daily_rate: pricing.rate,
-        insurance_type: bookingData.insuranceType,
-        insurance_rate: bookingData.insuranceRate,
+        insurance_type: bookingData.insuranceType || 'Βασική Ασφάλεια',
+        insurance_rate: bookingData.insuranceRate || 0,
         total_amount: pricing.grandTotal,
         notes: bookingData.notes || '',
         status: 'upcoming',
         excel_updated: false
       };
-      console.log('Reservation payload:', reservationPayload);
-      await reservationService.create(reservationPayload);
+      const reservation = await reservationService.create(reservationPayload);
+
+      // 3) Save extras to reservation_extras
+      const extrasMap = new Map(extrasList.map(e => [e.id, e]));
+      const extrasToSave: Array<{ extra_id: string; quantity: number; daily_rate: number }> = [];
+      Object.entries(bookingData.extras || {}).forEach(([extraId, quantity]) => {
+        const def = extrasMap.get(extraId);
+        if (!def || !quantity) return;
+        extrasToSave.push({
+          extra_id: extraId,
+          quantity: quantity,
+          daily_rate: Number(def.price) || 0
+        });
+      });
+
+      if (extrasToSave.length > 0) {
+        await reservationExtrasService.createMany(reservation.id, extrasToSave);
+      }
 
       onComplete?.();
     } catch (error: any) {
