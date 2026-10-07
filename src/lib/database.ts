@@ -519,6 +519,24 @@ export const reservationExtrasService = {
       ...row,
       daily_rate: Number(row.daily_rate) || 0
     }));
+  },
+
+  async deleteByReservationId(reservationId: string): Promise<void> {
+    if (isDemo) return Promise.resolve();
+
+    const { error } = await supabase!
+      .from('reservation_extras')
+      .delete()
+      .eq('reservation_id', reservationId);
+
+    if (error) throw error;
+  },
+
+  async replaceForReservation(reservationId: string, extras: Array<{ extra_id: string; quantity: number; daily_rate: number }>): Promise<void> {
+    await this.deleteByReservationId(reservationId);
+    if (extras.length > 0) {
+      await this.createMany(reservationId, extras);
+    }
   }
 };
 

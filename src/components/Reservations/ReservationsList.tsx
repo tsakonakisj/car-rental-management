@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { reservationService, customerService, stationService, vehicleService, pricingService, resolveDailyRate } from '../../lib/database';
+import { reservationService, customerService, stationService, vehicleService, pricingService, resolveDailyRate, insuranceService, reservationExtrasService } from '../../lib/database';
 import {
   EyeIcon,
   TruckIcon,
@@ -14,7 +14,7 @@ import {
 import ContractGenerator from '../PDF/ContractGenerator';
 import CheckOutForm from '../CheckOut/CheckOutForm';
 import CheckInForm from '../CheckIn/CheckInForm';
-import type { Station, Vehicle, Pricing, Season, Reservation } from '../../types';
+import type { Station, Vehicle, Pricing, Season, Reservation, Insurance, Extra } from '../../types';
 
 interface ReservationRow {
   id: string;
@@ -73,10 +73,13 @@ interface EditFormData {
   pickupStationId: string;
   returnStationId: string;
   insuranceType: string;
+  insuranceId: string;
+  insuranceRate: number;
   vehicleId: string;
   dailyRate: number;
   category: string;
   notes: string;
+  extras: { [extraId: string]: number };
 }
 
 interface ReservationsListProps {
@@ -109,12 +112,6 @@ function calcDaysBetween(startDate: string, endDate: string): number {
   return Math.max(1, Math.round((e - s) / 86400000));
 }
 
-function getSeasonalInsuranceRate(pickupDate: string): number {
-  if (!pickupDate) return 10;
-  const month = parseInt(pickupDate.split('-')[1], 10);
-  if (month === 7 || month === 8) return 15;
-  return 10;
-}
 
 const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheckIn, refreshTrigger }) => {
   const [reservations, setReservations] = useState<ReservationRow[]>([]);
@@ -141,6 +138,8 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
   const [editVehicles, setEditVehicles] = useState<Vehicle[]>([]);
   const [editPricing, setEditPricing] = useState<Pricing[]>([]);
   const [editSeasons, setEditSeasons] = useState<Season[]>([]);
+  const [editInsurances, setEditInsurances] = useState<Insurance[]>([]);
+  const [editExtras, setEditExtras] = useState<Extra[]>([]);
 
   const fetchReservations = useCallback(async () => {
     setLoading(true);
@@ -235,31 +234,56 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
     }
   };
 
-  const startEditing = (reservation: ReservationRow) => {
+  const startEditing = async (reservation: ReservationRow) => {
     const pickup = splitDateTime(reservation.pickup_date);
     const ret = splitDateTime(reservation.return_date);
-    Promise.all([vehicleService.getAll(), pricingService.getPricing(), pricingService.getSeasons()])
-      .then(([v, p, s]) => { setEditVehicles(v); setEditPricing(p); setEditSeasons(s); })
-      .catch(() => {});
-    setEditForm({
-      customerName: reservation.customer?.name || '',
-      phone: reservation.customer?.phone || '',
-      email: reservation.customer?.email || '',
-      country: reservation.customer?.country || '',
-      licenseNumber: reservation.customer?.license_number || '',
-      birthDate: reservation.customer?.birth_date || '',
-      pickupDate: pickup.date,
-      pickupTime: pickup.time,
-      returnDate: ret.date,
-      returnTime: ret.time,
-      pickupStationId: reservation.pickup_station_id || '',
-      returnStationId: reservation.return_station_id || '',
-      insuranceType: reservation.insurance_type || 'basic',
-      vehicleId: reservation.vehicle_id || '',
-      dailyRate: reservation.daily_rate || 0,
-      category: reservation.category || '',
-      notes: reservation.notes || ''
-    });
+    try {
+      const [v, p, s, ins, ext, existingExtras] = await Promise.all([
+        vehicleService.getAll(),
+        pricingService.getPricing(),
+        pricingService.getSeasons(),
+        insuranceService.getAll(),
+        pricingService.getExtras(),
+        reservationExtrasService.getByReservationId(reservation.id)
+      ]);
+      setEditVehicles(v);
+      setEditPricing(p);
+      setEditSeasons(s);
+      setEditInsurances(ins);
+      setEditExtras(ext);
+
+      // Match current insurance to DB product by name
+      const matchedIns = ins.find(i => i.name === reservation.insurance_type);
+      const extrasMap: { [key: string]: number } = {};
+      existingExtras.forEach(re => {
+        extrasMap[re.extra_id] = re.quantity;
+      });
+
+      setEditForm({
+        customerName: reservation.customer?.name || '',
+        phone: reservation.customer?.phone || '',
+        email: reservation.customer?.email || '',
+        country: reservation.customer?.country || '',
+        licenseNumber: reservation.customer?.license_number || '',
+        birthDate: reservation.customer?.birth_date || '',
+        pickupDate: pickup.date,
+        pickupTime: pickup.time,
+        returnDate: ret.date,
+        returnTime: ret.time,
+        pickupStationId: reservation.pickup_station_id || '',
+        returnStationId: reservation.return_station_id || '',
+        insuranceType: matchedIns ? matchedIns.name : (ins[0]?.name || ''),
+        insuranceId: matchedIns ? matchedIns.id : (ins[0]?.id || ''),
+        insuranceRate: matchedIns ? Number(matchedIns.daily_rate) : (ins[0] ? Number(ins[0].daily_rate) : 0),
+        vehicleId: reservation.vehicle_id || '',
+        dailyRate: reservation.daily_rate || 0,
+        category: reservation.category || '',
+        notes: reservation.notes || '',
+        extras: extrasMap
+      });
+    } catch (err) {
+      console.error('Failed to load edit data:', err);
+    }
     setSaveError('');
     setEditing(true);
   };
@@ -301,10 +325,21 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
         return;
       }
       const dailyRate = resolvedRate;
-      const insuranceRate = editForm.insuranceType === 'full'
-        ? getSeasonalInsuranceRate(editForm.pickupDate)
-        : 0;
-      const totalAmount = (dailyRate * days) + (insuranceRate * days);
+      const insuranceRate = editForm.insuranceRate || 0;
+
+      // Calculate extras total from DB extras
+      const extrasMap = new Map(editExtras.map(e => [e.id, e]));
+      let extrasTotal = 0;
+      Object.entries(editForm.extras || {}).forEach(([extraId, quantity]) => {
+        const def = extrasMap.get(extraId);
+        if (!def || !quantity) return;
+        const price = Number(def.price) || 0;
+        extrasTotal += def.type === 'daily'
+          ? price * quantity * days
+          : price * quantity;
+      });
+
+      const totalAmount = (dailyRate * days) + (insuranceRate * days) + extrasTotal;
 
       // Update reservation
       await reservationService.update(viewReservation.id, {
@@ -320,6 +355,19 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
         total_amount: totalAmount,
         notes: editForm.notes
       });
+
+      // Sync reservation_extras: delete old, insert new
+      const extrasToSave: Array<{ extra_id: string; quantity: number; daily_rate: number }> = [];
+      Object.entries(editForm.extras || {}).forEach(([extraId, quantity]) => {
+        const def = extrasMap.get(extraId);
+        if (!def || !quantity) return;
+        extrasToSave.push({
+          extra_id: extraId,
+          quantity: quantity,
+          daily_rate: Number(def.price) || 0
+        });
+      });
+      await reservationExtrasService.replaceForReservation(viewReservation.id, extrasToSave);
 
       setEditing(false);
       setEditForm(null);
@@ -1011,42 +1059,89 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
 
                         <div>
                           <h3 className="text-sm font-medium text-gray-700 mb-3">Ασφάλεια</h3>
-                          <div className="flex space-x-4">
-                            <label className="flex items-center">
-                              <input
-                                type="radio"
-                                name="editInsurance"
-                                value="basic"
-                                checked={editForm.insuranceType === 'basic'}
-                                onChange={() => setEditForm({ ...editForm, insuranceType: 'basic' })}
-                                className="mr-2"
-                              />
-                              <span className="text-sm">Basic</span>
-                            </label>
-                            <label className="flex items-center">
-                              <input
-                                type="radio"
-                                name="editInsurance"
-                                value="full"
-                                checked={editForm.insuranceType === 'full'}
-                                onChange={() => setEditForm({ ...editForm, insuranceType: 'full' })}
-                                className="mr-2"
-                              />
-                              <span className="text-sm">Full</span>
-                            </label>
-                          </div>
+                          {editInsurances.length === 0 ? (
+                            <p className="text-sm text-gray-500">Φόρτωση ασφαλίσεων...</p>
+                          ) : (
+                            <div className="space-y-2">
+                              {editInsurances.map(ins => (
+                                <label key={ins.id} className="flex items-center cursor-pointer">
+                                  <input
+                                    type="radio"
+                                    name="editInsurance"
+                                    checked={editForm.insuranceId === ins.id}
+                                    onChange={() => setEditForm({
+                                      ...editForm,
+                                      insuranceType: ins.name,
+                                      insuranceId: ins.id,
+                                      insuranceRate: Number(ins.daily_rate) || 0
+                                    })}
+                                    className="mr-2"
+                                  />
+                                  <span className="flex-1 text-sm">{ins.name}</span>
+                                  <span className="text-sm text-gray-600">
+                                    {'\u20AC'}{Number(ins.daily_rate).toFixed(2)}/{'\u03b7\u03bc.'}
+                                  </span>
+                                </label>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        <div>
+                          <h3 className="text-sm font-medium text-gray-700 mb-3">Έξτρα</h3>
+                          {editExtras.length === 0 ? (
+                            <p className="text-sm text-gray-500">Φόρτωση έξτρα...</p>
+                          ) : (
+                            editExtras.map(extra => (
+                              <div key={extra.id} className="flex items-center justify-between mb-2">
+                                <span className="text-sm">{extra.name}</span>
+                                <div className="flex items-center space-x-2">
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="10"
+                                    value={editForm.extras?.[extra.id] || 0}
+                                    onChange={(e) => {
+                                      const qty = parseInt(e.target.value) || 0;
+                                      const next = { ...editForm.extras };
+                                      if (qty <= 0) {
+                                        delete next[extra.id];
+                                      } else {
+                                        next[extra.id] = qty;
+                                      }
+                                      setEditForm({ ...editForm, extras: next });
+                                    }}
+                                    className="w-16 border border-gray-300 rounded px-2 py-1 text-sm"
+                                  />
+                                  <span className="text-sm text-gray-600">
+                                    {'\u20AC'}{Number(extra.price).toFixed(2)}/{extra.type === 'daily' ? '\u03b7\u03bc.' : '\u03b5\u03c6\u03ac\u03c0\u03b1\u03be'}
+                                  </span>
+                                </div>
+                              </div>
+                            ))
+                          )}
                         </div>
 
                         {/* Pricing summary */}
                         {(() => {
                           const days = calcDaysBetween(editForm.pickupDate, editForm.returnDate);
                           const dailyRate = editForm.dailyRate || 0;
-                          const insuranceRate = editForm.insuranceType === 'full'
-                            ? getSeasonalInsuranceRate(editForm.pickupDate)
-                            : 0;
+                          const insuranceRate = editForm.insuranceRate || 0;
                           const dailyTotal = dailyRate * days;
                           const insuranceTotal = insuranceRate * days;
-                          const grandTotal = dailyTotal + insuranceTotal;
+
+                          const extrasMap = new Map(editExtras.map(e => [e.id, e]));
+                          let extrasTotal = 0;
+                          Object.entries(editForm.extras || {}).forEach(([extraId, quantity]) => {
+                            const def = extrasMap.get(extraId);
+                            if (!def || !quantity) return;
+                            const price = Number(def.price) || 0;
+                            extrasTotal += def.type === 'daily'
+                              ? price * quantity * days
+                              : price * quantity;
+                          });
+
+                          const grandTotal = dailyTotal + insuranceTotal + extrasTotal;
                           return (
                             <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                               <h3 className="text-sm font-medium text-gray-700 mb-2">Κοστολόγηση</h3>
@@ -1059,9 +1154,15 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                                 <span className="text-gray-900">{'\u20AC'}{dailyTotal.toFixed(2)}</span>
                               </div>
                               <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Ασφάλεια ({editForm.insuranceType}) ({'\u20AC'}{insuranceRate.toFixed(2)} x {days})</span>
+                                <span className="text-gray-600">Ασφάλεια ({'\u20AC'}{insuranceRate.toFixed(2)} x {days})</span>
                                 <span className="text-gray-900">{'\u20AC'}{insuranceTotal.toFixed(2)}</span>
                               </div>
+                              {extrasTotal > 0 && (
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-gray-600">Έξτρα</span>
+                                  <span className="text-gray-900">{'\u20AC'}{extrasTotal.toFixed(2)}</span>
+                                </div>
+                              )}
                               <div className="flex justify-between text-sm font-bold border-t pt-2">
                                 <span>Σύνολο</span>
                                 <span className="text-green-600">{'\u20AC'}{grandTotal.toFixed(2)}</span>
