@@ -1,22 +1,22 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useLanguage } from '../../contexts/LanguageContext';
 import { company } from '../../lib/company';
 
 const LoginForm: React.FC = () => {
-  const [email, setEmail] = useState(company.demoEmail);
-  const [password, setPassword] = useState('demo123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const { login } = useAuth();
-  const { t } = useLanguage();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setErrorMsg('');
     try {
       await login(email, password);
-    } catch (error) {
-      console.error('Login failed:', error);
+    } catch {
+      setErrorMsg('Λανθασμένο email ή κωδικός πρόσβασης.');
     } finally {
       setLoading(false);
     }
@@ -33,7 +33,7 @@ const LoginForm: React.FC = () => {
             Σύστημα Διαχείρισης Κρατήσεων
           </p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
@@ -66,6 +66,12 @@ const LoginForm: React.FC = () => {
             </div>
           </div>
 
+          {errorMsg && (
+            <div className="rounded-md bg-red-50 px-4 py-3">
+              <p className="text-sm text-red-700">{errorMsg}</p>
+            </div>
+          )}
+
           <div>
             <button
               type="submit"
@@ -74,12 +80,6 @@ const LoginForm: React.FC = () => {
             >
               {loading ? 'Σύνδεση...' : 'Σύνδεση'}
             </button>
-          </div>
-          
-          <div className="text-center">
-            <p className="text-sm text-gray-600">
-              Demo: {company.demoEmail} / {company.demoPassword}
-            </p>
           </div>
         </form>
       </div>

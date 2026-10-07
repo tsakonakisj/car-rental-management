@@ -1,12 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '../lib/supabase';
 import { User } from '../types';
-import { company } from '../lib/company';
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   loading: boolean;
 }
 
@@ -17,85 +16,85 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkAuth = async () => {
+    let mounted = true;
+
+    const restoreSession = async () => {
       try {
-        if (supabase) {
-          // Try manager first, then any active user
-          const { data: userData } = await supabase
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session?.user) {
+          const { data: profile } = await supabase
             .from('users')
             .select('*')
-            .eq('email', 'manager@antilia.com')
+            .eq('auth_user_id', session.user.id)
             .maybeSingle();
 
-          if (userData) {
-            setUser(userData);
-            setLoading(false);
-            return;
-          }
-
-          const { data: anyUser } = await supabase
-            .from('users')
-            .select('*')
-            .eq('active', true)
-            .limit(1)
-            .maybeSingle();
-
-          if (anyUser) {
-            setUser(anyUser);
-            setLoading(false);
-            return;
+          if (profile && profile.active) {
+            if (mounted) setUser(profile);
+          } else {
+            await supabase.auth.signOut();
           }
         }
       } catch {
-        // ignore
+        // session restore failed — stay logged out
       }
 
-      // Fallback: use a default admin so the app is always accessible
-      setUser({
-        id: 'default',
-        name: 'Διαχειριστής',
-        email: 'admin@system.local',
-        role: 'admin',
-        active: true,
-        created_at: new Date().toISOString(),
-      } as any);
-      setLoading(false);
+      if (mounted) setLoading(false);
     };
 
-    checkAuth();
-  }, []);
+    restoreSession();
 
-  const login = async (email: string, _password: string) => {
-    try {
-      if (supabase) {
-        // Simple login: just check if user exists in users table
-        const { data: userData, error } = await supabase
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      (async () => {
+        if (!session?.user) {
+          if (mounted) setUser(null);
+          return;
+        }
+
+        const { data: profile } = await supabase
           .from('users')
           .select('*')
-          .eq('email', email)
-          .eq('active', true)
+          .eq('auth_user_id', session.user.id)
           .maybeSingle();
 
-        if (error) throw error;
-
-        if (userData) {
-          setUser(userData);
-          // Update last login
-          await supabase
-            .from('users')
-            .update({ last_login: new Date().toISOString() })
-            .eq('id', userData.id);
+        if (profile && profile.active) {
+          if (mounted) setUser(profile);
         } else {
-          throw new Error('Invalid credentials');
+          await supabase.auth.signOut();
+          if (mounted) setUser(null);
         }
-      }
-    } catch (error) {
-      console.error('Login failed:', error);
-      throw error;
+      })();
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) throw error;
+
+    const { data: profile, error: profileError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('auth_user_id', data.user.id)
+      .maybeSingle();
+
+    if (profileError) throw profileError;
+
+    if (!profile || !profile.active) {
+      await supabase.auth.signOut();
+      throw new Error('Ο λογαριασμός δεν είναι ενεργός ή δεν υπάρχει.');
     }
+
+    setUser(profile);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
   };
 
