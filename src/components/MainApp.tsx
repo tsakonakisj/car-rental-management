@@ -4,7 +4,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { reservationService, vehicleService, checkoutService, checkinService } from '../lib/database';
 import LoginForm from './Login/LoginForm';
 import Header from './Layout/Header';
-import Sidebar from './Layout/Sidebar';
+import Sidebar, { isTabAllowed } from './Layout/Sidebar';
 import DashboardPage from './Dashboard/DashboardPage';
 import BookingWizard from './Booking/BookingWizard';
 import ReservationsList from './Reservations/ReservationsList';
@@ -194,7 +194,8 @@ const MainApp: React.FC = () => {
   }
 
   const renderContent = () => {
-    switch (activeTab) {
+    const effectiveTab = isTabAllowed(user?.role, activeTab) ? activeTab : 'dashboard';
+    switch (effectiveTab) {
       case 'dashboard':
         return <DashboardPage />;
       case 'bookings':

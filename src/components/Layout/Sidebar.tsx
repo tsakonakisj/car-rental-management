@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   HomeIcon,
   CalendarDaysIcon,
@@ -11,6 +12,20 @@ import {
   CogIcon
 } from '@heroicons/react/24/outline';
 
+export type AppRole = 'admin' | 'manager' | 'agent';
+
+const ROLE_TAB_ACCESS: Record<AppRole, string[]> = {
+  admin: ['dashboard', 'bookings', 'customers', 'fleet', 'pricing', 'reports', 'users', 'settings'],
+  manager: ['dashboard', 'bookings', 'customers', 'fleet', 'pricing', 'reports'],
+  agent: ['dashboard', 'bookings', 'customers', 'fleet'],
+};
+
+export function isTabAllowed(role: string | undefined, tab: string): boolean {
+  if (!role) return false;
+  const allowed = ROLE_TAB_ACCESS[role as AppRole];
+  return allowed ? allowed.includes(tab) : false;
+}
+
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
@@ -18,8 +33,9 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
   const { t } = useLanguage();
+  const { user } = useAuth();
 
-  const menuItems = [
+  const allMenuItems = [
     { id: 'dashboard', label: t('dashboard'), icon: HomeIcon },
     { id: 'bookings', label: t('bookings'), icon: CalendarDaysIcon },
     { id: 'customers', label: t('customers'), icon: UsersIcon },
@@ -29,6 +45,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
     { id: 'users', label: t('users'), icon: UserGroupIcon },
     { id: 'settings', label: t('settings'), icon: CogIcon },
   ];
+
+  const menuItems = allMenuItems.filter((item) => isTabAllowed(user?.role, item.id));
 
   return (
     <div className="w-64 bg-gray-50 min-h-screen border-r border-gray-200">
