@@ -1,0 +1,2 @@
+[functions.cleanup-reservation-photos]
+verify_jwt = false
