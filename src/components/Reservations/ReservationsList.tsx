@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { reservationService, customerService, stationService, vehicleService, pricingService, resolveDailyRate, insuranceService, reservationExtrasService } from '../../lib/database';
+import { reservationService, customerService, stationService, vehicleService, pricingService, resolveDailyRate, insuranceService, reservationExtrasService, photoService } from '../../lib/database';
 import {
   EyeIcon,
   TruckIcon,
@@ -127,6 +127,11 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
   const [actionError, setActionError] = useState('');
   const [changingStatus, setChangingStatus] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [checkoutPhotoPaths, setCheckoutPhotoPaths] = useState<string[]>([]);
+  const [checkinPhotoPaths, setCheckinPhotoPaths] = useState<string[]>([]);
+  const [photoSignedUrls, setPhotoSignedUrls] = useState<Map<string, string>>(new Map());
+  const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
+  const [photosLoading, setPhotosLoading] = useState(false);
 
   // Edit mode
   const [editing, setEditing] = useState(false);
@@ -161,6 +166,34 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
   useEffect(() => {
     stationService.getAll().then(setStations).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!viewReservation) {
+      setCheckoutPhotoPaths([]);
+      setCheckinPhotoPaths([]);
+      setPhotoSignedUrls(new Map());
+      return;
+    }
+    setPhotosLoading(true);
+    Promise.all([
+      photoService.getPhotos('checkout', viewReservation.id),
+      photoService.getPhotos('checkin', viewReservation.id),
+    ]).then(async ([coPaths, ciPaths]) => {
+      setCheckoutPhotoPaths(coPaths);
+      setCheckinPhotoPaths(ciPaths);
+      const allPaths = [...coPaths, ...ciPaths];
+      if (allPaths.length > 0) {
+        try {
+          const urls = await photoService.getSignedUrls(allPaths, 3600);
+          setPhotoSignedUrls(urls);
+        } catch (err) {
+          console.error('Failed to load signed URLs:', err);
+        }
+      }
+    }).catch((err) => {
+      console.error('Failed to load photos:', err);
+    }).finally(() => setPhotosLoading(false));
+  }, [viewReservation]);
 
   const handleStatusChange = async (id: string, newStatus: string) => {
     setChangingStatus(id);
@@ -817,6 +850,50 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                       </div>
                     )}
 
+                    {/* Checkout Photos */}
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 mb-2">Φωτογραφίες Παράδοσης</h3>
+                      {photosLoading ? (
+                        <p className="text-sm text-gray-400">Φόρτωση φωτογραφιών...</p>
+                      ) : checkoutPhotoPaths.length === 0 ? (
+                        <p className="text-sm text-gray-400">Δεν υπάρχουν φωτογραφίες παράδοσης.</p>
+                      ) : (
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                          {checkoutPhotoPaths.map((path) => (
+                            <img
+                              key={path}
+                              src={photoSignedUrls.get(path) || ''}
+                              alt="Checkout"
+                              onClick={() => setLightboxPhoto(photoSignedUrls.get(path) || '')}
+                              className="w-full h-24 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Checkin Photos */}
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500 mb-2">Φωτογραφίες Επιστροφής</h3>
+                      {photosLoading ? (
+                        <p className="text-sm text-gray-400">Φόρτωση φωτογραφιών...</p>
+                      ) : checkinPhotoPaths.length === 0 ? (
+                        <p className="text-sm text-gray-400">Δεν υπάρχουν φωτογραφίες επιστροφής.</p>
+                      ) : (
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                          {checkinPhotoPaths.map((path) => (
+                            <img
+                              key={path}
+                              src={photoSignedUrls.get(path) || ''}
+                              alt="Checkin"
+                              onClick={() => setLightboxPhoto(photoSignedUrls.get(path) || '')}
+                              className="w-full h-24 object-cover rounded-lg border border-gray-200 cursor-pointer hover:opacity-80 transition-opacity"
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
                   </>
                 ) : (
                   <>
@@ -1205,6 +1282,26 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Photo Lightbox */}
+      {lightboxPhoto && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-80"
+          onClick={() => setLightboxPhoto(null)}
+        >
+          <img
+            src={lightboxPhoto}
+            alt="Preview"
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg"
+          />
+          <button
+            onClick={() => setLightboxPhoto(null)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300"
+          >
+            <XMarkIcon className="h-8 w-8" />
+          </button>
         </div>
       )}
     </div>
