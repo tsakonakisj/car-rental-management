@@ -1,9 +1,10 @@
+// Cleanup reservation photos — authorized via x-cron-secret header
 import { createClient } from "npm:@supabase/supabase-js@2.58.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey, x-cron-secret",
 };
 
 interface CleanupPhoto {
@@ -32,6 +33,20 @@ Deno.serve(async (req: Request) => {
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false },
   });
+
+  const { data: cronSecret, error: secretError } = await supabase.rpc(
+    "get_cron_secret",
+    { secret_name: "CLEANUP_CRON_SECRET" }
+  );
+
+  const providedSecret = req.headers.get("x-cron-secret") ?? "";
+
+  if (secretError || !cronSecret || providedSecret !== cronSecret) {
+    return new Response(
+      JSON.stringify({ error: "Unauthorized" }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
 
   let scanned = 0;
   let deleted = 0;
