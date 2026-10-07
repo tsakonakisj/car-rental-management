@@ -12,8 +12,6 @@ import {
   PencilSquareIcon
 } from '@heroicons/react/24/outline';
 import ContractGenerator from '../PDF/ContractGenerator';
-import CheckOutForm from '../CheckOut/CheckOutForm';
-import CheckInForm from '../CheckIn/CheckInForm';
 import type { Station, Vehicle, Pricing, Season, Reservation, Insurance, Extra } from '../../types';
 
 interface ReservationRow {
@@ -128,10 +126,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
   const [viewReservation, setViewReservation] = useState<ReservationRow | null>(null);
   const [actionError, setActionError] = useState('');
   const [changingStatus, setChangingStatus] = useState<string | null>(null);
-  const [checkingOut, setCheckingOut] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
-  const [checkoutReservationId, setCheckoutReservationId] = useState<string | null>(null);
-  const [checkInReservationId, setCheckInReservationId] = useState<string | null>(null);
 
   // Edit mode
   const [editing, setEditing] = useState(false);
@@ -194,31 +189,8 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
     }
   };
 
-  const handleDirectCheckOut = async (id: string, vehicleId?: string) => {
-    setCheckingOut(id);
-    setActionError('');
-    try {
-      await reservationService.update(id, { status: 'active' });
-      if (vehicleId) {
-        await vehicleService.update(vehicleId, { status: 'rented' });
-      }
-      setReservations(prev =>
-        prev.map(r => (r.id === id ? { ...r, status: 'active' as ReservationRow['status'] } : r))
-      );
-    } catch (err) {
-      console.error('Check-out failed:', err);
-      setActionError('Αποτυχία check-out.');
-    } finally {
-      setCheckingOut(null);
-    }
-  };
-
   const handleCheckInClick = (reservation: ReservationRow) => {
-    if (onCheckIn) {
-      onCheckIn(reservation.id);
-      return;
-    }
-    setCheckInReservationId(reservation.id);
+    onCheckIn?.(reservation.id);
   };
 
   const handleDelete = async (id: string) => {
@@ -511,40 +483,6 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
 
   return (
     <div className="space-y-6">
-      {checkoutReservationId && (
-        <CheckOutForm
-          reservationId={checkoutReservationId}
-          onComplete={async () => {
-            if (checkoutReservationId) {
-              const res = reservations.find(r => r.id === checkoutReservationId);
-              await reservationService.update(checkoutReservationId, { status: 'active' });
-              if (res?.vehicle_id) {
-                await vehicleService.update(res.vehicle_id, { status: 'rented' });
-              }
-            }
-            setCheckoutReservationId(null);
-            fetchReservations();
-          }}
-          onCancel={() => setCheckoutReservationId(null)}
-        />
-      )}
-      {checkInReservationId && (
-        <CheckInForm
-          reservationId={checkInReservationId}
-          onComplete={async () => {
-            if (checkInReservationId) {
-              const res = reservations.find(r => r.id === checkInReservationId);
-              await reservationService.update(checkInReservationId, { status: 'completed' });
-              if (res?.vehicle_id) {
-                await vehicleService.update(res.vehicle_id, { status: 'available' });
-              }
-            }
-            setCheckInReservationId(null);
-            fetchReservations();
-          }}
-          onCancel={() => setCheckInReservationId(null)}
-        />
-      )}
       {actionError && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
           {actionError}
@@ -721,12 +659,11 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                     const canCheckOut = pickupTime <= now;
                     return canCheckOut ? (
                       <button
-                        onClick={() => setCheckoutReservationId(reservation.id)}
-                        disabled={checkingOut === reservation.id}
-                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                        onClick={() => onCheckOut?.(reservation.id)}
+                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded text-white bg-blue-600 hover:bg-blue-700 transition-colors"
                       >
                         <TruckIcon className="h-4 w-4 mr-1" />
-                        {checkingOut === reservation.id ? 'Check-out...' : 'Check-out'}
+                        Check-out
                       </button>
                     ) : (
                       <span className="inline-flex items-center px-3 py-1.5 text-xs text-gray-500">

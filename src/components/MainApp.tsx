@@ -211,7 +211,7 @@ const MainApp: React.FC = () => {
               </button>
             </div>
             <ReservationsList
-              onCheckOut={(id) => { alert('MAINAPP WORKS: ' + id); }}
+              onCheckOut={handleCheckOut}
               onCheckIn={handleCheckIn}
               refreshTrigger={reservationRefresh}
             />
