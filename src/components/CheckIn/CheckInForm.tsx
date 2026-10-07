@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { photoService } from '../../lib/database';
+import { compressImage } from '../../lib/imageUtils';
 import {
   CameraIcon,
   TrashIcon,
   CheckIcon,
   XMarkIcon,
-  PlusIcon
+  PlusIcon,
+  ArrowPathIcon
 } from '@heroicons/react/24/outline';
 
 interface CheckInData {
@@ -47,11 +49,26 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, onComplete, on
   const [showChargeForm, setShowChargeForm] = useState(false);
   const [newDamage, setNewDamage] = useState({ description: '', cost: 0 });
   const [newCharge, setNewCharge] = useState({ type: '', amount: 0, description: '' });
+  const [photoUrls, setPhotoUrls] = useState<Map<string, string>>(new Map());
+  const [uploading, setUploading] = useState(false);
 
-  // Scroll to top when form opens
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
+
+  const refreshSignedUrls = useCallback(async (paths: string[]) => {
+    if (paths.length === 0) return;
+    try {
+      const urls = await photoService.getSignedUrls(paths, 3600);
+      setPhotoUrls(urls);
+    } catch (err) {
+      console.error('Failed to generate signed URLs:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshSignedUrls(checkInData.photos);
+  }, [checkInData.photos, refreshSignedUrls]);
 
   const chargeTypes = [
     'Καύσιμο',
@@ -62,29 +79,44 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, onComplete, on
     'Άλλο'
   ];
 
-  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoCapture = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
-    if (files) {
-      Array.from(files).forEach(async (file) => {
-        try {
-          const url = await photoService.upload(file, 'checkin', reservationId);
-          setCheckInData(prev => ({
-            ...prev,
-            photos: [...prev.photos, url]
-          }));
-        } catch (error) {
-          console.error('Photo upload failed:', error);
-          alert('Αποτυχία μεταφόρτωσης φωτογραφίας');
-        }
-      });
+    if (!files || files.length === 0) return;
+
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const compressed = await compressImage(file, 1600, 0.8);
+        const path = await photoService.upload(compressed, 'checkin', reservationId);
+        setCheckInData(prev => ({
+          ...prev,
+          photos: [...prev.photos, path]
+        }));
+      }
+    } catch (error) {
+      console.error('Photo upload failed:', error);
+      alert('Αποτυχία μεταφόρτωσης φωτογραφίας');
+    } finally {
+      setUploading(false);
+      event.target.value = '';
     }
   };
 
-  const removePhoto = (index: number) => {
+  const removePhoto = async (path: string) => {
+    try {
+      await photoService.deletePhoto(path);
+    } catch (err) {
+      console.error('Failed to delete photo:', err);
+    }
     setCheckInData(prev => ({
       ...prev,
-      photos: prev.photos.filter((_, i) => i !== index)
+      photos: prev.photos.filter(p => p !== path)
     }));
+    setPhotoUrls(prev => {
+      const next = new Map(prev);
+      next.delete(path);
+      return next;
+    });
   };
 
   const addDamage = () => {
@@ -207,33 +239,41 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, onComplete, on
             <label className="block text-sm font-medium text-gray-700 mb-4">
               Φωτογραφίες Επιστροφής
             </label>
-            
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-              {checkInData.photos.map((photo, index) => (
-                <div key={index} className="relative">
+              {checkInData.photos.map((photoPath) => (
+                <div key={photoPath} className="relative">
                   <img
-                    src={photo}
-                    alt={`Return photo ${index + 1}`}
+                    src={photoUrls.get(photoPath) || ''}
+                    alt="Return photo"
                     className="w-full h-32 object-cover rounded-lg border"
                   />
                   <button
-                    onClick={() => removePhoto(index)}
+                    onClick={() => removePhoto(photoPath)}
                     className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700"
                   >
                     <TrashIcon className="h-4 w-4" />
                   </button>
                 </div>
               ))}
-              
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50">
-                <CameraIcon className="h-8 w-8 text-gray-400 mb-2" />
-                <span className="text-sm text-gray-500">Προσθήκη φωτογραφίας</span>
+
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                {uploading ? (
+                  <ArrowPathIcon className="h-8 w-8 text-blue-500 mb-2 animate-spin" />
+                ) : (
+                  <CameraIcon className="h-8 w-8 text-gray-400 mb-2" />
+                )}
+                <span className="text-sm text-gray-500">
+                  {uploading ? 'Μεταφόρτωση...' : 'Λήψη φωτογραφίας'}
+                </span>
                 <input
                   type="file"
-                  multiple
                   accept="image/*"
-                  onChange={handlePhotoUpload}
+                  capture="environment"
+                  multiple
+                  onChange={handlePhotoCapture}
                   className="hidden"
+                  disabled={uploading}
                 />
               </label>
             </div>

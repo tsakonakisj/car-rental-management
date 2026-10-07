@@ -542,29 +542,35 @@ export const reservationExtrasService = {
 
 // Photo upload
 export const photoService = {
-  async upload(file: File, type: 'checkout' | 'checkin' | 'damage' | 'vehicle', referenceId: string): Promise<string> {
+  async upload(
+    blob: Blob,
+    type: 'checkout' | 'checkin' | 'damage' | 'vehicle',
+    referenceId: string
+  ): Promise<string> {
     if (isDemo) {
       return Promise.resolve(`https://placehold.co/400x300?text=${type}`);
     }
 
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${type}/${referenceId}/${Date.now()}.${fileExt}`;
+    const filePath = `reservations/${referenceId}/${type}/${Date.now()}.jpg`;
 
     const { error: uploadError } = await supabase!.storage
-      .from('photos')
-      .upload(fileName, file);
+      .from('rental-photos')
+      .upload(filePath, blob, { contentType: 'image/jpeg' });
 
     if (uploadError) throw uploadError;
 
-    const { data: { publicUrl } } = supabase!.storage
+    const { error: dbError } = await supabase!
       .from('photos')
-      .getPublicUrl(fileName);
+      .insert({ url: filePath, type, reference_id: referenceId });
 
-    await supabase!
-      .from('photos')
-      .insert({ url: publicUrl, type, reference_id: referenceId });
+    if (dbError) {
+      await supabase!.storage
+        .from('rental-photos')
+        .remove([filePath]);
+      throw dbError;
+    }
 
-    return publicUrl;
+    return filePath;
   },
 
   async getPhotos(type: string, referenceId: string): Promise<string[]> {
@@ -580,6 +586,52 @@ export const photoService = {
 
     if (error) throw error;
     return data?.map(p => p.url) || [];
+  },
+
+  async getSignedUrl(path: string, expiresIn: number = 3600): Promise<string> {
+    if (isDemo) {
+      return Promise.resolve(path);
+    }
+
+    const { data, error } = await supabase!.storage
+      .from('rental-photos')
+      .createSignedUrl(path, expiresIn);
+
+    if (error) throw error;
+    return data?.signedUrl || '';
+  },
+
+  async getSignedUrls(paths: string[], expiresIn: number = 3600): Promise<Map<string, string>> {
+    if (isDemo || paths.length === 0) {
+      return Promise.resolve(new Map());
+    }
+
+    const { data, error } = await supabase!.storage
+      .from('rental-photos')
+      .createSignedUrls(paths, expiresIn);
+
+    if (error) throw error;
+
+    const map = new Map<string, string>();
+    for (const item of data || []) {
+      if (item.signedUrl) {
+        map.set(item.path, item.signedUrl);
+      }
+    }
+    return map;
+  },
+
+  async deletePhoto(path: string): Promise<void> {
+    if (isDemo) return Promise.resolve();
+
+    await supabase!.storage
+      .from('rental-photos')
+      .remove([path]);
+
+    await supabase!
+      .from('photos')
+      .delete()
+      .eq('url', path);
   }
 };
 
