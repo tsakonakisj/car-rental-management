@@ -80,6 +80,10 @@ interface EditFormData {
   category: string;
   notes: string;
   extras: { [extraId: string]: number };
+  originalPickupDate: string;
+  originalVehicleId: string;
+  originalCategory: string;
+  originalDailyRate: number;
 }
 
 interface ReservationsListProps {
@@ -279,7 +283,11 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
         dailyRate: reservation.daily_rate || 0,
         category: reservation.category || '',
         notes: reservation.notes || '',
-        extras: extrasMap
+        extras: extrasMap,
+        originalPickupDate: pickup.date,
+        originalVehicleId: reservation.vehicle_id || '',
+        originalCategory: reservation.category || '',
+        originalDailyRate: reservation.daily_rate || 0
       });
     } catch (err) {
       console.error('Failed to load edit data:', err);
@@ -311,20 +319,33 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
         });
       }
 
-      // Recalculate pricing
+      // Determine if pricing-relevant fields changed
+      const pickupDateChanged = editForm.pickupDate !== editForm.originalPickupDate;
+      const vehicleChanged = editForm.vehicleId !== editForm.originalVehicleId;
+      const categoryChanged = editForm.category !== editForm.originalCategory;
+      const needsRateRecalc = pickupDateChanged || vehicleChanged || categoryChanged;
+
       const days = calcDaysBetween(editForm.pickupDate, editForm.returnDate);
-      const { rate: resolvedRate } = resolveDailyRate(
-        editForm.pickupDate || '',
-        editForm.category || '',
-        editSeasons,
-        editPricing
-      );
-      if (resolvedRate <= 0) {
-        setSaveError('Δεν έχει οριστεί τιμή για αυτή την κατηγορία και σεζόν. Ορίστε την τιμή στη σελίδα Τιμολόγηση.');
-        setSaving(false);
-        return;
+
+      // Only recalculate vehicle daily rate from pricing table when relevant fields changed
+      let dailyRate: number;
+      if (needsRateRecalc) {
+        const { rate: resolvedRate } = resolveDailyRate(
+          editForm.pickupDate || '',
+          editForm.category || '',
+          editSeasons,
+          editPricing
+        );
+        if (resolvedRate <= 0) {
+          setSaveError('Δεν έχει οριστεί τιμή για αυτή την κατηγορία και σεζόν. Ορίστε την τιμή στη σελίδα Τιμολόγηση.');
+          setSaving(false);
+          return;
+        }
+        dailyRate = resolvedRate;
+      } else {
+        dailyRate = editForm.originalDailyRate || 0;
       }
-      const dailyRate = resolvedRate;
+
       const insuranceRate = editForm.insuranceRate || 0;
 
       // Calculate extras total from DB extras
