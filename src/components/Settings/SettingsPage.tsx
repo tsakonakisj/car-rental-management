@@ -422,12 +422,14 @@ const SettingsPage: React.FC = () => {
     try {
       const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
       if (updateError) throw updateError;
+      setPasswordError('');
       setPasswordSuccess(true);
       setNewPassword('');
       setConfirmPassword('');
-      setTimeout(() => setPasswordSuccess(false), 3000);
+      setTimeout(() => setPasswordSuccess(false), 5000);
     } catch (err) {
-      setPasswordError('Αποτυχία αλλαγής κωδικού. Παρακαλώ δοκιμάστε ξανά.');
+      const msg = err instanceof Error ? err.message : 'Αποτυχία αλλαγής κωδικού.';
+      setPasswordError(msg || 'Αποτυχία αλλαγής κωδικού.');
     } finally {
       setPasswordSaving(false);
     }
@@ -447,7 +449,7 @@ const SettingsPage: React.FC = () => {
       {passwordSuccess && (
         <div className="rounded-md bg-green-50 px-4 py-3 text-sm text-green-700 flex items-center">
           <CheckIcon className="h-5 w-5 mr-2" />
-          Ο κωδικός άλλαξε επιτυχώς.
+          Ο κωδικός πρόσβασης άλλαξε επιτυχώς.
         </div>
       )}
 
