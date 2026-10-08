@@ -9,6 +9,7 @@ import {
   CurrencyEuroIcon,
   DocumentTextIcon,
   BellIcon,
+  LockClosedIcon,
   CheckIcon,
   ArrowPathIcon,
 } from '@heroicons/react/24/outline';
@@ -70,6 +71,12 @@ const SettingsPage: React.FC = () => {
     cleaning_fee: 25,
     fuel_charge_per_liter: 1.5,
   });
+
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordSaving, setPasswordSaving] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   const loadSettings = useCallback(async () => {
     if (!supabase) return;
@@ -184,6 +191,7 @@ const SettingsPage: React.FC = () => {
     { id: 'financial', label: 'Οικονομικά', icon: CurrencyEuroIcon },
     { id: 'documents', label: 'Έγγραφα', icon: DocumentTextIcon },
     { id: 'notifications', label: 'Ειδοποιήσεις', icon: BellIcon },
+    { id: 'security', label: 'Ασφάλεια', icon: LockClosedIcon },
   ];
 
   const renderCompanySettings = () => (
@@ -393,6 +401,93 @@ const SettingsPage: React.FC = () => {
     </div>
   );
 
+  const handlePasswordChange = async () => {
+    setPasswordError('');
+    setPasswordSuccess(false);
+
+    if (!newPassword || !confirmPassword) {
+      setPasswordError('Και τα δύο πεδία είναι υποχρεωτικά.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Οι κωδικοί δεν ταιριάζουν.');
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPasswordError('Ο κωδικός πρέπει να είναι τουλάχιστον 8 χαρακτήρες.');
+      return;
+    }
+
+    setPasswordSaving(true);
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+      if (updateError) throw updateError;
+      setPasswordSuccess(true);
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => setPasswordSuccess(false), 3000);
+    } catch (err) {
+      setPasswordError('Αποτυχία αλλαγής κωδικού. Παρακαλώ δοκιμάστε ξανά.');
+    } finally {
+      setPasswordSaving(false);
+    }
+  };
+
+  const renderSecuritySettings = () => (
+    <div className="space-y-6 max-w-md">
+      <div>
+        <h3 className="text-lg font-medium text-gray-900">Αλλαγή Κωδικού Πρόσβασης</h3>
+        <p className="text-sm text-gray-500 mt-1">Αλλάξτε τον κωδικό πρόσβασης του λογαριασμού σας.</p>
+      </div>
+
+      {passwordError && (
+        <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">{passwordError}</div>
+      )}
+
+      {passwordSuccess && (
+        <div className="rounded-md bg-green-50 px-4 py-3 text-sm text-green-700 flex items-center">
+          <CheckIcon className="h-5 w-5 mr-2" />
+          Ο κωδικός άλλαξε επιτυχώς.
+        </div>
+      )}
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Νέος Κωδικός</label>
+        <input
+          type="password"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Εισάγετε νέο κωδικό"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Επιβεβαίωση Νέου Κωδικού</label>
+        <input
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Επιβεβαιώστε τον νέο κωδικό"
+        />
+      </div>
+
+      <button
+        onClick={handlePasswordChange}
+        disabled={passwordSaving}
+        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors"
+      >
+        {passwordSaving ? (
+          <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
+        ) : (
+          <LockClosedIcon className="h-4 w-4 mr-2" />
+        )}
+        {passwordSaving ? 'Αλλαγή...' : 'Αλλαγή Κωδικού'}
+      </button>
+    </div>
+  );
+
   const renderContent = () => {
     switch (activeTab) {
       case 'company':
@@ -415,6 +510,8 @@ const SettingsPage: React.FC = () => {
             <p className="text-gray-500">Ρυθμίσεις ειδοποιήσεων θα υλοποιηθούν σύντομα</p>
           </div>
         );
+      case 'security':
+        return renderSecuritySettings();
       default:
         return null;
     }
@@ -472,21 +569,23 @@ const SettingsPage: React.FC = () => {
         {/* Content */}
         <div className="p-6">{renderContent()}</div>
 
-        {/* Save Button */}
-        <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors"
-          >
-            {saving ? (
-              <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <CogIcon className="h-4 w-4 mr-2" />
-            )}
-            {saving ? 'Αποθήκευση...' : 'Αποθήκευση Ρυθμίσεων'}
-          </button>
-        </div>
+        {/* Save Button — hidden on security tab (has its own submit) */}
+        {activeTab !== 'security' && (
+          <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors"
+            >
+              {saving ? (
+                <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <CogIcon className="h-4 w-4 mr-2" />
+              )}
+              {saving ? 'Αποθήκευση...' : 'Αποθήκευση Ρυθμίσεων'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
