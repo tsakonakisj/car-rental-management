@@ -49,7 +49,7 @@ BEGIN
     'authenticated',
     'authenticated',
     'admin@antilia.com',
-    crypt('AntiliaAdmin2026!', gen_salt('bf')),
+    NULL,
     now(),
     now(),
     now(),
