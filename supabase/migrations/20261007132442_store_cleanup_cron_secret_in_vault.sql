@@ -12,8 +12,3 @@
 - Only accessible server-side.
 */
 
-SELECT vault.create_secret(
-  'dev8RJhmIg0SS2moCqWCA6JEYOJGJ0v6rlTgYpxYMCM=',
-  'CLEANUP_CRON_SECRET',
-  'Shared secret for authorizing the cleanup-reservation-photos cron job'
-);
