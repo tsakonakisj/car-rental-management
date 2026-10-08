@@ -36,6 +36,3 @@ AS $$
   SELECT value FROM cron_secrets WHERE name = secret_name LIMIT 1;
 $$;
 
-INSERT INTO cron_secrets (name, value)
-VALUES ('CLEANUP_CRON_SECRET', 'dev8RJhmIg0SS2moCqWCA6JEYOJGJ0v6rlTgYpxYMCM=')
-ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value;
