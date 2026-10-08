@@ -10,8 +10,6 @@ export interface CompanyConfig {
   registrationNumber: string;
   contractHeader: string;
   contractSubheader: string;
-  demoEmail: string;
-  demoPassword: string;
 }
 
 // Fallback defaults (used when database is not available)
@@ -25,8 +23,6 @@ const DEFAULT_CONFIG: CompanyConfig = {
   registrationNumber: 'ΑΕ 00000',
   contractHeader: 'DEMO RENT A CAR',
   contractSubheader: 'Chania, Crete',
-  demoEmail: 'manager@antilia.com',
-  demoPassword: 'demo123',
 };
 
 // Cached company config
@@ -60,8 +56,6 @@ export async function loadCompanyConfig(): Promise<CompanyConfig> {
           registrationNumber: (v.registrationNumber as string) || DEFAULT_CONFIG.registrationNumber,
           contractHeader: (v.contractHeader as string) || DEFAULT_CONFIG.contractHeader,
           contractSubheader: (v.contractSubheader as string) || DEFAULT_CONFIG.contractSubheader,
-          demoEmail: DEFAULT_CONFIG.demoEmail,
-          demoPassword: DEFAULT_CONFIG.demoPassword,
         };
         return cachedConfig;
       }

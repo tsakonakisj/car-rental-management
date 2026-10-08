@@ -97,7 +97,7 @@ function AppContent() {
               <div>
                 <input
                   type="email"
-                  defaultValue={company.demoEmail}
+
                   className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                   placeholder="Email address"
                 />
@@ -105,7 +105,7 @@ function AppContent() {
               <div>
                 <input
                   type="password"
-                  defaultValue="demo123"
+
                   className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
                   placeholder="Κωδικός πρόσβασης"
                 />
@@ -121,11 +121,7 @@ function AppContent() {
               </button>
             </div>
             
-            <div className="text-center">
-              <p className="text-sm text-gray-600">
-                Demo: {company.demoEmail} / {company.demoPassword}
-              </p>
-            </div>
+
           </div>
         </div>
       </div>
