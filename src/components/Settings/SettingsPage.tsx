@@ -72,6 +72,7 @@ const SettingsPage: React.FC = () => {
     fuel_charge_per_liter: 1.5,
   });
 
+  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordSaving, setPasswordSaving] = useState(false);
@@ -405,8 +406,8 @@ const SettingsPage: React.FC = () => {
     setPasswordError('');
     setPasswordSuccess(false);
 
-    if (!newPassword || !confirmPassword) {
-      setPasswordError('Και τα δύο πεδία είναι υποχρεωτικά.');
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError('Όλα τα πεδία είναι υποχρεωτικά.');
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -420,10 +421,14 @@ const SettingsPage: React.FC = () => {
 
     setPasswordSaving(true);
     try {
-      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+      const { error: updateError } = await supabase.auth.updateUser({
+        current_password: currentPassword,
+        password: newPassword,
+      });
       if (updateError) throw updateError;
       setPasswordError('');
       setPasswordSuccess(true);
+      setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
       setTimeout(() => setPasswordSuccess(false), 5000);
@@ -452,6 +457,17 @@ const SettingsPage: React.FC = () => {
           Ο κωδικός πρόσβασης άλλαξε επιτυχώς.
         </div>
       )}
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Τρέχων Κωδικός</label>
+        <input
+          type="password"
+          value={currentPassword}
+          onChange={(e) => setCurrentPassword(e.target.value)}
+          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Εισάγετε τρέχοντα κωδικό"
+        />
+      </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Νέος Κωδικός</label>
