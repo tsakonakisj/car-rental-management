@@ -30,6 +30,13 @@ const MainApp: React.FC = () => {
   const [checkInError, setCheckInError] = useState('');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
+  const handleSetActiveTab = useCallback((tab: string) => {
+    setShowBookingWizard(false);
+    setCheckOutReservation(null);
+    setCheckInReservation(null);
+    setActiveTab(tab);
+  }, []);
+
   const toggleMobileSidebar = useCallback(() => {
     setMobileSidebarOpen(prev => !prev);
   }, []);
@@ -269,7 +276,7 @@ const MainApp: React.FC = () => {
       <div className="flex">
         <Sidebar
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={handleSetActiveTab}
           mobileOpen={mobileSidebarOpen}
           onCloseMobile={closeMobileSidebar}
         />
