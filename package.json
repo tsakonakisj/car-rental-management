@@ -12,7 +12,7 @@
   "dependencies": {
     "@headlessui/react": "^2.2.8",
     "@heroicons/react": "^2.2.0",
-    "@supabase/supabase-js": "^2.58.0",
+    "@supabase/supabase-js": "^2.102.0",
     "@types/react-signature-canvas": "^1.0.7",
     "@types/uuid": "^10.0.0",
     "date-fns": "^4.1.0",
