@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { reservationService, vehicleService, checkoutService, checkinService } from '../lib/database';
@@ -28,6 +28,26 @@ const MainApp: React.FC = () => {
   const [reservationRefresh, setReservationRefresh] = useState(0);
   const [checkOutError, setCheckOutError] = useState('');
   const [checkInError, setCheckInError] = useState('');
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  const toggleMobileSidebar = useCallback(() => {
+    setMobileSidebarOpen(prev => !prev);
+  }, []);
+
+  const closeMobileSidebar = useCallback(() => {
+    setMobileSidebarOpen(false);
+  }, []);
+
+  useEffect(() => {
+    if (mobileSidebarOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileSidebarOpen]);
 
   if (window.location.pathname === '/update-password') {
     return <UpdatePassword />;
@@ -139,7 +159,7 @@ const MainApp: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-100">
         <Header />
-        <div className="py-8">
+        <div className="py-4 sm:py-8">
           {checkOutError && (
             <div className="max-w-4xl mx-auto mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
               {checkOutError}
@@ -160,7 +180,7 @@ const MainApp: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-100">
         <Header />
-        <div className="py-8">
+        <div className="py-4 sm:py-8">
           {checkInError && (
             <div className="max-w-4xl mx-auto mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
               {checkInError}
@@ -181,7 +201,7 @@ const MainApp: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-100">
         <Header />
-        <div className="py-8">
+        <div className="py-4 sm:py-8">
           <BookingWizard
             onComplete={() => {
               setShowBookingWizard(false);
@@ -244,11 +264,16 @@ const MainApp: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Header />
+    <div className="min-h-screen bg-gray-100 overflow-x-hidden">
+      <Header onToggleSidebar={toggleMobileSidebar} />
       <div className="flex">
-        <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
-        <main className="flex-1 p-8">
+        <Sidebar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          mobileOpen={mobileSidebarOpen}
+          onCloseMobile={closeMobileSidebar}
+        />
+        <main className="flex-1 p-4 sm:p-8 min-w-0">
           {renderContent()}
         </main>
       </div>

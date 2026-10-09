@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import {
@@ -29,9 +29,11 @@ export function isTabAllowed(role: string | undefined, tab: string): boolean {
 interface SidebarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  mobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, mobileOpen = false, onCloseMobile }) => {
   const { t } = useLanguage();
   const { user } = useAuth();
 
@@ -48,30 +50,68 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => {
 
   const menuItems = allMenuItems.filter((item) => isTabAllowed(user?.role, item.id));
 
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCloseMobile?.();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [mobileOpen, onCloseMobile]);
+
+  const handleTabClick = (tab: string) => {
+    setActiveTab(tab);
+    onCloseMobile?.();
+  };
+
+  const navContent = (
+    <nav className="mt-6 px-3">
+      <div className="space-y-1">
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.id}
+              onClick={() => handleTabClick(item.id)}
+              className={`${
+                activeTab === item.id
+                  ? 'bg-blue-50 border-r-2 border-blue-600 text-blue-600'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              } group flex items-center px-3 py-2 text-sm font-medium rounded-md w-full transition-colors`}
+            >
+              <Icon className="mr-3 h-5 w-5 flex-shrink-0" />
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+    </nav>
+  );
+
   return (
-    <div className="w-64 bg-gray-50 min-h-screen border-r border-gray-200">
-      <nav className="mt-6 px-3">
-        <div className="space-y-1">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`${
-                  activeTab === item.id
-                    ? 'bg-blue-50 border-r-2 border-blue-600 text-blue-600'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-                } group flex items-center px-3 py-2 text-sm font-medium rounded-md w-full transition-colors`}
-              >
-                <Icon className="mr-3 h-5 w-5 flex-shrink-0" />
-                {item.label}
-              </button>
-            );
-          })}
-        </div>
-      </nav>
-    </div>
+    <>
+      {/* Desktop sidebar — unchanged */}
+      <div className="hidden lg:block w-64 bg-gray-50 min-h-screen border-r border-gray-200 flex-shrink-0">
+        {navContent}
+      </div>
+
+      {/* Mobile drawer backdrop */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-gray-900 bg-opacity-50 lg:hidden"
+          onClick={onCloseMobile}
+        />
+      )}
+
+      {/* Mobile drawer */}
+      <div
+        className={`fixed top-0 left-0 z-50 w-64 h-full bg-gray-50 border-r border-gray-200 transform transition-transform duration-200 ease-in-out lg:hidden ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {navContent}
+      </div>
+    </>
   );
 };
 
