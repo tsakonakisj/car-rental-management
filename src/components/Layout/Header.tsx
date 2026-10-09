@@ -24,7 +24,7 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
   }, []);
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200">
+    <header className="bg-white border-b border-neutral-200 shadow-sm">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Left: hamburger + company name */}
@@ -32,14 +32,14 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
             {onToggleSidebar && (
               <button
                 onClick={onToggleSidebar}
-                className="lg:hidden flex-shrink-0 mr-3 p-2 rounded-md text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                className="lg:hidden flex-shrink-0 mr-3 p-2 rounded-lg text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
                 aria-label="Toggle menu"
               >
                 <Bars3Icon className="h-6 w-6" />
               </button>
             )}
             <div className="min-w-0 flex-shrink">
-              <h1 className="text-lg sm:text-xl font-bold text-blue-600 truncate">
+              <h1 className="text-lg sm:text-xl font-bold text-primary-700 truncate tracking-tight">
                 {companyName}
               </h1>
             </div>
@@ -52,27 +52,28 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
               <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value as 'el' | 'en')}
-                className="appearance-none bg-white border border-gray-300 rounded-md pl-3 pr-8 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="appearance-none bg-white border border-neutral-200 rounded-lg pl-3 pr-9 py-2 text-sm text-neutral-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors hover:border-neutral-300 cursor-pointer"
               >
                 <option value="el">Ελληνικά</option>
                 <option value="en">English</option>
               </select>
-              <GlobeAltIcon className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+              <GlobeAltIcon className="absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 pointer-events-none" />
             </div>
 
             {/* User Menu */}
             <div className="relative">
-              <div className="flex items-center space-x-2 text-sm">
-                <span className="text-gray-700 hidden sm:block truncate max-w-[120px]">
+              <div className="flex items-center space-x-2.5 text-sm">
+                <span className="text-neutral-700 hidden sm:block truncate max-w-[120px] font-medium">
                   {user?.name}
                 </span>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-primary-50 text-primary-700 ring-1 ring-inset ring-primary-200">
                   {user?.role}
                 </span>
                 <button
                   onClick={logout}
-                  className="text-gray-500 hover:text-gray-700 transition-colors"
+                  className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition-colors"
                   aria-label="Logout"
+                  title="Logout"
                 >
                   <ChevronDownIcon className="h-4 w-4" />
                 </button>
