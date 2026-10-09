@@ -607,15 +607,15 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {filteredReservations.map((reservation) => (
           <div key={reservation.id} className="bg-white shadow-sm rounded-lg">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
+            <div className="p-4 sm:p-6">
+              <div className="flex items-start justify-between mb-4 gap-2">
                 <div>
                   <h3 className="text-lg font-medium text-gray-900">
                     {reservation.customer?.name || 'Άγνωστος πελάτης'}
                   </h3>
                   <p className="text-sm text-gray-600">{reservation.customer?.phone || '-'}</p>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span
                     className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium cursor-pointer ${
                       reservation.excel_updated
@@ -663,8 +663,8 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                <div className="flex space-x-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-gray-200">
+                <div className="flex flex-wrap space-x-2 gap-y-2">
                   <button
                     onClick={() => setViewReservation(reservation)}
                     className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50 transition-colors"
@@ -685,7 +685,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                   )}
                 </div>
 
-                <div className="flex space-x-2">
+                <div className="flex flex-wrap space-x-2 gap-y-2 justify-end">
                   {reservation.status === 'upcoming' && (() => {
                     const pickupTime = new Date(reservation.pickup_date).getTime();
                     const now = Date.now();
@@ -726,11 +726,11 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20">
             <div className="fixed inset-0 bg-gray-900 bg-opacity-50 transition-opacity" onClick={() => { setViewReservation(null); cancelEditing(); }} />
             <div className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full mx-auto z-10">
-              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                <h2 className="text-lg font-medium text-gray-900">
+              <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex items-center justify-between gap-2">
+                <h2 className="text-base sm:text-lg font-medium text-gray-900">
                   {editing ? 'Επεξεργασία Κράτησης' : 'Λεπτομέρειες Κράτησης'}
                 </h2>
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
                   {!editing && (
                     <button
                       onClick={() => startEditing(viewReservation)}
@@ -746,11 +746,11 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                 </div>
               </div>
 
-              <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+              <div className="p-4 sm:p-6 space-y-6 max-h-[70vh] overflow-y-auto">
                 {!editing ? (
                   <>
                     {/* View Mode */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(viewReservation.status)}`}>
                         {getStatusLabel(viewReservation.status)}
                       </span>
@@ -782,8 +782,8 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-medium text-gray-500 mb-2">Όχημα</h3>
                         <div className="bg-gray-50 rounded-lg p-4 space-y-1">
                           <p className="text-sm text-gray-900 font-medium">
@@ -793,7 +793,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                           </p>
                         </div>
                       </div>
-                      <div className="ml-4 flex-shrink-0">
+                      <div className="sm:ml-4 mt-3 sm:mt-0 flex-shrink-0">
                         <label className="flex items-center cursor-pointer select-none bg-gray-50 border border-gray-200 rounded-lg px-3 py-3">
                           <input
                             type="checkbox"
@@ -1227,10 +1227,10 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                 )}
               </div>
 
-              <div className="px-6 py-4 border-t border-gray-200 flex justify-between">
+              <div className="px-4 sm:px-6 py-4 border-t border-gray-200 flex flex-wrap justify-between gap-2">
                 {!editing ? (
                   <>
-                    <div className="flex space-x-2">
+                    <div className="flex flex-wrap space-x-2 gap-y-2">
                       <ContractGenerator data={getContractData(viewReservation)} />
                       <button
                         onClick={() => startEditing(viewReservation)}

@@ -563,7 +563,7 @@ const SettingsPage: React.FC = () => {
       <div className="bg-white shadow-sm rounded-lg">
         {/* Tabs */}
         <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6" aria-label="Tabs">
+          <nav className="flex space-x-4 sm:space-x-8 px-4 sm:px-6 overflow-x-auto" aria-label="Tabs">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
@@ -574,7 +574,7 @@ const SettingsPage: React.FC = () => {
                     activeTab === tab.id
                       ? 'border-blue-500 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
+                  } whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
                 >
                   <Icon className="h-5 w-5 mr-2" />
                   {tab.label}
@@ -585,11 +585,11 @@ const SettingsPage: React.FC = () => {
         </div>
 
         {/* Content */}
-        <div className="p-6">{renderContent()}</div>
+        <div className="p-4 sm:p-6">{renderContent()}</div>
 
         {/* Save Button — hidden on security tab (has its own submit) */}
         {activeTab !== 'security' && (
-          <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+          <div className="px-4 sm:px-6 py-4 border-t border-gray-200 flex justify-end">
             <button
               onClick={handleSave}
               disabled={saving}
