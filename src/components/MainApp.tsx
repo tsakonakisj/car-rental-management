@@ -16,9 +16,10 @@ import UserManagement from './Users/UserManagement';
 import SettingsPage from './Settings/SettingsPage';
 import CheckOutForm from './CheckOut/CheckOutForm';
 import CheckInForm from './CheckIn/CheckInForm';
+import UpdatePassword from './Login/UpdatePassword';
 
 const MainApp: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, isPasswordRecovery } = useAuth();
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showBookingWizard, setShowBookingWizard] = useState(false);
@@ -37,6 +38,10 @@ const MainApp: React.FC = () => {
         </div>
       </div>
     );
+  }
+
+  if (isPasswordRecovery) {
+    return <UpdatePassword />;
   }
 
   if (!user) {
