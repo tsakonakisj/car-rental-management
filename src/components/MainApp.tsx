@@ -29,6 +29,10 @@ const MainApp: React.FC = () => {
   const [checkOutError, setCheckOutError] = useState('');
   const [checkInError, setCheckInError] = useState('');
 
+  if (window.location.pathname === '/update-password') {
+    return <UpdatePassword />;
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">

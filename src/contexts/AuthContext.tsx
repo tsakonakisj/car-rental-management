@@ -22,6 +22,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     let mounted = true;
 
     const restoreSession = async () => {
+      if (window.location.pathname === '/update-password') {
+        if (mounted) setLoading(false);
+        return;
+      }
+
       try {
         const { data: { session } } = await supabase.auth.getSession();
 
