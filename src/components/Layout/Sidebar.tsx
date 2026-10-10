@@ -118,8 +118,12 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, mobileOpen =
   return (
     <>
       {/* Desktop sidebar */}
-      <div className="hidden min-h-screen w-64 flex-shrink-0 border-r border-[#1e4e7d]/70 bg-[#041a32] lg:block">
-        {navContent}
+      <div className="relative hidden min-h-screen w-64 flex-shrink-0 overflow-hidden border-r border-[#1e4e7d]/70 bg-[#041a32] lg:block">
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-0 bottom-0 h-[52%] bg-[linear-gradient(to_bottom,rgba(4,26,50,1)_0%,rgba(4,26,50,0.92)_16%,rgba(4,26,50,0.42)_58%,rgba(2,11,24,0.72)_100%),url('/assets/login_background_car_left.jpg')] bg-cover bg-center"
+        />
+        <div className="relative z-10 min-h-screen">{navContent}</div>
       </div>
 
       {/* Mobile drawer backdrop */}
@@ -132,11 +136,15 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, mobileOpen =
 
       {/* Mobile drawer */}
       <div
-        className={`fixed left-0 top-0 z-50 h-full w-64 transform border-r border-[#1e4e7d]/70 bg-[#041a32] shadow-[12px_0_40px_rgba(0,0,0,0.35)] transition-transform duration-200 ease-in-out lg:hidden ${
+        className={`fixed left-0 top-0 z-50 h-full w-64 transform overflow-hidden border-r border-[#1e4e7d]/70 bg-[#041a32] shadow-[12px_0_40px_rgba(0,0,0,0.35)] transition-transform duration-200 ease-in-out lg:hidden ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {navContent}
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-0 bottom-0 h-[52%] bg-[linear-gradient(to_bottom,rgba(4,26,50,1)_0%,rgba(4,26,50,0.92)_16%,rgba(4,26,50,0.42)_58%,rgba(2,11,24,0.72)_100%),url('/assets/login_background_car_left.jpg')] bg-cover bg-center"
+        />
+        <div className="relative z-10 min-h-full">{navContent}</div>
       </div>
     </>
   );
