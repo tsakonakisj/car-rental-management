@@ -121,7 +121,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, mobileOpen =
       <div className="relative hidden min-h-screen w-64 flex-shrink-0 overflow-hidden border-r border-[#1e4e7d]/70 bg-[#041a32] lg:block">
         <div
           aria-hidden="true"
-          className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(4,26,50,0.98)_0%,rgba(4,26,50,0.86)_24%,rgba(4,26,50,0.56)_50%,rgba(4,26,50,0.24)_74%,rgba(2,11,24,0.1)_100%),url('/assets/login_background_car_left.jpg')] bg-cover bg-center"
+          className="fixed left-0 top-0 h-screen w-64 bg-[linear-gradient(to_bottom,rgba(4,26,50,0.98)_0%,rgba(4,26,50,0.86)_24%,rgba(4,26,50,0.56)_50%,rgba(4,26,50,0.24)_74%,rgba(2,11,24,0.1)_100%),url('/assets/login_background_car_left.jpg')] bg-cover bg-center"
         />
         <div className="relative z-10 min-h-screen">{navContent}</div>
       </div>
