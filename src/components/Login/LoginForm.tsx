@@ -147,11 +147,11 @@ const LoginForm: React.FC = () => {
         loading="eager"
         fetchPriority="high"
         decoding="async"
-        className="absolute inset-0 h-full w-full object-cover object-center"
+        className="absolute inset-0 h-full w-full object-cover object-[72%_center]"
       />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,22,49,0.84)_0%,rgba(4,28,59,0.55)_42%,rgba(3,19,42,0.82)_100%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_40%_55%,rgba(35,103,185,0.22),transparent_42%)]" />
-      <div className="absolute -right-32 top-[-18%] h-[125%] w-[43%] rotate-[30deg] bg-[#0a2e5c]/45 blur-[1px]" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,22,49,0.62)_0%,rgba(4,28,59,0.28)_42%,rgba(3,19,42,0.5)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_38%_55%,rgba(35,103,185,0.16),transparent_42%)]" />
+      <div className="absolute -right-32 top-[-18%] h-[125%] w-[43%] rotate-[30deg] bg-[#0a2e5c]/25 blur-[1px]" />
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-[1600px] items-center px-5 py-8 sm:px-8 lg:px-14 lg:py-12">
         <section className="hidden max-w-[620px] flex-1 py-10 lg:block xl:max-w-[680px]">
@@ -199,10 +199,18 @@ const LoginForm: React.FC = () => {
                     {forgotMsg}
                   </Message>
                 )}
-                <button type="submit" disabled={forgotLoading} className="primary-button">
+                <button
+                  type="submit"
+                  disabled={forgotLoading}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1268f3] px-5 py-4 text-base font-semibold text-white shadow-[0_12px_28px_rgba(18,104,243,0.35)] transition-all hover:bg-[#2478ff] hover:shadow-[0_14px_32px_rgba(18,104,243,0.45)] focus:outline-none focus:ring-2 focus:ring-[#63a6ff] focus:ring-offset-2 focus:ring-offset-[#061a35] disabled:cursor-not-allowed disabled:opacity-60"
+                >
                   {forgotLoading ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : copy.send}
                 </button>
-                <button type="button" onClick={switchToLogin} className="secondary-link">
+                <button
+                  type="button"
+                  onClick={switchToLogin}
+                  className="mx-auto block text-sm font-medium text-[#55a8ff] underline decoration-[#55a8ff]/50 underline-offset-4 transition-colors hover:text-white"
+                >
                   {copy.back}
                 </button>
               </form>
@@ -237,7 +245,11 @@ const LoginForm: React.FC = () => {
                   }
                 />
                 {errorMsg && <Message tone="error">{errorMsg}</Message>}
-                <button type="submit" disabled={loading} className="primary-button">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1268f3] px-5 py-4 text-base font-semibold text-white shadow-[0_12px_28px_rgba(18,104,243,0.35)] transition-all hover:bg-[#2478ff] hover:shadow-[0_14px_32px_rgba(18,104,243,0.45)] focus:outline-none focus:ring-2 focus:ring-[#63a6ff] focus:ring-offset-2 focus:ring-offset-[#061a35] disabled:cursor-not-allowed disabled:opacity-60"
+                >
                   {loading ? <ArrowPathIcon className="h-5 w-5 animate-spin" /> : <>{copy.signIn}<ArrowRightIcon className="h-5 w-5" /></>}
                 </button>
                 <button
@@ -246,7 +258,7 @@ const LoginForm: React.FC = () => {
                     setForgotEmail(email);
                     setShowForgot(true);
                   }}
-                  className="secondary-link"
+                  className="mx-auto block text-sm font-medium text-[#55a8ff] underline decoration-[#55a8ff]/50 underline-offset-4 transition-colors hover:text-white"
                 >
                   {copy.forgot}
                 </button>
