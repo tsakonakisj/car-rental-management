@@ -171,19 +171,19 @@ const LoginForm: React.FC = () => {
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-[500px] lg:ml-auto lg:mr-0 lg:max-w-[540px]">
-          <div className="rounded-[26px] border border-blue-200/35 bg-[#061a35]/75 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-xl sm:p-10 lg:p-12">
+        <section className="mx-auto w-full max-w-[440px] lg:ml-auto lg:mr-0 lg:max-w-[440px]">
+          <div className="rounded-[26px] border border-blue-200/35 bg-[#061a35]/75 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-xl sm:p-8 lg:p-9">
             <div className="text-center">
-              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#0d315e]/70 ring-1 ring-blue-300/25 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
-                <TruckIcon className="h-9 w-9 text-[#1680ff]" strokeWidth={1.7} />
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0d315e]/70 ring-1 ring-blue-300/25 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
+                <TruckIcon className="h-8 w-8 text-[#1680ff]" strokeWidth={1.7} />
               </div>
               <h2 className="text-3xl font-semibold tracking-[-0.03em] text-white sm:text-4xl">{companyName}</h2>
-              <p className="mt-3 text-base text-blue-100/75">{showForgot ? copy.recoveryTitle : copy.subtitle}</p>
+              <p className="mt-2 text-base text-blue-100/75">{showForgot ? copy.recoveryTitle : copy.subtitle}</p>
             </div>
 
             {showForgot ? (
-              <form className="mt-10 space-y-5" onSubmit={handleForgotPassword}>
-                <p className="text-center text-sm leading-6 text-blue-100/70">{copy.recoveryDescription}</p>
+              <form className="mt-7 space-y-4" onSubmit={handleForgotPassword}>
+                <p className="text-center text-sm leading-5 text-blue-100/70">{copy.recoveryDescription}</p>
                 <Field
                   id="forgot-email"
                   label={copy.email}
@@ -215,7 +215,7 @@ const LoginForm: React.FC = () => {
                 </button>
               </form>
             ) : (
-              <form className="mt-10 space-y-5" onSubmit={handleSubmit}>
+              <form className="mt-7 space-y-4" onSubmit={handleSubmit}>
                 <Field
                   id="email"
                   label={copy.email}
