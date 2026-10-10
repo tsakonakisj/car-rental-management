@@ -116,6 +116,7 @@ function calcDaysBetween(startDate: string, endDate: string): number {
 
 
 const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheckIn, refreshTrigger }) => {
+  const loginBackgroundImage = '/assets/login_background_car_left.jpg';
   const [reservations, setReservations] = useState<ReservationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -424,11 +425,11 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'upcoming': return 'bg-primary-50 text-primary-700 ring-1 ring-inset ring-primary-200';
-      case 'active': return 'bg-success-50 text-success-700 ring-1 ring-inset ring-success-200';
-      case 'completed': return 'bg-neutral-100 text-neutral-600 ring-1 ring-inset ring-neutral-200';
-      case 'cancelled': return 'bg-danger-50 text-danger-700 ring-1 ring-inset ring-danger-200';
-      default: return 'bg-neutral-100 text-neutral-600 ring-1 ring-inset ring-neutral-200';
+      case 'upcoming': return 'bg-blue-500/15 text-[#8ec7ff] ring-1 ring-inset ring-blue-400/40';
+      case 'active': return 'bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-400/40';
+      case 'completed': return 'bg-slate-500/15 text-blue-100/70 ring-1 ring-inset ring-slate-400/35';
+      case 'cancelled': return 'bg-red-500/15 text-red-300 ring-1 ring-inset ring-red-400/40';
+      default: return 'bg-slate-500/15 text-blue-100/70 ring-1 ring-inset ring-slate-400/35';
     }
   };
 
@@ -492,8 +493,8 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
   if (loading && reservations.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <ArrowPathIcon className="h-6 w-6 text-primary-600 animate-spin mr-3" />
-        <span className="text-neutral-600">Φόρτωση κρατήσεων...</span>
+        <ArrowPathIcon className="h-6 w-6 text-[#55a8ff] animate-spin mr-3" />
+        <span className="text-blue-100/65">Φόρτωση κρατήσεων...</span>
       </div>
     );
   }
@@ -501,11 +502,11 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
   if (error && reservations.length === 0) {
     return (
       <div className="text-center py-12">
-        <XMarkIcon className="h-12 w-12 text-danger-400 mx-auto mb-4" />
-        <p className="text-danger-600 mb-4">{error}</p>
+        <XMarkIcon className="h-12 w-12 text-red-300 mx-auto mb-4" />
+        <p className="text-red-100 mb-4">{error}</p>
         <button
           onClick={fetchReservations}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-[#1268f3] hover:bg-[#2478ff]"
         >
           <ArrowPathIcon className="h-4 w-4 mr-2" />
           Δοκιμή ξανά
@@ -515,39 +516,49 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 text-blue-50">
+      <div className="relative isolate overflow-hidden rounded-2xl border border-[#285b88]/70 bg-[#071d38] shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
+        <img src={loginBackgroundImage} alt="" aria-hidden="true" className="absolute inset-0 -z-20 h-full w-full object-cover object-[center_58%]" />
+        <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(3,18,39,0.96)_0%,rgba(5,27,54,0.78)_44%,rgba(5,27,54,0.38)_100%)]" />
+        <div className="relative px-5 py-5 sm:px-7 sm:py-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#6ab3ff]">Reservation desk</p>
+          <h1 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white sm:text-3xl">Κρατήσεις</h1>
+          <p className="mt-1 text-sm text-blue-100/75 sm:text-base">Διαχείριση κρατήσεων ανά σταθμό και ημερομηνία</p>
+        </div>
+      </div>
+
       {actionError && (
-        <div className="p-3 bg-danger-50 border border-danger-200 rounded-lg text-sm text-danger-700">
+        <div className="rounded-xl border border-red-400/30 bg-red-950/45 p-3 text-sm text-red-100 shadow-lg">
           {actionError}
         </div>
       )}
 
       {/* Filters */}
-      <div className="bg-white border border-neutral-200 shadow-sm rounded-xl p-4">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.22)] backdrop-blur-xl">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">
+            <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-blue-100/65">
               Αναζήτηση
             </label>
             <div className="relative">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-neutral-400" />
+              <MagnifyingGlassIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#72b9ff]" />
               <input
                 type="text"
                 placeholder="Όνομα, τηλέφωνο, κατηγορία..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+                className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 py-2.5 pl-9 pr-3 text-sm text-white placeholder:text-blue-100/45 focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
               />
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">
+            <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-blue-100/65">
               Κατάσταση
             </label>
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+              className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
             >
               <option value="all">Όλες</option>
               {statusOptions.map(s => (
@@ -556,13 +567,13 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">
+            <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-blue-100/65">
               Excel
             </label>
             <select
               value={excelFilter}
               onChange={(e) => setExcelFilter(e.target.value)}
-              className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+              className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
             >
               <option value="all">Όλες</option>
               <option value="pending">Εκκρεμεί ενημέρωση</option>
@@ -570,20 +581,20 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-1">
+            <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-blue-100/65">
               Ημ. Παραλαβής
             </label>
             <input
               type="date"
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full border border-neutral-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+              className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
             />
           </div>
           <div className="flex items-end">
             <button
               onClick={() => { setFilter('all'); setExcelFilter('all'); setDateFilter(''); setSearchTerm(''); }}
-              className="px-3 py-2 text-sm text-neutral-600 hover:text-neutral-800 border border-neutral-300 rounded-lg bg-white hover:bg-neutral-50"
+              className="rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm font-medium text-blue-100/75 transition-colors hover:border-[#4b8fc7] hover:bg-[#12375d] hover:text-white"
             >
               Καθαρισμός
             </button>
@@ -593,9 +604,9 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
 
       {/* Empty state */}
       {filteredReservations.length === 0 && (
-        <div className="text-center py-12 bg-white border border-neutral-200 shadow-sm rounded-xl">
-          <CalendarDaysIcon className="h-12 w-12 text-neutral-400 mx-auto mb-4" />
-          <p className="text-neutral-500">
+        <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/85 py-14 text-center shadow-[0_16px_40px_rgba(0,0,0,0.2)]">
+          <CalendarDaysIcon className="h-12 w-12 text-blue-100/45 mx-auto mb-4" />
+          <p className="text-blue-100/55">
             {reservations.length === 0
               ? 'Δεν υπάρχουν κρατήσεις ακόμα.'
               : 'Δεν βρέθηκαν κρατήσεις με τα επιλεγμένα φίλτρα.'}
@@ -604,23 +615,23 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
       )}
 
       {/* Reservations Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {filteredReservations.map((reservation) => (
-          <div key={reservation.id} className="bg-white border border-neutral-200 shadow-sm rounded-xl transition-shadow hover:shadow-md">
-            <div className="p-4 sm:p-6">
+          <div key={reservation.id} className="overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)]">
+            <div className="p-4 sm:p-5">
               <div className="flex items-start justify-between mb-4 gap-2">
                 <div>
-                  <h3 className="text-lg font-medium text-neutral-900">
+                  <h3 className="text-lg font-semibold tracking-[-0.02em] text-white">
                     {reservation.customer?.name || 'Άγνωστος πελάτης'}
                   </h3>
-                  <p className="text-sm text-neutral-600">{reservation.customer?.phone || '-'}</p>
+                  <p className="text-sm text-blue-100/65">{reservation.customer?.phone || '-'}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <span
                     className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium cursor-pointer ${
                       reservation.excel_updated
-                        ? 'bg-success-50 text-success-700 ring-1 ring-inset ring-success-200'
-                        : 'bg-warning-50 text-warning-700 ring-1 ring-inset ring-warning-200'
+                        ? 'bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-400/40'
+                        : 'bg-amber-500/15 text-amber-300 ring-1 ring-inset ring-amber-400/40'
                     }`}
                     onClick={(e) => { e.stopPropagation(); handleExcelToggle(reservation.id, !!reservation.excel_updated); }}
                   >
@@ -634,40 +645,40 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
 
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <p className="text-sm font-medium text-neutral-500">Όχημα</p>
-                  <p className="text-sm text-neutral-900">
+                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-blue-100/50">Όχημα</p>
+                  <p className="text-sm text-blue-50">
                     {reservation.vehicle
                       ? `${reservation.vehicle.plate} ${reservation.vehicle.brand} ${reservation.vehicle.model}`
                       : '-'}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-neutral-500">Κατηγορία</p>
-                  <p className="text-sm text-neutral-900">{reservation.vehicle?.category || reservation.category}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-blue-100/50">Κατηγορία</p>
+                  <p className="text-sm text-blue-50">{reservation.vehicle?.category || reservation.category}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-neutral-500">Σύνολο</p>
-                  <p className="text-sm font-semibold text-success-600">
+                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-blue-100/50">Σύνολο</p>
+                  <p className="text-sm font-semibold text-emerald-300">
                     {'\u20AC'}{Number(reservation.total_amount || 0).toFixed(2)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-neutral-500">Παραλαβή</p>
-                  <p className="text-sm text-neutral-900">{formatDateStr(reservation.pickup_date)}</p>
-                  <p className="text-xs text-neutral-500">{reservation.pickup_station?.name || '-'}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-blue-100/50">Παραλαβή</p>
+                  <p className="text-sm text-blue-50">{formatDateStr(reservation.pickup_date)}</p>
+                  <p className="text-xs text-blue-100/55">{reservation.pickup_station?.name || '-'}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-neutral-500">Παράδοση</p>
-                  <p className="text-sm text-neutral-900">{formatDateStr(reservation.return_date)}</p>
-                  <p className="text-xs text-neutral-500">{reservation.return_station?.name || '-'}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-blue-100/50">Παράδοση</p>
+                  <p className="text-sm text-blue-50">{formatDateStr(reservation.return_date)}</p>
+                  <p className="text-xs text-blue-100/55">{reservation.return_station?.name || '-'}</p>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-2 pt-4 border-t border-neutral-200">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#1e4e7d]/70 pt-4">
                 <div className="flex flex-wrap space-x-2 gap-y-2">
                   <button
                     onClick={() => setViewReservation(reservation)}
-                    className="inline-flex items-center px-3 py-1.5 border border-neutral-300 text-sm font-medium rounded-lg text-neutral-700 bg-white hover:bg-neutral-50 transition-colors"
+                    className="inline-flex min-h-10 items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-1.5 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
                   >
                     <EyeIcon className="h-4 w-4 mr-1" />
                     Προβολή
@@ -675,7 +686,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                   <ContractGenerator data={getContractData(reservation)} />
                   {reservation.status !== 'cancelled' && reservation.status !== 'completed' && (
                     <button
-                      className="inline-flex items-center px-3 py-1.5 border border-neutral-300 text-sm font-medium rounded-lg text-neutral-700 bg-white hover:bg-neutral-50 transition-colors"
+                      className="inline-flex min-h-10 items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-1.5 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
                       onClick={() => handleStatusChange(reservation.id, 'cancelled')}
                       disabled={changingStatus === reservation.id}
                     >
@@ -693,13 +704,13 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                     return canCheckOut ? (
                       <button
                         onClick={() => onCheckOut?.(reservation.id)}
-                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 transition-colors"
+                        className="inline-flex min-h-10 items-center rounded-xl border border-transparent bg-[#1268f3] px-3 py-1.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
                       >
                         <TruckIcon className="h-4 w-4 mr-1" />
                         Check-out
                       </button>
                     ) : (
-                      <span className="inline-flex items-center px-3 py-1.5 text-xs text-neutral-500">
+                      <span className="inline-flex items-center px-3 py-1.5 text-xs text-blue-100/55">
                         Checkout μετά την ώρα παραλαβής
                       </span>
                     );
@@ -707,7 +718,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                   {reservation.status === 'active' && (
                     <button
                       onClick={() => handleCheckInClick(reservation)}
-                      className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-lg text-white bg-success-600 hover:bg-success-700 transition-colors"
+                      className="inline-flex min-h-10 items-center rounded-xl border border-transparent bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(16,185,129,0.22)] transition-colors hover:bg-emerald-500"
                     >
                       <CheckIcon className="h-4 w-4 mr-1" />
                       Check-in
@@ -724,23 +735,23 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
       {viewReservation && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20">
-            <div className="fixed inset-0 bg-neutral-950/50 backdrop-blur-sm transition-opacity" onClick={() => { setViewReservation(null); cancelEditing(); }} />
-            <div className="relative bg-white rounded-xl shadow-xl border border-neutral-200 max-w-2xl w-full mx-auto z-10">
-              <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-neutral-200 flex items-center justify-between gap-2">
-                <h2 className="text-base sm:text-lg font-medium text-neutral-900">
+            <div className="fixed inset-0 bg-[#020b18]/80 backdrop-blur-sm transition-opacity" onClick={() => { setViewReservation(null); cancelEditing(); }} />
+            <div className="relative bg-[#071d38] rounded-xl shadow-xl border border-[#1e4e7d]/70 max-w-2xl w-full mx-auto z-10">
+              <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-[#1e4e7d]/70 flex items-center justify-between gap-2">
+                <h2 className="text-base sm:text-lg font-medium text-white">
                   {editing ? 'Επεξεργασία Κράτησης' : 'Λεπτομέρειες Κράτησης'}
                 </h2>
                 <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
                   {!editing && (
                     <button
                       onClick={() => startEditing(viewReservation)}
-                      className="inline-flex items-center px-3 py-1.5 border border-primary-300 text-sm font-medium rounded-lg text-primary-700 bg-primary-50 hover:bg-primary-100 transition-colors"
+                      className="inline-flex items-center px-3 py-1.5 border border-[#3475aa] text-sm font-medium rounded-lg text-[#8ec7ff] bg-blue-500/15 hover:bg-blue-500/25 transition-colors"
                     >
                       <PencilSquareIcon className="h-4 w-4 mr-1.5" />
                       Επεξεργασία Κράτησης
                     </button>
                   )}
-                  <button onClick={() => { setViewReservation(null); cancelEditing(); }} className="text-neutral-400 hover:text-neutral-600">
+                  <button onClick={() => { setViewReservation(null); cancelEditing(); }} className="text-blue-100/45 hover:text-blue-100/65">
                     <XMarkIcon className="h-6 w-6" />
                   </button>
                 </div>
@@ -755,12 +766,12 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                         {getStatusLabel(viewReservation.status)}
                       </span>
                       <div className="flex items-center space-x-2">
-                        <label className="text-sm text-neutral-600">Αλλαγή κατάστασης:</label>
+                        <label className="text-sm text-blue-100/65">Αλλαγή κατάστασης:</label>
                         <select
                           value={viewReservation.status}
                           onChange={(e) => handleStatusChange(viewReservation.id, e.target.value)}
                           disabled={changingStatus === viewReservation.id}
-                          className="border border-neutral-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                          className="border border-[#2b5b85]/80 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                         >
                           {statusOptions.map(s => (
                             <option key={s.value} value={s.value}>{s.labelEl}</option>
@@ -770,23 +781,23 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                     </div>
 
                     <div>
-                      <h3 className="text-sm font-semibold text-neutral-500 mb-2">Πελάτης</h3>
-                      <div className="bg-neutral-50 rounded-lg p-4 space-y-1">
-                        <p className="text-sm text-neutral-900 font-medium">{viewReservation.customer?.name || '-'}</p>
-                        <p className="text-sm text-neutral-600">{viewReservation.customer?.phone || '-'}</p>
-                        <p className="text-sm text-neutral-600">{viewReservation.customer?.email || '-'}</p>
-                        <p className="text-sm text-neutral-600">{viewReservation.customer?.country || '-'}</p>
+                      <h3 className="text-sm font-semibold text-blue-100/55 mb-2">Πελάτης</h3>
+                      <div className="bg-[#0b2949]/70 rounded-lg p-4 space-y-1">
+                        <p className="text-sm text-white font-medium">{viewReservation.customer?.name || '-'}</p>
+                        <p className="text-sm text-blue-100/65">{viewReservation.customer?.phone || '-'}</p>
+                        <p className="text-sm text-blue-100/65">{viewReservation.customer?.email || '-'}</p>
+                        <p className="text-sm text-blue-100/65">{viewReservation.customer?.country || '-'}</p>
                         {viewReservation.customer?.license_number && (
-                          <p className="text-sm text-neutral-600">Άδεια: {viewReservation.customer.license_number}</p>
+                          <p className="text-sm text-blue-100/65">Άδεια: {viewReservation.customer.license_number}</p>
                         )}
                       </div>
                     </div>
 
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-neutral-500 mb-2">Όχημα</h3>
-                        <div className="bg-neutral-50 rounded-lg p-4 space-y-1">
-                          <p className="text-sm text-neutral-900 font-medium">
+                        <h3 className="text-sm font-semibold text-blue-100/55 mb-2">Όχημα</h3>
+                        <div className="bg-[#0b2949]/70 rounded-lg p-4 space-y-1">
+                          <p className="text-sm text-white font-medium">
                             {viewReservation.vehicle
                               ? `${viewReservation.vehicle.brand} ${viewReservation.vehicle.model} (${viewReservation.vehicle.plate})`
                               : `Κατηγορία ${viewReservation.category}`}
@@ -794,69 +805,69 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                         </div>
                       </div>
                       <div className="sm:ml-4 mt-3 sm:mt-0 flex-shrink-0">
-                        <label className="flex items-center cursor-pointer select-none bg-neutral-50 border border-neutral-200 rounded-lg px-3 py-3">
+                        <label className="flex items-center cursor-pointer select-none bg-[#0b2949]/70 border border-[#1e4e7d]/70 rounded-lg px-3 py-3">
                           <input
                             type="checkbox"
                             checked={!!viewReservation.excel_updated}
                             onChange={() => handleExcelToggle(viewReservation.id, !!viewReservation.excel_updated)}
-                            className="rounded-md border-neutral-300 text-primary-600 focus:ring-primary-500 mr-2"
+                            className="mr-2 rounded-md border-[#2b5b85]/80 bg-[#0b2949] text-[#55a8ff] focus:ring-[#2f8cff]/50"
                           />
-                          <span className="text-sm text-neutral-700 whitespace-nowrap">Excel ενημερώθηκε</span>
+                          <span className="text-sm text-blue-100/85 whitespace-nowrap">Excel ενημερώθηκε</span>
                         </label>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <h3 className="text-sm font-semibold text-neutral-500 mb-2">Παραλαβή</h3>
-                        <div className="bg-neutral-50 rounded-lg p-4 space-y-1">
-                          <p className="text-sm text-neutral-900">{formatDateStr(viewReservation.pickup_date)}</p>
-                          <p className="text-sm text-neutral-600">{viewReservation.pickup_station?.name || '-'}</p>
+                        <h3 className="text-sm font-semibold text-blue-100/55 mb-2">Παραλαβή</h3>
+                        <div className="bg-[#0b2949]/70 rounded-lg p-4 space-y-1">
+                          <p className="text-sm text-blue-50">{formatDateStr(viewReservation.pickup_date)}</p>
+                          <p className="text-sm text-blue-100/65">{viewReservation.pickup_station?.name || '-'}</p>
                         </div>
                       </div>
                       <div>
-                        <h3 className="text-sm font-semibold text-neutral-500 mb-2">Παράδοση</h3>
-                        <div className="bg-neutral-50 rounded-lg p-4 space-y-1">
-                          <p className="text-sm text-neutral-900">{formatDateStr(viewReservation.return_date)}</p>
-                          <p className="text-sm text-neutral-600">{viewReservation.return_station?.name || '-'}</p>
+                        <h3 className="text-sm font-semibold text-blue-100/55 mb-2">Παράδοση</h3>
+                        <div className="bg-[#0b2949]/70 rounded-lg p-4 space-y-1">
+                          <p className="text-sm text-blue-50">{formatDateStr(viewReservation.return_date)}</p>
+                          <p className="text-sm text-blue-100/65">{viewReservation.return_station?.name || '-'}</p>
                         </div>
                       </div>
                     </div>
 
                     <div>
-                      <h3 className="text-sm font-semibold text-neutral-500 mb-2">Τιμολόγηση</h3>
-                      <div className="bg-neutral-50 rounded-lg p-4 space-y-2">
+                      <h3 className="text-sm font-semibold text-blue-100/55 mb-2">Τιμολόγηση</h3>
+                      <div className="bg-[#0b2949]/70 rounded-lg p-4 space-y-2">
                         <div className="flex justify-between text-sm">
-                          <span className="text-neutral-600">Ημερήσιο τέλος</span>
-                          <span className="text-neutral-900">{'\u20AC'}{Number(viewReservation.daily_rate || 0).toFixed(2)}</span>
+                          <span className="text-blue-100/65">Ημερήσιο τέλος</span>
+                          <span className="text-white">{'\u20AC'}{Number(viewReservation.daily_rate || 0).toFixed(2)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-neutral-600">Ασφάλεια ({viewReservation.insurance_type})</span>
-                          <span className="text-neutral-900">{'\u20AC'}{Number(viewReservation.insurance_rate || 0).toFixed(2)}/ημέρα</span>
+                          <span className="text-blue-100/65">Ασφάλεια ({viewReservation.insurance_type})</span>
+                          <span className="text-white">{'\u20AC'}{Number(viewReservation.insurance_rate || 0).toFixed(2)}/ημέρα</span>
                         </div>
                         <div className="flex justify-between text-sm font-bold border-t pt-2">
                           <span>Σύνολο</span>
-                          <span className="text-success-600">{'\u20AC'}{Number(viewReservation.total_amount || 0).toFixed(2)}</span>
+                          <span className="text-emerald-300">{'\u20AC'}{Number(viewReservation.total_amount || 0).toFixed(2)}</span>
                         </div>
                       </div>
                     </div>
 
                     {viewReservation.notes && (
                       <div>
-                        <h3 className="text-sm font-semibold text-neutral-500 mb-2">Σημειώσεις</h3>
-                        <div className="bg-neutral-50 rounded-lg p-4">
-                          <p className="text-sm text-neutral-700">{viewReservation.notes}</p>
+                        <h3 className="text-sm font-semibold text-blue-100/55 mb-2">Σημειώσεις</h3>
+                        <div className="bg-[#0b2949]/70 rounded-lg p-4">
+                          <p className="text-sm text-blue-100/85">{viewReservation.notes}</p>
                         </div>
                       </div>
                     )}
 
                     {/* Checkout Photos */}
                     <div>
-                      <h3 className="text-sm font-semibold text-neutral-500 mb-2">Φωτογραφίες Παράδοσης</h3>
+                      <h3 className="text-sm font-semibold text-blue-100/55 mb-2">Φωτογραφίες Παράδοσης</h3>
                       {photosLoading ? (
-                        <p className="text-sm text-neutral-400">Φόρτωση φωτογραφιών...</p>
+                        <p className="text-sm text-blue-100/45">Φόρτωση φωτογραφιών...</p>
                       ) : checkoutPhotoPaths.length === 0 ? (
-                        <p className="text-sm text-neutral-400">Δεν υπάρχουν φωτογραφίες παράδοσης.</p>
+                        <p className="text-sm text-blue-100/45">Δεν υπάρχουν φωτογραφίες παράδοσης.</p>
                       ) : (
                         <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                           {checkoutPhotoPaths.map((path) => (
@@ -865,7 +876,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                               src={photoSignedUrls.get(path) || ''}
                               alt="Checkout"
                               onClick={() => setLightboxPhoto(photoSignedUrls.get(path) || '')}
-                              className="w-full h-24 object-cover rounded-lg border border-neutral-200 cursor-pointer hover:opacity-80 transition-opacity"
+                              className="w-full h-24 object-cover rounded-lg border border-[#1e4e7d]/70 cursor-pointer hover:opacity-80 transition-opacity"
                             />
                           ))}
                         </div>
@@ -874,11 +885,11 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
 
                     {/* Checkin Photos */}
                     <div>
-                      <h3 className="text-sm font-semibold text-neutral-500 mb-2">Φωτογραφίες Επιστροφής</h3>
+                      <h3 className="text-sm font-semibold text-blue-100/55 mb-2">Φωτογραφίες Επιστροφής</h3>
                       {photosLoading ? (
-                        <p className="text-sm text-neutral-400">Φόρτωση φωτογραφιών...</p>
+                        <p className="text-sm text-blue-100/45">Φόρτωση φωτογραφιών...</p>
                       ) : checkinPhotoPaths.length === 0 ? (
-                        <p className="text-sm text-neutral-400">Δεν υπάρχουν φωτογραφίες επιστροφής.</p>
+                        <p className="text-sm text-blue-100/45">Δεν υπάρχουν φωτογραφίες επιστροφής.</p>
                       ) : (
                         <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                           {checkinPhotoPaths.map((path) => (
@@ -887,7 +898,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                               src={photoSignedUrls.get(path) || ''}
                               alt="Checkin"
                               onClick={() => setLightboxPhoto(photoSignedUrls.get(path) || '')}
-                              className="w-full h-24 object-cover rounded-lg border border-neutral-200 cursor-pointer hover:opacity-80 transition-opacity"
+                              className="w-full h-24 object-cover rounded-lg border border-[#1e4e7d]/70 cursor-pointer hover:opacity-80 transition-opacity"
                             />
                           ))}
                         </div>
@@ -901,110 +912,110 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                     {editForm && (
                       <div className="space-y-5">
                         <div>
-                          <h3 className="text-sm font-medium text-neutral-700 mb-3">Στοιχεία Πελάτη</h3>
+                          <h3 className="text-sm font-medium text-blue-100/85 mb-3">Στοιχεία Πελάτη</h3>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
-                              <label className="block text-xs text-neutral-500 mb-1">Όνομα</label>
+                              <label className="block text-xs text-blue-100/55 mb-1">Όνομα</label>
                               <input
                                 type="text"
                                 value={editForm.customerName}
                                 onChange={(e) => setEditForm({ ...editForm, customerName: e.target.value })}
-                                className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               />
                             </div>
                             <div>
-                              <label className="block text-xs text-neutral-500 mb-1">Τηλέφωνο</label>
+                              <label className="block text-xs text-blue-100/55 mb-1">Τηλέφωνο</label>
                               <input
                                 type="tel"
                                 value={editForm.phone}
                                 onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                                className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               />
                             </div>
                             <div>
-                              <label className="block text-xs text-neutral-500 mb-1">Email</label>
+                              <label className="block text-xs text-blue-100/55 mb-1">Email</label>
                               <input
                                 type="email"
                                 value={editForm.email}
                                 onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                                className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               />
                             </div>
                             <div>
-                              <label className="block text-xs text-neutral-500 mb-1">Χώρα</label>
+                              <label className="block text-xs text-blue-100/55 mb-1">Χώρα</label>
                               <input
                                 type="text"
                                 value={editForm.country}
                                 onChange={(e) => setEditForm({ ...editForm, country: e.target.value })}
-                                className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               />
                             </div>
                             <div>
-                              <label className="block text-xs text-neutral-500 mb-1">Αρ. Άδειας</label>
+                              <label className="block text-xs text-blue-100/55 mb-1">Αρ. Άδειας</label>
                               <input
                                 type="text"
                                 value={editForm.licenseNumber}
                                 onChange={(e) => setEditForm({ ...editForm, licenseNumber: e.target.value })}
-                                className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               />
                             </div>
                             <div>
-                              <label className="block text-xs text-neutral-500 mb-1">Ημ. Γέννησης</label>
+                              <label className="block text-xs text-blue-100/55 mb-1">Ημ. Γέννησης</label>
                               <input
                                 type="date"
                                 value={editForm.birthDate}
                                 onChange={(e) => setEditForm({ ...editForm, birthDate: e.target.value })}
-                                className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               />
                             </div>
                           </div>
                         </div>
 
                         <div>
-                          <h3 className="text-sm font-medium text-neutral-700 mb-3">Ημερομηνίες & Σταθμοί</h3>
+                          <h3 className="text-sm font-medium text-blue-100/85 mb-3">Ημερομηνίες & Σταθμοί</h3>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <div>
-                              <label className="block text-xs text-neutral-500 mb-1">Ημ. Παραλαβής</label>
+                              <label className="block text-xs text-blue-100/55 mb-1">Ημ. Παραλαβής</label>
                               <input
                                 type="date"
                                 value={editForm.pickupDate}
                                 onChange={(e) => setEditForm({ ...editForm, pickupDate: e.target.value })}
-                                className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               />
                             </div>
                             <div>
-                              <label className="block text-xs text-neutral-500 mb-1">Ώρα Παραλαβής</label>
+                              <label className="block text-xs text-blue-100/55 mb-1">Ώρα Παραλαβής</label>
                               <input
                                 type="time"
                                 value={editForm.pickupTime}
                                 onChange={(e) => setEditForm({ ...editForm, pickupTime: e.target.value })}
-                                className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               />
                             </div>
                             <div>
-                              <label className="block text-xs text-neutral-500 mb-1">Ημ. Παράδοσης</label>
+                              <label className="block text-xs text-blue-100/55 mb-1">Ημ. Παράδοσης</label>
                               <input
                                 type="date"
                                 value={editForm.returnDate}
                                 onChange={(e) => setEditForm({ ...editForm, returnDate: e.target.value })}
-                                className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               />
                             </div>
                             <div>
-                              <label className="block text-xs text-neutral-500 mb-1">Ώρα Παράδοσης</label>
+                              <label className="block text-xs text-blue-100/55 mb-1">Ώρα Παράδοσης</label>
                               <input
                                 type="time"
                                 value={editForm.returnTime}
                                 onChange={(e) => setEditForm({ ...editForm, returnTime: e.target.value })}
-                                className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               />
                             </div>
                             <div>
-                              <label className="block text-xs text-neutral-500 mb-1">Σταθμός Παραλαβής</label>
+                              <label className="block text-xs text-blue-100/55 mb-1">Σταθμός Παραλαβής</label>
                               <select
                                 value={editForm.pickupStationId}
                                 onChange={(e) => setEditForm({ ...editForm, pickupStationId: e.target.value })}
-                                className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               >
                                 <option value="">-- Επιλέξτε --</option>
                                 {stations.map(st => (
@@ -1013,11 +1024,11 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                               </select>
                             </div>
                             <div>
-                              <label className="block text-xs text-neutral-500 mb-1">Σταθμός Παράδοσης</label>
+                              <label className="block text-xs text-blue-100/55 mb-1">Σταθμός Παράδοσης</label>
                               <select
                                 value={editForm.returnStationId}
                                 onChange={(e) => setEditForm({ ...editForm, returnStationId: e.target.value })}
-                                className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               >
                                 <option value="">-- Επιλέξτε --</option>
                                 {stations.map(st => (
@@ -1029,7 +1040,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                         </div>
 
                         <div>
-                          <h3 className="text-sm font-medium text-neutral-700 mb-3">Όχημα</h3>
+                          <h3 className="text-sm font-medium text-blue-100/85 mb-3">Όχημα</h3>
                           <select
                             value={editForm.vehicleId}
                             onChange={(e) => {
@@ -1058,7 +1069,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                                 setEditForm({ ...editForm, vehicleId: '', category: '', dailyRate: 0 });
                               }
                             }}
-                            className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                           >
                             <option value="">-- Επιλέξτε όχημα --</option>
                             {editVehicles.map(v => {
@@ -1093,9 +1104,9 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                         </div>
 
                         <div>
-                          <h3 className="text-sm font-medium text-neutral-700 mb-3">Ασφάλεια</h3>
+                          <h3 className="text-sm font-medium text-blue-100/85 mb-3">Ασφάλεια</h3>
                           {editInsurances.length === 0 ? (
-                            <p className="text-sm text-neutral-500">Φόρτωση ασφαλίσεων...</p>
+                            <p className="text-sm text-blue-100/55">Φόρτωση ασφαλίσεων...</p>
                           ) : (
                             <div className="space-y-2">
                               {editInsurances.map(ins => (
@@ -1113,7 +1124,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                                     className="mr-2"
                                   />
                                   <span className="flex-1 text-sm">{ins.name}</span>
-                                  <span className="text-sm text-neutral-600">
+                                  <span className="text-sm text-blue-100/65">
                                     {'\u20AC'}{Number(ins.daily_rate).toFixed(2)}/{'\u03b7\u03bc.'}
                                   </span>
                                 </label>
@@ -1123,9 +1134,9 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                         </div>
 
                         <div>
-                          <h3 className="text-sm font-medium text-neutral-700 mb-3">Έξτρα</h3>
+                          <h3 className="text-sm font-medium text-blue-100/85 mb-3">Έξτρα</h3>
                           {editExtras.length === 0 ? (
-                            <p className="text-sm text-neutral-500">Φόρτωση έξτρα...</p>
+                            <p className="text-sm text-blue-100/55">Φόρτωση έξτρα...</p>
                           ) : (
                             editExtras.map(extra => (
                               <div key={extra.id} className="flex items-center justify-between mb-2">
@@ -1146,9 +1157,9 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                                       }
                                       setEditForm({ ...editForm, extras: next });
                                     }}
-                                    className="w-16 border border-neutral-300 rounded-md px-2 py-1 text-sm"
+                                    className="w-16 border border-[#2b5b85]/80 rounded-md px-2 py-1 text-sm"
                                   />
-                                  <span className="text-sm text-neutral-600">
+                                  <span className="text-sm text-blue-100/65">
                                     {'\u20AC'}{Number(extra.price).toFixed(2)}/{extra.type === 'daily' ? '\u03b7\u03bc.' : '\u03b5\u03c6\u03ac\u03c0\u03b1\u03be'}
                                   </span>
                                 </div>
@@ -1178,46 +1189,46 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
 
                           const grandTotal = dailyTotal + insuranceTotal + extrasTotal;
                           return (
-                            <div className="bg-neutral-50 rounded-lg p-4 space-y-2">
-                              <h3 className="text-sm font-medium text-neutral-700 mb-2">Κοστολόγηση</h3>
+                            <div className="bg-[#0b2949]/70 rounded-lg p-4 space-y-2">
+                              <h3 className="text-sm font-medium text-blue-100/85 mb-2">Κοστολόγηση</h3>
                               <div className="flex justify-between text-sm">
-                                <span className="text-neutral-600">Ημέρες</span>
-                                <span className="text-neutral-900">{days}</span>
+                                <span className="text-blue-100/65">Ημέρες</span>
+                                <span className="text-white">{days}</span>
                               </div>
                               <div className="flex justify-between text-sm">
-                                <span className="text-neutral-600">Ημερήσιο ({'\u20AC'}{dailyRate.toFixed(2)} x {days})</span>
-                                <span className="text-neutral-900">{'\u20AC'}{dailyTotal.toFixed(2)}</span>
+                                <span className="text-blue-100/65">Ημερήσιο ({'\u20AC'}{dailyRate.toFixed(2)} x {days})</span>
+                                <span className="text-white">{'\u20AC'}{dailyTotal.toFixed(2)}</span>
                               </div>
                               <div className="flex justify-between text-sm">
-                                <span className="text-neutral-600">Ασφάλεια ({'\u20AC'}{insuranceRate.toFixed(2)} x {days})</span>
-                                <span className="text-neutral-900">{'\u20AC'}{insuranceTotal.toFixed(2)}</span>
+                                <span className="text-blue-100/65">Ασφάλεια ({'\u20AC'}{insuranceRate.toFixed(2)} x {days})</span>
+                                <span className="text-white">{'\u20AC'}{insuranceTotal.toFixed(2)}</span>
                               </div>
                               {extrasTotal > 0 && (
                                 <div className="flex justify-between text-sm">
-                                  <span className="text-neutral-600">Έξτρα</span>
-                                  <span className="text-neutral-900">{'\u20AC'}{extrasTotal.toFixed(2)}</span>
+                                  <span className="text-blue-100/65">Έξτρα</span>
+                                  <span className="text-white">{'\u20AC'}{extrasTotal.toFixed(2)}</span>
                                 </div>
                               )}
                               <div className="flex justify-between text-sm font-bold border-t pt-2">
                                 <span>Σύνολο</span>
-                                <span className="text-success-600">{'\u20AC'}{grandTotal.toFixed(2)}</span>
+                                <span className="text-emerald-300">{'\u20AC'}{grandTotal.toFixed(2)}</span>
                               </div>
                             </div>
                           );
                         })()}
 
                         <div>
-                          <label className="block text-xs text-neutral-500 mb-1">Σημειώσεις</label>
+                          <label className="block text-xs text-blue-100/55 mb-1">Σημειώσεις</label>
                           <textarea
                             value={editForm.notes}
                             onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
                             rows={3}
-                            className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                            className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                           />
                         </div>
 
                         {saveError && (
-                          <div className="p-3 bg-danger-50 border border-danger-200 rounded-lg text-sm text-danger-700">
+                          <div className="p-3 bg-red-950/45 border border-red-400/30 rounded-lg text-sm text-red-100">
                             {saveError}
                           </div>
                         )}
@@ -1227,14 +1238,14 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                 )}
               </div>
 
-              <div className="px-4 sm:px-6 py-4 border-t border-neutral-200 flex flex-wrap justify-between gap-2">
+              <div className="px-4 sm:px-6 py-4 border-t border-[#1e4e7d]/70 flex flex-wrap justify-between gap-2">
                 {!editing ? (
                   <>
                     <div className="flex flex-wrap space-x-2 gap-y-2">
                       <ContractGenerator data={getContractData(viewReservation)} />
                       <button
                         onClick={() => startEditing(viewReservation)}
-                        className="inline-flex items-center px-4 py-2 border border-primary-300 text-sm font-medium rounded-lg text-primary-700 bg-white hover:bg-primary-50 transition-colors"
+                        className="inline-flex items-center px-4 py-2 border border-[#3475aa] text-sm font-medium rounded-lg text-[#8ec7ff] bg-[#071d38] hover:bg-blue-500/15 transition-colors"
                       >
                         <PencilSquareIcon className="h-4 w-4 mr-2" />
                         Επεξεργασία
@@ -1247,7 +1258,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                             }
                           }}
                           disabled={deleting === viewReservation.id}
-                          className="inline-flex items-center px-4 py-2 border border-danger-300 text-sm font-medium rounded-lg text-danger-700 bg-white hover:bg-danger-50 transition-colors"
+                          className="inline-flex items-center px-4 py-2 border border-red-400/50 text-sm font-medium rounded-lg text-red-100 bg-[#071d38] hover:bg-red-900/60 transition-colors"
                         >
                           <TrashIcon className="h-4 w-4 mr-2" />
                           {deleting === viewReservation.id ? 'Διαγραφή...' : 'Διαγραφή'}
@@ -1256,7 +1267,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                     </div>
                     <button
                       onClick={() => setViewReservation(null)}
-                      className="px-4 py-2 border border-neutral-300 text-sm font-medium rounded-lg text-neutral-700 bg-white hover:bg-neutral-50"
+                      className="px-4 py-2 border border-[#2b5b85]/80 text-sm font-medium rounded-lg text-blue-100/85 bg-[#071d38] hover:bg-[#0b2949]/70"
                     >
                       Κλείσιμο
                     </button>
@@ -1266,14 +1277,14 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                     <button
                       onClick={cancelEditing}
                       disabled={saving}
-                      className="px-4 py-2 border border-neutral-300 text-sm font-medium rounded-lg text-neutral-700 bg-white hover:bg-neutral-50"
+                      className="px-4 py-2 border border-[#2b5b85]/80 text-sm font-medium rounded-lg text-blue-100/85 bg-[#071d38] hover:bg-[#0b2949]/70"
                     >
                       Ακύρωση
                     </button>
                     <button
                       onClick={handleSaveEdit}
                       disabled={saving}
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 transition-colors"
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-[#1268f3] hover:bg-[#2478ff] disabled:opacity-50 transition-colors"
                     >
                       {saving ? 'Αποθήκευση...' : 'Αποθήκευση'}
                     </button>
@@ -1288,7 +1299,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
       {/* Photo Lightbox */}
       {lightboxPhoto && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-neutral-950/80"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-[#020b18]/90"
           onClick={() => setLightboxPhoto(null)}
         >
           <img
@@ -1298,7 +1309,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
           />
           <button
             onClick={() => setLightboxPhoto(null)}
-            className="absolute top-4 right-4 text-white hover:text-neutral-300"
+            className="absolute top-4 right-4 text-white hover:text-blue-100/60"
           >
             <XMarkIcon className="h-8 w-8" />
           </button>
