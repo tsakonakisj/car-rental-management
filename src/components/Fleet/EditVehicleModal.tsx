@@ -79,31 +79,31 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
     }
   };
 
-  const inputClass = 'w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500';
+  const inputClass = 'w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#020b18]/80 p-4 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+        className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-[#1e4e7d]/70 bg-[#071d38] shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
+        <div className="flex items-center justify-between border-b border-[#1e4e7d]/70 px-6 py-4">
+          <h2 className="text-lg font-semibold text-white">
             {isEdit ? 'Επεξεργασία Οχήματος' : 'Προσθήκη Οχήματος'}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+          <button onClick={onClose} className="text-blue-100/45 transition-colors hover:text-blue-100/75">
             <XMarkIcon className="h-6 w-6" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 px-6 py-5">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">{error}</div>
+            <div className="rounded-xl border border-red-400/30 bg-red-950/45 p-3 text-sm text-red-100">{error}</div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Πινακίδα</label>
+              <label className="mb-1 block text-sm font-medium text-blue-100/65">Πινακίδα</label>
               <input
                 type="text"
                 required
@@ -113,7 +113,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Έτος</label>
+              <label className="mb-1 block text-sm font-medium text-blue-100/65">Έτος</label>
               <input
                 type="number"
                 required
@@ -125,7 +125,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Μάρκα</label>
+              <label className="mb-1 block text-sm font-medium text-blue-100/65">Μάρκα</label>
               <input
                 type="text"
                 required
@@ -135,7 +135,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Μοντέλο</label>
+              <label className="mb-1 block text-sm font-medium text-blue-100/65">Μοντέλο</label>
               <input
                 type="text"
                 required
@@ -145,7 +145,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Κατηγορία</label>
+              <label className="mb-1 block text-sm font-medium text-blue-100/65">Κατηγορία</label>
               <select
                 value={form.category}
                 onChange={(e) => setForm((p) => ({ ...p, category: e.target.value as Vehicle['category'] }))}
@@ -159,7 +159,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Κιβώτιο</label>
+              <label className="mb-1 block text-sm font-medium text-blue-100/65">Κιβώτιο</label>
               <select
                 value={form.transmission}
                 onChange={(e) => setForm((p) => ({ ...p, transmission: e.target.value as Vehicle['transmission'] }))}
@@ -170,7 +170,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Καύσιμο</label>
+              <label className="mb-1 block text-sm font-medium text-blue-100/65">Καύσιμο</label>
               <select
                 value={form.fuel_type}
                 onChange={(e) => setForm((p) => ({ ...p, fuel_type: e.target.value as Vehicle['fuel_type'] }))}
@@ -181,7 +181,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Λήξη Ασφάλειας</label>
+              <label className="mb-1 block text-sm font-medium text-blue-100/65">Λήξη Ασφάλειας</label>
               <input
                 type="date"
                 value={form.insurance_expiry}
@@ -190,7 +190,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Λήξη ΚΤΕΟ</label>
+              <label className="mb-1 block text-sm font-medium text-blue-100/65">Λήξη ΚΤΕΟ</label>
               <input
                 type="date"
                 value={form.inspection_expiry}
@@ -200,23 +200,23 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
             </div>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-2 border-t border-gray-200">
+          <div className="flex justify-end space-x-3 border-t border-[#1e4e7d]/70 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+              className="rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-4 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
             >
               Άκυρο
             </button>
             <button
               type="submit"
               disabled={saving}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff] disabled:opacity-50"
             >
               {saving ? (
-                <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
+                <ArrowPathIcon className="mr-2 h-4 w-4 animate-spin" />
               ) : (
-                <CheckIcon className="h-4 w-4 mr-2" />
+                <CheckIcon className="mr-2 h-4 w-4" />
               )}
               {saving ? 'Αποθήκευση...' : 'Αποθήκευση'}
             </button>

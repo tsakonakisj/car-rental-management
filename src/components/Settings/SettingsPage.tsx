@@ -199,66 +199,66 @@ const SettingsPage: React.FC = () => {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Επωνυμία Εταιρείας</label>
+          <label className="block text-sm font-medium text-blue-100/65 mb-2">Επωνυμία Εταιρείας</label>
           <input
             type="text"
             value={companySettings.name}
             onChange={(e) => setCompanySettings((prev) => ({ ...prev, name: e.target.value }))}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">ΑΦΜ</label>
+          <label className="block text-sm font-medium text-blue-100/65 mb-2">ΑΦΜ</label>
           <input
             type="text"
             value={companySettings.tax_number}
             onChange={(e) => setCompanySettings((prev) => ({ ...prev, tax_number: e.target.value }))}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           />
         </div>
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium text-gray-700 mb-2">Διεύθυνση</label>
+          <label className="block text-sm font-medium text-blue-100/65 mb-2">Διεύθυνση</label>
           <input
             type="text"
             value={companySettings.address}
             onChange={(e) => setCompanySettings((prev) => ({ ...prev, address: e.target.value }))}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Τηλέφωνο</label>
+          <label className="block text-sm font-medium text-blue-100/65 mb-2">Τηλέφωνο</label>
           <input
             type="text"
             value={companySettings.phone}
             onChange={(e) => setCompanySettings((prev) => ({ ...prev, phone: e.target.value }))}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+          <label className="block text-sm font-medium text-blue-100/65 mb-2">Email</label>
           <input
             type="email"
             value={companySettings.email}
             onChange={(e) => setCompanySettings((prev) => ({ ...prev, email: e.target.value }))}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
+          <label className="block text-sm font-medium text-blue-100/65 mb-2">Website</label>
           <input
             type="text"
             value={companySettings.website}
             onChange={(e) => setCompanySettings((prev) => ({ ...prev, website: e.target.value }))}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Αριθμός Μητρώου</label>
+          <label className="block text-sm font-medium text-blue-100/65 mb-2">Αριθμός Μητρώου</label>
           <input
             type="text"
             value={companySettings.registration_number}
             onChange={(e) => setCompanySettings((prev) => ({ ...prev, registration_number: e.target.value }))}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           />
         </div>
       </div>
@@ -268,43 +268,43 @@ const SettingsPage: React.FC = () => {
   const renderStationsSettings = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium text-gray-900">Σταθμοί Παραλαβής/Παράδοσης</h3>
+        <h3 className="text-lg font-medium text-white">Σταθμοί Παραλαβής/Παράδοσης</h3>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-8">
-          <ArrowPathIcon className="h-6 w-6 text-gray-400 animate-spin" />
+          <ArrowPathIcon className="h-6 w-6 text-blue-100/55 animate-spin" />
         </div>
       ) : (
         <div className="space-y-4">
           {stations.map((station) => (
-            <div key={station.id} className="border border-gray-200 rounded-lg p-4">
+            <div key={station.id} className="rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)] p-4">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Όνομα (ΕΛ)</label>
+                  <label className="block text-sm font-medium text-blue-100/65 mb-1">Όνομα (ΕΛ)</label>
                   <input
                     type="text"
                     value={station.name}
                     readOnly
-                    className="w-full border border-gray-200 rounded-md px-3 py-2 bg-gray-50 text-gray-700"
+                    className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Όνομα (EN)</label>
+                  <label className="block text-sm font-medium text-blue-100/65 mb-1">Όνομα (EN)</label>
                   <input
                     type="text"
                     value={station.name_en}
                     readOnly
-                    className="w-full border border-gray-200 rounded-md px-3 py-2 bg-gray-50 text-gray-700"
+                    className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Διεύθυνση</label>
+                  <label className="block text-sm font-medium text-blue-100/65 mb-1">Διεύθυνση</label>
                   <input
                     type="text"
                     value={station.address}
                     readOnly
-                    className="w-full border border-gray-200 rounded-md px-3 py-2 bg-gray-50 text-gray-700"
+                    className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                   />
                 </div>
                 <div className="flex items-center">
@@ -313,9 +313,9 @@ const SettingsPage: React.FC = () => {
                       type="checkbox"
                       checked={station.active}
                       readOnly
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      className="rounded border-[#2b5b85]/80 bg-[#0b2949]/80 text-[#55a8ff] focus:ring-[#2f8cff]/50"
                     />
-                    <span className="ml-2 text-sm text-gray-700">Ενεργός</span>
+                    <span className="ml-2 text-sm text-blue-100/85">Ενεργός</span>
                   </label>
                 </div>
               </div>
@@ -324,7 +324,7 @@ const SettingsPage: React.FC = () => {
         </div>
       )}
 
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-blue-100/55">
         Οι σταθμοί ενημερώνονται από τη σελίδα Στόλου (απαιτείται επέκταση).
       </p>
     </div>
@@ -334,29 +334,29 @@ const SettingsPage: React.FC = () => {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Νόμισμα</label>
+          <label className="block text-sm font-medium text-blue-100/65 mb-2">Νόμισμα</label>
           <select
             value={financialSettings.currency}
             onChange={(e) => setFinancialSettings((prev) => ({ ...prev, currency: e.target.value }))}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           >
             <option value="EUR">Euro (EUR)</option>
             <option value="USD">US Dollar (USD)</option>
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">ΦΠΑ (%)</label>
+          <label className="block text-sm font-medium text-blue-100/65 mb-2">ΦΠΑ (%)</label>
           <input
             type="number"
             value={financialSettings.vat_rate}
             onChange={(e) =>
               setFinancialSettings((prev) => ({ ...prev, vat_rate: parseFloat(e.target.value) || 0 }))
             }
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Χρέωση Καθυστέρησης (EUR/ώρα)</label>
+          <label className="block text-sm font-medium text-blue-100/65 mb-2">Χρέωση Καθυστέρησης (EUR/ώρα)</label>
           <input
             type="number"
             value={financialSettings.late_return_fee}
@@ -366,11 +366,11 @@ const SettingsPage: React.FC = () => {
                 late_return_fee: parseFloat(e.target.value) || 0,
               }))
             }
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Χρέωση Καθαρισμού (EUR)</label>
+          <label className="block text-sm font-medium text-blue-100/65 mb-2">Χρέωση Καθαρισμού (EUR)</label>
           <input
             type="number"
             value={financialSettings.cleaning_fee}
@@ -380,11 +380,11 @@ const SettingsPage: React.FC = () => {
                 cleaning_fee: parseFloat(e.target.value) || 0,
               }))
             }
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Χρέωση Καυσίμου (EUR/λίτρο)</label>
+          <label className="block text-sm font-medium text-blue-100/65 mb-2">Χρέωση Καυσίμου (EUR/λίτρο)</label>
           <input
             type="number"
             step="0.01"
@@ -395,7 +395,7 @@ const SettingsPage: React.FC = () => {
                 fuel_charge_per_liter: parseFloat(e.target.value) || 0,
               }))
             }
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           />
         </div>
       </div>
@@ -443,50 +443,50 @@ const SettingsPage: React.FC = () => {
   const renderSecuritySettings = () => (
     <div className="space-y-6 max-w-md">
       <div>
-        <h3 className="text-lg font-medium text-gray-900">Αλλαγή Κωδικού Πρόσβασης</h3>
-        <p className="text-sm text-gray-500 mt-1">Αλλάξτε τον κωδικό πρόσβασης του λογαριασμού σας.</p>
+        <h3 className="text-lg font-medium text-white">Αλλαγή Κωδικού Πρόσβασης</h3>
+        <p className="text-sm text-blue-100/55 mt-1">Αλλάξτε τον κωδικό πρόσβασης του λογαριασμού σας.</p>
       </div>
 
       {passwordError && (
-        <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">{passwordError}</div>
+        <div className="rounded-md bg-red-950/45 border border-red-400/30 px-4 py-3 text-sm text-red-100">{passwordError}</div>
       )}
 
       {passwordSuccess && (
-        <div className="rounded-md bg-green-50 px-4 py-3 text-sm text-green-700 flex items-center">
+        <div className="rounded-md bg-emerald-500/15 border border-emerald-400/30 px-4 py-3 text-sm text-emerald-300 flex items-center">
           <CheckIcon className="h-5 w-5 mr-2" />
           Ο κωδικός πρόσβασης άλλαξε επιτυχώς.
         </div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Τρέχων Κωδικός</label>
+        <label className="block text-sm font-medium text-blue-100/65 mb-2">Τρέχων Κωδικός</label>
         <input
           type="password"
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
-          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           placeholder="Εισάγετε τρέχοντα κωδικό"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Νέος Κωδικός</label>
+        <label className="block text-sm font-medium text-blue-100/65 mb-2">Νέος Κωδικός</label>
         <input
           type="password"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
-          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           placeholder="Εισάγετε νέο κωδικό"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Επιβεβαίωση Νέου Κωδικού</label>
+        <label className="block text-sm font-medium text-blue-100/65 mb-2">Επιβεβαίωση Νέου Κωδικού</label>
         <input
           type="password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
-          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           placeholder="Επιβεβαιώστε τον νέο κωδικό"
         />
       </div>
@@ -494,7 +494,7 @@ const SettingsPage: React.FC = () => {
       <button
         onClick={handlePasswordChange}
         disabled={passwordSaving}
-        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors"
+        className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff] disabled:opacity-50"
       >
         {passwordSaving ? (
           <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
@@ -517,15 +517,15 @@ const SettingsPage: React.FC = () => {
       case 'documents':
         return (
           <div className="text-center py-12">
-            <DocumentTextIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">Ρυθμίσεις εγγράφων θα υλοποιηθούν σύντομα</p>
+            <DocumentTextIcon className="h-12 w-12 text-blue-100/45 mx-auto mb-4" />
+            <p className="text-blue-100/55">Ρυθμίσεις εγγράφων θα υλοποιηθούν σύντομα</p>
           </div>
         );
       case 'notifications':
         return (
           <div className="text-center py-12">
-            <BellIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">Ρυθμίσεις ειδοποιήσεων θα υλοποιηθούν σύντομα</p>
+            <BellIcon className="h-12 w-12 text-blue-100/45 mx-auto mb-4" />
+            <p className="text-blue-100/55">Ρυθμίσεις ειδοποιήσεων θα υλοποιηθούν σύντομα</p>
           </div>
         );
       case 'security':
@@ -538,7 +538,7 @@ const SettingsPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center py-12">
-        <ArrowPathIcon className="h-8 w-8 text-gray-400 animate-spin" />
+        <ArrowPathIcon className="h-8 w-8 text-blue-100/55 animate-spin" />
       </div>
     );
   }
@@ -546,23 +546,23 @@ const SettingsPage: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-gray-900">{t('settings')}</h1>
+        <h1 className="text-2xl font-semibold text-white tracking-[-0.02em]">{t('settings')}</h1>
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>
+        <div className="p-4 bg-red-950/45 border border-red-400/30 rounded-lg text-sm text-red-100">{error}</div>
       )}
 
       {saved && (
-        <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700 flex items-center">
+        <div className="p-4 bg-emerald-500/15 border border-emerald-400/30 rounded-lg text-sm text-emerald-300 flex items-center">
           <CheckIcon className="h-5 w-5 mr-2" />
           Οι ρυθμίσεις αποθηκεύτηκαν επιτυχώς.
         </div>
       )}
 
-      <div className="bg-white shadow-sm rounded-lg">
+      <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)]">
         {/* Tabs */}
-        <div className="border-b border-gray-200">
+        <div className="border-b border-[#1e4e7d]/70">
           <nav className="flex space-x-4 sm:space-x-8 px-4 sm:px-6 overflow-x-auto" aria-label="Tabs">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -572,8 +572,8 @@ const SettingsPage: React.FC = () => {
                   onClick={() => setActiveTab(tab.id)}
                   className={`${
                     activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-[#2f8cff] text-[#55a8ff]'
+                      : 'border-transparent text-blue-100/55 hover:text-white hover:border-[#55a8ff]'
                   } whitespace-nowrap py-3 sm:py-4 px-1 border-b-2 font-medium text-sm flex items-center`}
                 >
                   <Icon className="h-5 w-5 mr-2" />
@@ -589,11 +589,11 @@ const SettingsPage: React.FC = () => {
 
         {/* Save Button — hidden on security tab (has its own submit) */}
         {activeTab !== 'security' && (
-          <div className="px-4 sm:px-6 py-4 border-t border-gray-200 flex justify-end">
+          <div className="px-4 sm:px-6 py-4 border-t border-[#1e4e7d]/70 flex justify-end">
             <button
               onClick={handleSave}
               disabled={saving}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff] disabled:opacity-50"
             >
               {saving ? (
                 <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />

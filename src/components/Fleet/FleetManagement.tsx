@@ -121,12 +121,12 @@ const FleetManagement: React.FC = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'available': return 'bg-green-100 text-green-800';
-      case 'reserved': return 'bg-yellow-100 text-yellow-800';
-      case 'rented': return 'bg-blue-100 text-blue-800';
-      case 'service': return 'bg-red-100 text-red-800';
-      case 'inactive': return 'bg-gray-200 text-gray-500';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'available': return 'bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-400/40';
+      case 'reserved': return 'bg-amber-500/15 text-amber-300 ring-1 ring-inset ring-amber-400/40';
+      case 'rented': return 'bg-blue-500/15 text-[#8ec7ff] ring-1 ring-inset ring-blue-400/40';
+      case 'service': return 'bg-red-500/15 text-red-300 ring-1 ring-inset ring-red-400/40';
+      case 'inactive': return 'bg-slate-500/15 text-blue-100/70 ring-1 ring-inset ring-slate-400/35';
+      default: return 'bg-slate-500/15 text-blue-100/70 ring-1 ring-inset ring-slate-400/35';
     }
   };
 
@@ -174,22 +174,22 @@ const FleetManagement: React.FC = () => {
   if (loading && vehicles.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
-        <ArrowPathIcon className="h-6 w-6 text-blue-600 animate-spin mr-3" />
-        <span className="text-gray-600">Φόρτωση στόλου...</span>
+        <ArrowPathIcon className="mr-3 h-6 w-6 animate-spin text-[#55a8ff]" />
+        <span className="text-blue-100/65">Φόρτωση στόλου...</span>
       </div>
     );
   }
 
   if (error && vehicles.length === 0) {
     return (
-      <div className="text-center py-12">
-        <TruckIcon className="h-12 w-12 text-red-400 mx-auto mb-4" />
-        <p className="text-red-600 mb-4">{error}</p>
+      <div className="py-12 text-center">
+        <TruckIcon className="mx-auto mb-4 h-12 w-12 text-red-300" />
+        <p className="mb-4 text-red-100">{error}</p>
         <button
           onClick={fetchVehicles}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+          className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
         >
-          <ArrowPathIcon className="h-4 w-4 mr-2" />
+          <ArrowPathIcon className="mr-2 h-4 w-4" />
           Δοκιμή ξανά
         </button>
       </div>
@@ -198,13 +198,13 @@ const FleetManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-gray-900">{t('fleet')}</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold tracking-[-0.03em] text-white">{t('fleet')}</h1>
         <button
           onClick={() => setAddingVehicle(true)}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
         >
-          <PlusIcon className="h-4 w-4 mr-2" />
+          <PlusIcon className="mr-2 h-4 w-4" />
           Προσθήκη Οχήματος
         </button>
       </div>
@@ -219,10 +219,10 @@ const FleetManagement: React.FC = () => {
           <button
             key={f.key}
             onClick={() => setFilter(f.key)}
-            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+            className={`rounded-xl px-3 py-1.5 text-sm font-medium transition-colors ${
               filter === f.key
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                ? 'bg-[#1268f3] text-white shadow-[0_6px_18px_rgba(18,104,243,0.28)]'
+                : 'border border-[#2b5b85]/80 bg-[#0b2949]/75 text-blue-100/75 hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white'
             }`}
           >
             {f.label}
@@ -232,9 +232,9 @@ const FleetManagement: React.FC = () => {
 
       {/* Empty state */}
       {filteredVehicles.length === 0 && (
-        <div className="text-center py-12 bg-white shadow-sm rounded-lg">
-          <TruckIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <p className="text-gray-500">
+        <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/85 py-14 text-center shadow-[0_16px_40px_rgba(0,0,0,0.2)]">
+          <TruckIcon className="mx-auto mb-4 h-12 w-12 text-blue-100/45" />
+          <p className="text-blue-100/55">
             {filter === 'inactive'
               ? 'Δεν υπάρχουν ανενεργά οχήματα.'
               : 'Δεν υπάρχουν οχήματα ακόμα. Προσθέστε το πρώτο όχημα του στόλου σας.'}
@@ -276,63 +276,63 @@ const FleetManagement: React.FC = () => {
 
       {/* Fleet Grid */}
       {filteredVehicles.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
           {filteredVehicles.map((vehicle) => {
             const StatusIcon = getStatusIcon(vehicle.status);
             const isInactive = vehicle.status === 'inactive';
             return (
               <div
                 key={vehicle.id}
-                className={`bg-white shadow-sm rounded-lg overflow-hidden ${isInactive ? 'opacity-50' : ''}`}
+                className={`overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)] ${isInactive ? 'opacity-50' : ''}`}
               >
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
+                <div className="p-5">
+                  <div className="mb-4 flex items-center justify-between">
                     <div className="flex items-center">
-                      <TruckIcon className="h-8 w-8 text-gray-400 mr-3" />
+                      <TruckIcon className="mr-3 h-8 w-8 text-blue-100/45" />
                       <div>
-                        <h3 className="text-lg font-medium text-gray-900">{vehicle.plate}</h3>
-                        <p className="text-sm text-gray-600">{vehicle.brand} {vehicle.model}</p>
+                        <h3 className="text-lg font-semibold tracking-[-0.02em] text-white">{vehicle.plate}</h3>
+                        <p className="text-sm text-blue-100/65">{vehicle.brand} {vehicle.model}</p>
                       </div>
                     </div>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(vehicle.status)}`}>
-                      <StatusIcon className="h-3 w-3 mr-1" />
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(vehicle.status)}`}>
+                      <StatusIcon className="mr-1 h-3 w-3" />
                       {getStatusLabel(vehicle.status)}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+                  <div className="mb-4 grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <span className="text-gray-500">Κατηγορία:</span>
-                      <p className="font-medium">{vehicle.category}</p>
+                      <span className="text-blue-100/55">Κατηγορία:</span>
+                      <p className="font-medium text-white">{vehicle.category}</p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Έτος:</span>
-                      <p className="font-medium">{vehicle.year}</p>
+                      <span className="text-blue-100/55">Έτος:</span>
+                      <p className="font-medium text-white">{vehicle.year}</p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Κιβώτιο:</span>
-                      <p className="font-medium">{vehicle.transmission === 'manual' ? 'Χειροκίνητο' : 'Αυτόματο'}</p>
+                      <span className="text-blue-100/55">Κιβώτιο:</span>
+                      <p className="font-medium text-white">{vehicle.transmission === 'manual' ? 'Χειροκίνητο' : 'Αυτόματο'}</p>
                     </div>
                     <div>
-                      <span className="text-gray-500">Καύσιμο:</span>
-                      <p className="font-medium">{vehicle.fuel_type === 'petrol' ? 'Βενζίνη' : 'Πετρέλαιο'}</p>
+                      <span className="text-blue-100/55">Καύσιμο:</span>
+                      <p className="font-medium text-white">{vehicle.fuel_type === 'petrol' ? 'Βενζίνη' : 'Πετρέλαιο'}</p>
                     </div>
                   </div>
 
                   {/* Document Status */}
                   {!isInactive && (
-                    <div className="space-y-2 mb-4">
+                    <div className="mb-4 space-y-2">
                       {vehicle.insurance_expiry && (
-                        <div className={`flex items-center justify-between text-xs p-2 rounded ${
-                          isDocumentExpiring(vehicle.insurance_expiry) ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'
+                        <div className={`flex items-center justify-between rounded-lg p-2 text-xs ${
+                          isDocumentExpiring(vehicle.insurance_expiry) ? 'bg-red-500/15 text-red-300' : 'bg-emerald-500/15 text-emerald-300'
                         }`}>
                           <span>Ασφάλεια:</span>
                           <span>{new Date(vehicle.insurance_expiry).toLocaleDateString('el-GR')}</span>
                         </div>
                       )}
                       {vehicle.inspection_expiry && (
-                        <div className={`flex items-center justify-between text-xs p-2 rounded ${
-                          isDocumentExpiring(vehicle.inspection_expiry) ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'
+                        <div className={`flex items-center justify-between rounded-lg p-2 text-xs ${
+                          isDocumentExpiring(vehicle.inspection_expiry) ? 'bg-red-500/15 text-red-300' : 'bg-emerald-500/15 text-emerald-300'
                         }`}>
                           <span>ΚΤΕΟ:</span>
                           <span>{new Date(vehicle.inspection_expiry).toLocaleDateString('el-GR')}</span>
@@ -344,16 +344,16 @@ const FleetManagement: React.FC = () => {
                   <div className="flex space-x-2">
                     <button
                       onClick={() => setSelectedVehicle(vehicle)}
-                      className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 transition-colors"
+                      className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
                     >
-                      <CalendarDaysIcon className="h-4 w-4 mr-1" />
+                      <CalendarDaysIcon className="mr-1 h-4 w-4" />
                       Κρατήσεις
                     </button>
                     {!isInactive && (
                       <>
                         <button
                           onClick={() => setEditingVehicle(vehicle)}
-                          className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+                          className="inline-flex min-h-10 items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
                           title="Επεξεργασία"
                         >
                           <PencilIcon className="h-4 w-4" />
@@ -361,7 +361,7 @@ const FleetManagement: React.FC = () => {
                         <button
                           onClick={() => handleDeactivate(vehicle)}
                           disabled={togglingId === vehicle.id}
-                          className="inline-flex items-center px-3 py-2 border border-orange-300 text-sm font-medium rounded-md text-orange-700 bg-white hover:bg-orange-50 transition-colors disabled:opacity-50"
+                          className="inline-flex min-h-10 items-center rounded-xl border border-amber-400/40 bg-amber-500/15 px-3 py-2 text-sm font-medium text-amber-300 transition-colors hover:bg-amber-500/25 disabled:opacity-50"
                           title="Απενεργοποίηση"
                         >
                           <NoSymbolIcon className="h-4 w-4" />
@@ -372,9 +372,9 @@ const FleetManagement: React.FC = () => {
                       <button
                         onClick={() => handleReactivate(vehicle)}
                         disabled={togglingId === vehicle.id}
-                        className="inline-flex items-center px-3 py-2 border border-green-300 text-sm font-medium rounded-md text-green-700 bg-white hover:bg-green-50 transition-colors disabled:opacity-50"
+                        className="inline-flex min-h-10 items-center rounded-xl border border-emerald-400/40 bg-emerald-500/15 px-3 py-2 text-sm font-medium text-emerald-300 transition-colors hover:bg-emerald-500/25 disabled:opacity-50"
                       >
-                        <ArrowPathIcon className="h-4 w-4 mr-1" />
+                        <ArrowPathIcon className="mr-1 h-4 w-4" />
                         Επανενεργοποίηση
                       </button>
                     )}

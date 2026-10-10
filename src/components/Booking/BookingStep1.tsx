@@ -44,7 +44,7 @@ const BookingStep1: React.FC<BookingStep1Props> = ({ data, updateData }) => {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-blue-100/65 mb-2">
             {t('pickupDateTime')}
           </label>
           <div className="grid grid-cols-2 gap-2">
@@ -53,19 +53,19 @@ const BookingStep1: React.FC<BookingStep1Props> = ({ data, updateData }) => {
               value={data.pickupDate}
               min={todayStr}
               onChange={e => updateData({ pickupDate: e.target.value })}
-              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
             />
             <input
               type="time"
               value={data.pickupTime || '09:00'}
               onChange={(e) => updateData({ pickupTime: e.target.value })}
-              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-blue-100/65 mb-2">
             {t('returnDateTime')}
           </label>
           <div className="grid grid-cols-2 gap-2">
@@ -74,13 +74,13 @@ const BookingStep1: React.FC<BookingStep1Props> = ({ data, updateData }) => {
               value={data.returnDate}
               min={data.pickupDate || todayStr}
               onChange={e => updateData({ returnDate: e.target.value })}
-              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
             />
             <input
               type="time"
               value={data.returnTime || '09:00'}
               onChange={(e) => updateData({ returnTime: e.target.value })}
-              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
             />
           </div>
         </div>
@@ -88,13 +88,13 @@ const BookingStep1: React.FC<BookingStep1Props> = ({ data, updateData }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-blue-100/65 mb-2">
             {t('pickupStation')}
           </label>
           <select
             value={data.pickupStation || ''}
             onChange={(e) => updateData({ pickupStation: e.target.value })}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           >
             <option value="">Επιλέξτε σταθμό...</option>
             {stations.map(station => (
@@ -106,13 +106,13 @@ const BookingStep1: React.FC<BookingStep1Props> = ({ data, updateData }) => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-blue-100/65 mb-2">
             {t('returnStation')}
           </label>
           <select
             value={data.returnStation || ''}
             onChange={(e) => updateData({ returnStation: e.target.value })}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           >
             <option value="">Επιλέξτε σταθμό...</option>
             {stations.map(station => (

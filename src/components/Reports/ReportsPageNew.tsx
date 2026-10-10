@@ -243,36 +243,36 @@ const ReportsPageNew: React.FC = () => {
 
   const Spinner = () => (
     <div className="flex justify-center py-8">
-      <ArrowPathIcon className="h-6 w-6 text-gray-400 animate-spin" />
+      <ArrowPathIcon className="h-6 w-6 text-blue-100/45 animate-spin" />
     </div>
   );
 
   const Empty = ({ msg = 'Δεν υπάρχουν δεδομένα για την επιλεγμένη περίοδο.' }) => (
-    <p className="text-center text-gray-400 py-8 text-sm">{msg}</p>
+    <p className="text-center text-blue-100/45 py-8 text-sm">{msg}</p>
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 text-blue-50">
       <div className="flex flex-wrap gap-4 justify-between items-center">
-        <h1 className="text-2xl font-semibold text-gray-900">ΑΝΑΦΟΡΕΣ v2</h1>
+        <h1 className="text-2xl font-semibold text-white tracking-[-0.03em]">ΑΝΑΦΟΡΕΣ v2</h1>
         <div className="flex items-center gap-3">
           <input
             type="date"
             value={dateRange.from}
             onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
-            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           />
-          <span className="text-gray-400">—</span>
+          <span className="text-blue-100/45">—</span>
           <input
             type="date"
             value={dateRange.to}
             onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
-            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           />
           <button
             onClick={fetchReport}
             disabled={loading}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+            className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white disabled:opacity-50"
           >
             <ArrowPathIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
@@ -280,37 +280,37 @@ const ReportsPageNew: React.FC = () => {
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">{error}</div>
+        <div className="rounded-xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-300">{error}</div>
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {(
           [
-            { label: 'Συνολικά Έσοδα', value: `€${summary.totalRevenue.toFixed(2)}`, icon: CurrencyEuroIcon, color: 'text-green-600', bg: 'bg-green-50' },
-            { label: 'Κρατήσεις', value: summary.totalRentals, icon: CalendarDaysIcon, color: 'text-blue-600', bg: 'bg-blue-50' },
-            { label: 'Ενεργές', value: summary.activeRentals, icon: ClockIcon, color: 'text-amber-600', bg: 'bg-amber-50' },
-            { label: 'Ολοκληρωμένες', value: summary.completedRentals, icon: CheckCircleIcon, color: 'text-teal-600', bg: 'bg-teal-50' },
+            { label: 'Συνολικά Έσοδα', value: `€${summary.totalRevenue.toFixed(2)}`, icon: CurrencyEuroIcon, color: 'text-emerald-300', bg: 'bg-emerald-500/15' },
+            { label: 'Κρατήσεις', value: summary.totalRentals, icon: CalendarDaysIcon, color: 'text-[#55a8ff]', bg: 'bg-blue-500/15' },
+            { label: 'Ενεργές', value: summary.activeRentals, icon: ClockIcon, color: 'text-amber-300', bg: 'bg-amber-500/15' },
+            { label: 'Ολοκληρωμένες', value: summary.completedRentals, icon: CheckCircleIcon, color: 'text-teal-300', bg: 'bg-teal-500/15' },
           ] as const
         ).map(({ label, value, icon: Icon, color, bg }) => (
-          <div key={label} className="bg-white rounded-lg shadow-sm p-5 flex items-center gap-4">
+          <div key={label} className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)] p-5 flex items-center gap-4">
             <div className={`${bg} rounded-full p-3 flex-shrink-0`}>
               <Icon className={`h-6 w-6 ${color}`} />
             </div>
             <div>
-              <p className="text-sm text-gray-500">{label}</p>
+              <p className="text-sm text-blue-100/55">{label}</p>
               <p className={`text-xl font-bold ${color}`}>{loading ? '—' : value}</p>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="bg-white shadow-sm rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-lg font-medium text-gray-900">Ημερήσιες Πωλήσεις</h2>
+      <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)]">
+        <div className="px-6 py-4 border-b border-[#1e4e7d]/70 flex items-center justify-between">
+          <h2 className="text-lg font-medium text-white tracking-[-0.02em]">Ημερήσιες Πωλήσεις</h2>
           <button
             onClick={() => exportToCSV(dailySales, 'daily-sales')}
             disabled={!dailySales.length}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-40"
+            className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white disabled:opacity-40"
           >
             <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
             Εξαγωγή CSV
@@ -321,37 +321,37 @@ const ReportsPageNew: React.FC = () => {
             <div className="overflow-x-auto">
               <table className="min-w-full">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 text-sm font-medium text-gray-500">Ημερομηνία</th>
-                    <th className="text-center py-3 text-sm font-medium text-gray-500">Κρατήσεις</th>
-                    <th className="text-right py-3 text-sm font-medium text-gray-500">Έσοδα</th>
-                    <th className="text-right py-3 text-sm font-medium text-gray-500">Μέσο Έσοδο</th>
+                  <tr className="border-b border-[#1e4e7d]/70">
+                    <th className="text-left py-3 text-sm font-medium text-blue-100/55">Ημερομηνία</th>
+                    <th className="text-center py-3 text-sm font-medium text-blue-100/55">Κρατήσεις</th>
+                    <th className="text-right py-3 text-sm font-medium text-blue-100/55">Έσοδα</th>
+                    <th className="text-right py-3 text-sm font-medium text-blue-100/55">Μέσο Έσοδο</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-[#1e4e7d]/50">
                   {dailySales.map((day) => (
-                    <tr key={day.date} className="hover:bg-gray-50">
-                      <td className="py-3 text-sm font-medium text-gray-900">
+                    <tr key={day.date} className="hover:bg-[#0b2949]/50">
+                      <td className="py-3 text-sm font-medium text-white">
                         {format(new Date(`${day.date}T12:00:00`), 'dd/MM/yyyy')}
                       </td>
                       <td className="text-center py-3">
-                        <span className="text-sm font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
+                        <span className="text-sm font-medium text-[#8ec7ff] bg-blue-500/15 px-2 py-0.5 rounded-full ring-1 ring-inset ring-blue-400/40">
                           {day.reservations}
                         </span>
                       </td>
-                      <td className="text-right py-3 text-sm font-semibold text-green-600">
+                      <td className="text-right py-3 text-sm font-semibold text-emerald-300">
                         €{day.revenue.toFixed(2)}
                       </td>
-                      <td className="text-right py-3 text-sm text-gray-500">
+                      <td className="text-right py-3 text-sm text-blue-100/55">
                         €{day.avg_revenue.toFixed(2)}
                       </td>
                     </tr>
                   ))}
-                  <tr className="border-t-2 border-gray-300 bg-gray-50 font-semibold">
+                  <tr className="border-t-2 border-[#1e4e7d]/70 bg-[#0b2949]/50 font-semibold">
                     <td className="py-3 text-sm">Σύνολο</td>
                     <td className="text-center py-3 text-sm">{summary.totalRentals}</td>
-                    <td className="text-right py-3 text-sm text-green-600">€{summary.totalRevenue.toFixed(2)}</td>
-                    <td className="text-right py-3 text-sm text-gray-500">
+                    <td className="text-right py-3 text-sm text-emerald-300">€{summary.totalRevenue.toFixed(2)}</td>
+                    <td className="text-right py-3 text-sm text-blue-100/55">
                       {summary.totalRentals > 0
                         ? `€${(summary.totalRevenue / summary.totalRentals).toFixed(2)}`
                         : '—'}
@@ -364,13 +364,13 @@ const ReportsPageNew: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white shadow-sm rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-          <h2 className="text-lg font-medium text-gray-900">Ανάλυση ανά Κατηγορία Οχήματος</h2>
+      <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)]">
+        <div className="px-6 py-4 border-b border-[#1e4e7d]/70 flex items-center justify-between">
+          <h2 className="text-lg font-medium text-white tracking-[-0.02em]">Ανάλυση ανά Κατηγορία Οχήματος</h2>
           <button
             onClick={() => exportToCSV(categoryData, 'category-breakdown')}
             disabled={!categoryData.length}
-            className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-40"
+            className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white disabled:opacity-40"
           >
             <ArrowDownTrayIcon className="h-4 w-4 mr-2" />
             Εξαγωγή CSV
@@ -380,25 +380,25 @@ const ReportsPageNew: React.FC = () => {
           {loading ? <Spinner /> : categoryData.length === 0 ? <Empty /> : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {categoryData.map((cat) => (
-                <div key={cat.category} className="border border-gray-200 rounded-lg p-4">
+                <div key={cat.category} className="rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)] p-4">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="bg-blue-50 rounded-full p-2">
-                      <TruckIcon className="h-5 w-5 text-blue-600" />
+                    <div className="bg-blue-500/15 rounded-full p-2">
+                      <TruckIcon className="h-5 w-5 text-[#55a8ff]" />
                     </div>
-                    <h3 className="font-semibold text-gray-900">Κατηγορία {cat.category}</h3>
+                    <h3 className="font-semibold text-white">Κατηγορία {cat.category}</h3>
                   </div>
                   <div className="space-y-1.5 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Κρατήσεις</span>
+                      <span className="text-blue-100/55">Κρατήσεις</span>
                       <span className="font-medium">{cat.rentals}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Έσοδα</span>
-                      <span className="font-semibold text-green-600">€{cat.revenue.toFixed(2)}</span>
+                      <span className="text-blue-100/55">Έσοδα</span>
+                      <span className="font-semibold text-emerald-300">€{cat.revenue.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-500">Μέσο/κράτηση</span>
-                      <span className="text-gray-700">€{cat.avgRevenue.toFixed(2)}</span>
+                      <span className="text-blue-100/55">Μέσο/κράτηση</span>
+                      <span className="text-blue-100/85">€{cat.avgRevenue.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -408,9 +408,9 @@ const ReportsPageNew: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white shadow-sm rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">Έσοδα ανά Κανάλι</h2>
+      <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)]">
+        <div className="px-6 py-4 border-b border-[#1e4e7d]/70">
+          <h2 className="text-lg font-medium text-white tracking-[-0.02em]">Έσοδα ανά Κανάλι</h2>
         </div>
         <div className="p-6">
           {loading ? <Spinner /> : channelData.length === 0 ? <Empty /> : (
@@ -418,15 +418,15 @@ const ReportsPageNew: React.FC = () => {
               {channelData.map((ch) => (
                 <div key={ch.channel} className="text-center">
                   <div
-                    className={`w-16 h-16 ${CHANNEL_COLORS[ch.channel] || 'bg-gray-400'} rounded-full mx-auto mb-4 flex items-center justify-center text-white text-xl font-bold`}
+                    className={`w-16 h-16 ${CHANNEL_COLORS[ch.channel] || 'bg-[#2b5b85]'} rounded-full mx-auto mb-4 flex items-center justify-center text-white text-xl font-bold`}
                   >
                     {ch.percentage}%
                   </div>
-                  <h3 className="text-sm font-medium text-gray-900 mb-1">
+                  <h3 className="text-sm font-medium text-white mb-1">
                     {CHANNEL_LABELS[ch.channel] || ch.channel}
                   </h3>
-                  <p className="text-xs text-gray-500">{ch.reservations} κρατήσεις</p>
-                  <p className="text-base font-semibold text-green-600">€{ch.revenue.toFixed(2)}</p>
+                  <p className="text-xs text-blue-100/55">{ch.reservations} κρατήσεις</p>
+                  <p className="text-base font-semibold text-emerald-300">€{ch.revenue.toFixed(2)}</p>
                 </div>
               ))}
             </div>
@@ -434,9 +434,9 @@ const ReportsPageNew: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white shadow-sm rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">Πληρότητα Στόλου — Τρέχουσα Κατάσταση</h2>
+      <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)]">
+        <div className="px-6 py-4 border-b border-[#1e4e7d]/70">
+          <h2 className="text-lg font-medium text-white tracking-[-0.02em]">Πληρότητα Στόλου — Τρέχουσα Κατάσταση</h2>
         </div>
         <div className="p-6">
           {loading ? <Spinner /> : occupancyData.length === 0 ? <Empty msg="Δεν βρέθηκαν δεδομένα στόλου." /> : (
@@ -445,16 +445,16 @@ const ReportsPageNew: React.FC = () => {
                 const pct = item.total > 0 ? (item.occupied / item.total) * 100 : 0;
                 return (
                   <div key={item.category} className="text-center">
-                    <TruckIcon className="h-7 w-7 text-gray-400 mx-auto mb-2" />
-                    <h3 className="font-medium text-gray-900 mb-3">{item.category}</h3>
-                    <div className="text-2xl font-bold text-blue-600 mb-2">{item.occupied}/{item.total}</div>
-                    <div className="w-full bg-gray-200 rounded-full h-2 mb-1">
+                    <TruckIcon className="h-7 w-7 text-blue-100/45 mx-auto mb-2" />
+                    <h3 className="font-medium text-white mb-3">{item.category}</h3>
+                    <div className="text-2xl font-bold text-[#55a8ff] mb-2">{item.occupied}/{item.total}</div>
+                    <div className="w-full bg-[#0b2949] rounded-full h-2 mb-1">
                       <div
                         className={`h-2 rounded-full transition-all ${pct < 50 ? 'bg-green-500' : pct < 80 ? 'bg-amber-500' : 'bg-red-500'}`}
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <p className="text-xs text-gray-500">{pct.toFixed(0)}% ενοικιάζεται</p>
+                    <p className="text-xs text-blue-100/55">{pct.toFixed(0)}% ενοικιάζεται</p>
                   </div>
                 );
               })}
@@ -463,24 +463,24 @@ const ReportsPageNew: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white shadow-sm rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">Δραστηριότητα Σταθμών</h2>
+      <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)]">
+        <div className="px-6 py-4 border-b border-[#1e4e7d]/70">
+          <h2 className="text-lg font-medium text-white tracking-[-0.02em]">Δραστηριότητα Σταθμών</h2>
         </div>
         <div className="p-6">
           {loading ? <Spinner /> : stationActivity.length === 0 ? <Empty /> : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {stationActivity.map((st) => (
-                <div key={st.station} className="border border-gray-200 rounded-lg p-4">
-                  <h3 className="font-medium text-gray-900 mb-4 text-center">{st.station}</h3>
+                <div key={st.station} className="rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)] p-4">
+                  <h3 className="font-medium text-white mb-4 text-center">{st.station}</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">{st.checkouts}</div>
-                      <p className="text-sm text-gray-500">Check-outs</p>
+                      <div className="text-2xl font-bold text-[#55a8ff]">{st.checkouts}</div>
+                      <p className="text-sm text-blue-100/55">Check-outs</p>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600">{st.checkins}</div>
-                      <p className="text-sm text-gray-500">Check-ins</p>
+                      <div className="text-2xl font-bold text-emerald-300">{st.checkins}</div>
+                      <p className="text-sm text-blue-100/55">Check-ins</p>
                     </div>
                   </div>
                 </div>

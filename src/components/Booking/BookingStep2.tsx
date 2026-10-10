@@ -72,10 +72,10 @@ const BookingStep2: React.FC<BookingStep2Props> = ({ data, updateData }) => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'available': return 'bg-green-100 text-green-700';
-      case 'reserved': return 'bg-yellow-100 text-yellow-700';
-      case 'service': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'available': return 'bg-emerald-500/20 text-emerald-300';
+      case 'reserved': return 'bg-amber-500/20 text-amber-300';
+      case 'service': return 'bg-red-500/20 text-red-300';
+      default: return 'bg-[#0b2949] text-blue-100/65';
     }
   };
 
@@ -95,8 +95,8 @@ const BookingStep2: React.FC<BookingStep2Props> = ({ data, updateData }) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <ArrowPathIcon className="h-6 w-6 text-blue-600 animate-spin mr-3" />
-        <span className="text-gray-600">Φόρτωση οχημάτων...</span>
+        <ArrowPathIcon className="h-6 w-6 text-[#55a8ff] animate-spin mr-3" />
+        <span className="text-blue-100/65">Φόρτωση οχημάτων...</span>
       </div>
     );
   }
@@ -105,7 +105,7 @@ const BookingStep2: React.FC<BookingStep2Props> = ({ data, updateData }) => {
     return (
       <div className="text-center py-12">
         <TruckIcon className="h-12 w-12 text-red-400 mx-auto mb-4" />
-        <p className="text-red-600">{error}</p>
+        <p className="text-red-400">{error}</p>
       </div>
     );
   }
@@ -113,15 +113,15 @@ const BookingStep2: React.FC<BookingStep2Props> = ({ data, updateData }) => {
   if (vehicles.length === 0) {
     return (
       <div className="text-center py-12">
-        <TruckIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-500">Δεν υπάρχουν οχήματα στον στόλο. Προσθέστε οχήματα από τη σελίδα Στόλος.</p>
+        <TruckIcon className="h-12 w-12 text-blue-100/45 mx-auto mb-4" />
+        <p className="text-blue-100/55">Δεν υπάρχουν οχήματα στον στόλο. Προσθέστε οχήματα από τη σελίδα Στόλος.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-medium text-gray-900">{t('selectCategory')}</h3>
+      <h3 className="text-lg font-medium text-white tracking-[-0.02em]">{t('selectCategory')}</h3>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {vehicles.map((vehicle) => {
@@ -135,24 +135,24 @@ const BookingStep2: React.FC<BookingStep2Props> = ({ data, updateData }) => {
             <div
               key={vehicle.id}
               onClick={() => isAvailable && handleVehicleSelect(vehicle)}
-              className={`rounded-lg border-2 p-4 transition-all ${
+              className={`rounded-2xl border p-4 transition-all ${
                 isAvailable ? 'cursor-pointer hover:shadow-md' : 'opacity-60 cursor-not-allowed'
               } ${
                 isSelected
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-300'
+                  ? 'border-[#2f8cff] bg-[#1268f3]/15'
+                  : 'border-[#2b5b85]/80 bg-[#0b2949]/60 hover:border-[#55a8ff]'
               }`}
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center">
-                  <TruckIcon className="h-6 w-6 text-gray-400 mr-2" />
+                  <TruckIcon className="h-6 w-6 text-blue-100/45 mr-2" />
                   <div>
-                    <h4 className="font-medium text-gray-900">{vehicle.plate}</h4>
-                    <p className="text-sm text-gray-600">{vehicle.brand} {vehicle.model}</p>
+                    <h4 className="font-medium text-white">{vehicle.plate}</h4>
+                    <p className="text-sm text-blue-100/65">{vehicle.brand} {vehicle.model}</p>
                   </div>
                 </div>
                 {hasOverlap ? (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-300">
                     Μη διαθέσιμο
                   </span>
                 ) : (
@@ -164,40 +164,40 @@ const BookingStep2: React.FC<BookingStep2Props> = ({ data, updateData }) => {
 
               <div className="grid grid-cols-2 gap-2 text-sm mb-3">
                 <div>
-                  <span className="text-gray-500">Κατηγορία:</span>
-                  <p className="font-medium text-gray-900">{vehicle.category}</p>
+                  <span className="text-blue-100/55">Κατηγορία:</span>
+                  <p className="font-medium text-white">{vehicle.category}</p>
                 </div>
                 <div>
-                  <span className="text-gray-500">Κιβώτιο:</span>
-                  <p className="font-medium text-gray-900">{vehicle.transmission === 'manual' ? 'Χειροκίνητο' : 'Αυτόματο'}</p>
+                  <span className="text-blue-100/55">Κιβώτιο:</span>
+                  <p className="font-medium text-white">{vehicle.transmission === 'manual' ? 'Χειροκίνητο' : 'Αυτόματο'}</p>
                 </div>
                 <div>
-                  <span className="text-gray-500">Καύσιμο:</span>
-                  <p className="font-medium text-gray-900">{vehicle.fuel_type === 'petrol' ? 'Βενζίνη' : 'Πετρέλαιο'}</p>
+                  <span className="text-blue-100/55">Καύσιμο:</span>
+                  <p className="font-medium text-white">{vehicle.fuel_type === 'petrol' ? 'Βενζίνη' : 'Πετρέλαιο'}</p>
                 </div>
                 <div>
-                  <span className="text-gray-500">Έτος:</span>
-                  <p className="font-medium text-gray-900">{vehicle.year}</p>
+                  <span className="text-blue-100/55">Έτος:</span>
+                  <p className="font-medium text-white">{vehicle.year}</p>
                 </div>
               </div>
 
               <div className="flex items-center justify-between">
                 <div>
                   {rate > 0 ? (
-                    <p className="text-lg font-semibold text-green-600">
+                    <p className="text-lg font-semibold text-emerald-300">
                       {`\u20AC${rate}/ημέρα`}
                       {seasonName && (
-                        <span className="text-xs font-normal text-gray-500 ml-1">({seasonName})</span>
+                        <span className="text-xs font-normal text-blue-100/55 ml-1">({seasonName})</span>
                       )}
                     </p>
                   ) : (
-                    <p className="text-sm text-red-600">
+                    <p className="text-sm text-red-400">
                       Δεν έχει οριστεί τιμή για αυτή την κατηγορία και σεζόν
                     </p>
                   )}
                 </div>
                 {isSelected && (
-                  <span className="text-sm font-medium text-blue-700 bg-blue-100 px-2 py-0.5 rounded">
+                  <span className="text-sm font-medium text-[#55a8ff] bg-[#1268f3]/20 px-2 py-0.5 rounded">
                     Επιλεγμένο
                   </span>
                 )}

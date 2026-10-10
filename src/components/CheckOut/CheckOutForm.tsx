@@ -147,13 +147,13 @@ const CheckOutForm: React.FC<CheckOutFormProps> = ({ reservationId, onComplete, 
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="bg-white shadow-sm rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
+      <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)]">
+        <div className="px-6 py-4 border-b border-[#1e4e7d]/70">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">Check-out Οχήματος</h2>
+            <h2 className="text-xl font-semibold text-white tracking-[-0.02em]">Check-out Οχήματος</h2>
             <button
               onClick={onCancel}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-blue-100/55 hover:text-white"
             >
               <XMarkIcon className="h-6 w-6" />
             </button>
@@ -164,7 +164,7 @@ const CheckOutForm: React.FC<CheckOutFormProps> = ({ reservationId, onComplete, 
           {/* Fuel and Odometer */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-blue-100/65 mb-2">
                 Επίπεδο Καυσίμου (%)
               </label>
               <input
@@ -174,9 +174,9 @@ const CheckOutForm: React.FC<CheckOutFormProps> = ({ reservationId, onComplete, 
                 step="12.5"
                 value={checkOutData.fuel_level}
                 onChange={(e) => setCheckOutData(prev => ({ ...prev, fuel_level: parseInt(e.target.value) }))}
-                className="w-full"
+                className="w-full accent-[#1268f3]"
               />
-              <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <div className="flex justify-between text-xs text-blue-100/55 mt-1">
                 <span>0%</span>
                 <span>1/8</span>
                 <span>1/4</span>
@@ -187,18 +187,18 @@ const CheckOutForm: React.FC<CheckOutFormProps> = ({ reservationId, onComplete, 
                 <span>7/8</span>
                 <span>100%</span>
               </div>
-              <p className="text-center mt-2 font-medium">{checkOutData.fuel_level}%</p>
+              <p className="text-center mt-2 font-medium text-white">{checkOutData.fuel_level}%</p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-blue-100/65 mb-2">
                 Χιλιόμετρα
               </label>
               <input
                 type="number"
                 value={checkOutData.odometer}
                 onChange={(e) => setCheckOutData(prev => ({ ...prev, odometer: parseInt(e.target.value) || 0 }))}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                 placeholder="Εισάγετε χιλιόμετρα..."
               />
             </div>
@@ -206,7 +206,7 @@ const CheckOutForm: React.FC<CheckOutFormProps> = ({ reservationId, onComplete, 
 
           {/* Photos */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-4">
+            <label className="block text-sm font-medium text-blue-100/65 mb-4">
               Φωτογραφίες Οχήματος
             </label>
 
@@ -216,24 +216,24 @@ const CheckOutForm: React.FC<CheckOutFormProps> = ({ reservationId, onComplete, 
                   <img
                     src={photoUrls.get(photoPath) || ''}
                     alt="Vehicle photo"
-                    className="w-full h-32 object-cover rounded-lg border"
+                    className="w-full h-32 object-cover rounded-xl border border-[#1e4e7d]/70"
                   />
                   <button
                     onClick={() => removePhoto(photoPath)}
-                    className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700"
+                    className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-500"
                   >
                     <TrashIcon className="h-4 w-4" />
                   </button>
                 </div>
               ))}
 
-              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+              <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-[#2b5b85]/80 border-dashed rounded-lg cursor-pointer bg-[#0b2949]/50 hover:bg-[#0b2949]/80 transition-colors">
                 {uploading ? (
-                  <ArrowPathIcon className="h-8 w-8 text-blue-500 mb-2 animate-spin" />
+                  <ArrowPathIcon className="h-8 w-8 text-[#55a8ff] mb-2 animate-spin" />
                 ) : (
-                  <CameraIcon className="h-8 w-8 text-gray-400 mb-2" />
+                  <CameraIcon className="h-8 w-8 text-blue-100/55 mb-2" />
                 )}
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-blue-100/55">
                   {uploading ? 'Μεταφόρτωση...' : 'Λήψη φωτογραφίας'}
                 </span>
                 <input
@@ -248,7 +248,7 @@ const CheckOutForm: React.FC<CheckOutFormProps> = ({ reservationId, onComplete, 
               </label>
             </div>
 
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-blue-100/65">
               Τραβήξτε φωτογραφίες από όλες τις πλευρές του οχήματος
             </p>
           </div>
@@ -256,36 +256,36 @@ const CheckOutForm: React.FC<CheckOutFormProps> = ({ reservationId, onComplete, 
           {/* Existing Damages */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className="block text-sm font-medium text-blue-100/65">
                 Προϋπάρχουσες Ζημιές
               </label>
               <button
                 onClick={() => setShowDamageForm(true)}
-                className="text-sm text-blue-600 hover:text-blue-700"
+                className="text-sm text-[#55a8ff] hover:text-[#7bc0ff]"
               >
                 + Προσθήκη ζημιάς
               </button>
             </div>
 
             {showDamageForm && (
-              <div className="mb-4 p-4 border border-gray-200 rounded-lg">
+              <div className="mb-4 p-4 rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
                 <div className="flex space-x-2">
                   <input
                     type="text"
                     value={newDamage}
                     onChange={(e) => setNewDamage(e.target.value)}
                     placeholder="Περιγραφή ζημιάς..."
-                    className="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                   />
                   <button
                     onClick={addDamage}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                    className="rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
                   >
                     <CheckIcon className="h-4 w-4" />
                   </button>
                   <button
                     onClick={() => setShowDamageForm(false)}
-                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                    className="rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
                   >
                     <XMarkIcon className="h-4 w-4" />
                   </button>
@@ -295,11 +295,11 @@ const CheckOutForm: React.FC<CheckOutFormProps> = ({ reservationId, onComplete, 
 
             <div className="space-y-2">
               {checkOutData.damages.map((damage) => (
-                <div key={damage.id} className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <span className="text-sm">{damage.description}</span>
+                <div key={damage.id} className="flex items-center justify-between p-3 rounded-lg border border-yellow-400/30 bg-yellow-950/40">
+                  <span className="text-sm text-blue-50">{damage.description}</span>
                   <button
                     onClick={() => removeDamage(damage.id)}
-                    className="text-red-600 hover:text-red-700"
+                    className="text-red-300 hover:text-red-200"
                   >
                     <TrashIcon className="h-4 w-4" />
                   </button>
@@ -310,7 +310,7 @@ const CheckOutForm: React.FC<CheckOutFormProps> = ({ reservationId, onComplete, 
 
           {/* Accessories */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-4">
+            <label className="block text-sm font-medium text-blue-100/65 mb-4">
               Αξεσουάρ που Δόθηκαν
             </label>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -320,26 +320,26 @@ const CheckOutForm: React.FC<CheckOutFormProps> = ({ reservationId, onComplete, 
                     type="checkbox"
                     checked={checkOutData.accessories_given.includes(accessory)}
                     onChange={() => toggleAccessory(accessory)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-[#2b5b85]/80 bg-[#0b2949]/80 text-[#1268f3] focus:ring-[#2f8cff]/50"
                   />
-                  <span className="ml-2 text-sm text-gray-700">{accessory}</span>
+                  <span className="ml-2 text-sm text-blue-100/85">{accessory}</span>
                 </label>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+        <div className="px-6 py-4 border-t border-[#1e4e7d]/70 flex justify-end space-x-3">
           <button
             onClick={onCancel}
-            className="px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+            className="rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-4 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
           >
             Ακύρωση
           </button>
           <button
             onClick={handleSubmit}
             disabled={false}
-            className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Ολοκλήρωση Check-out
           </button>

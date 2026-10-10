@@ -65,10 +65,10 @@ const UserManagement: React.FC = () => {
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'admin': return 'bg-red-100 text-red-800';
-      case 'manager': return 'bg-blue-100 text-blue-800';
-      case 'agent': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'admin': return 'bg-red-500/15 text-red-300 ring-1 ring-inset ring-red-400/40';
+      case 'manager': return 'bg-blue-500/15 text-[#8ec7ff] ring-1 ring-inset ring-blue-400/40';
+      case 'agent': return 'bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-400/40';
+      default: return 'bg-blue-500/15 text-[#8ec7ff] ring-1 ring-inset ring-blue-400/40';
     }
   };
 
@@ -97,10 +97,10 @@ const UserManagement: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-gray-900">{t('users')}</h1>
+        <h1 className="text-2xl font-semibold text-white tracking-[-0.02em]">{t('users')}</h1>
         <button
           onClick={() => setShowAddForm(true)}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+          className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
         >
           <PlusIcon className="h-4 w-4 mr-2" />
           Νέος Χρήστης
@@ -110,14 +110,14 @@ const UserManagement: React.FC = () => {
       {/* Users Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {users.map((user) => (
-          <div key={user.id} className="bg-white shadow-sm rounded-lg">
+          <div key={user.id} className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)]">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center">
-                  <UserGroupIcon className="h-8 w-8 text-gray-400 mr-3" />
+                  <UserGroupIcon className="h-8 w-8 text-blue-100/45 mr-3" />
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900">{user.name}</h3>
-                    <p className="text-sm text-gray-600">{user.email}</p>
+                    <h3 className="text-lg font-medium text-white">{user.name}</h3>
+                    <p className="text-sm text-blue-100/65">{user.email}</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -126,7 +126,7 @@ const UserManagement: React.FC = () => {
                     {getRoleLabel(user.role)}
                   </span>
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    user.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    user.active ? 'bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-400/40' : 'bg-red-500/15 text-red-300 ring-1 ring-inset ring-red-400/40'
                   }`}>
                     {user.active ? 'Ενεργός' : 'Ανενεργός'}
                   </span>
@@ -134,12 +134,12 @@ const UserManagement: React.FC = () => {
               </div>
 
               <div className="mb-4">
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Δικαιώματα:</h4>
+                <h4 className="text-sm font-medium text-blue-100/85 mb-2">Δικαιώματα:</h4>
                 <div className="flex flex-wrap gap-1">
                   {getRolePermissions(user.role).map((permission, index) => (
                     <span
                       key={index}
-                      className="inline-flex items-center px-2 py-1 rounded text-xs bg-gray-100 text-gray-700"
+                      className="inline-flex items-center px-2 py-1 rounded text-xs bg-blue-500/15 text-[#8ec7ff] ring-1 ring-inset ring-blue-400/40"
                     >
                       {permission}
                     </span>
@@ -149,14 +149,14 @@ const UserManagement: React.FC = () => {
 
               <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
                 <div>
-                  <span className="text-gray-500">Δημιουργήθηκε:</span>
-                  <p className="font-medium">
+                  <span className="text-blue-100/55">Δημιουργήθηκε:</span>
+                  <p className="font-medium text-blue-50">
                     {new Date(user.created_at).toLocaleDateString('el-GR')}
                   </p>
                 </div>
                 <div>
-                  <span className="text-gray-500">Τελευταία σύνδεση:</span>
-                  <p className="font-medium">
+                  <span className="text-blue-100/55">Τελευταία σύνδεση:</span>
+                  <p className="font-medium text-blue-50">
                     {user.last_login 
                       ? new Date(user.last_login).toLocaleDateString('el-GR')
                       : 'Ποτέ'
@@ -166,15 +166,15 @@ const UserManagement: React.FC = () => {
               </div>
 
               <div className="flex space-x-2">
-                <button className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                <button className="flex-1 inline-flex items-center justify-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white">
                   <EyeIcon className="h-4 w-4 mr-1" />
                   Προβολή
                 </button>
-                <button className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                <button className="flex-1 inline-flex items-center justify-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white">
                   <PencilIcon className="h-4 w-4 mr-1" />
                   Επεξεργασία
                 </button>
-                <button className="inline-flex items-center px-3 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 transition-colors">
+                <button className="inline-flex items-center justify-center rounded-xl border border-red-400/40 bg-red-500/15 px-3 py-2 text-sm font-medium text-red-300 transition-colors hover:bg-red-500/25">
                   <TrashIcon className="h-4 w-4" />
                 </button>
               </div>
@@ -184,18 +184,18 @@ const UserManagement: React.FC = () => {
       </div>
 
       {/* Role Descriptions */}
-      <div className="bg-white shadow-sm rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium text-gray-900">Περιγραφή Ρόλων</h2>
+      <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
+        <div className="px-6 py-4 border-b border-[#1e4e7d]/70">
+          <h2 className="text-lg font-medium text-white tracking-[-0.02em]">Περιγραφή Ρόλων</h2>
         </div>
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="border border-red-200 rounded-lg p-4">
+            <div className="border border-red-400/40 rounded-lg p-4">
               <div className="flex items-center mb-3">
-                <ShieldCheckIcon className="h-6 w-6 text-red-600 mr-2" />
-                <h3 className="font-medium text-red-800">Διαχειριστής (Admin)</h3>
+                <ShieldCheckIcon className="h-6 w-6 text-red-300 mr-2" />
+                <h3 className="font-medium text-red-300">Διαχειριστής (Admin)</h3>
               </div>
-              <ul className="text-sm text-gray-600 space-y-1">
+              <ul className="text-sm text-blue-100/65 space-y-1">
                 <li>• Πλήρη πρόσβαση σε όλες τις λειτουργίες</li>
                 <li>• Διαχείριση χρηστών και ρόλων</li>
                 <li>• Ρυθμίσεις συστήματος</li>
@@ -203,12 +203,12 @@ const UserManagement: React.FC = () => {
               </ul>
             </div>
             
-            <div className="border border-blue-200 rounded-lg p-4">
+            <div className="border border-[#2b5b85]/80 rounded-lg p-4">
               <div className="flex items-center mb-3">
-                <ShieldCheckIcon className="h-6 w-6 text-blue-600 mr-2" />
-                <h3 className="font-medium text-blue-800">Μάνατζερ (Manager)</h3>
+                <ShieldCheckIcon className="h-6 w-6 text-[#55a8ff] mr-2" />
+                <h3 className="font-medium text-[#8ec7ff]">Μάνατζερ (Manager)</h3>
               </div>
-              <ul className="text-sm text-gray-600 space-y-1">
+              <ul className="text-sm text-blue-100/65 space-y-1">
                 <li>• Όλες οι λειτουργίες Agent</li>
                 <li>• Αναφορές και στατιστικά</li>
                 <li>• Διαχείριση τιμών και σεζόν</li>
@@ -216,12 +216,12 @@ const UserManagement: React.FC = () => {
               </ul>
             </div>
             
-            <div className="border border-green-200 rounded-lg p-4">
+            <div className="border border-emerald-400/40 rounded-lg p-4">
               <div className="flex items-center mb-3">
-                <ShieldCheckIcon className="h-6 w-6 text-green-600 mr-2" />
-                <h3 className="font-medium text-green-800">Πράκτορας (Agent)</h3>
+                <ShieldCheckIcon className="h-6 w-6 text-emerald-300 mr-2" />
+                <h3 className="font-medium text-emerald-300">Πράκτορας (Agent)</h3>
               </div>
-              <ul className="text-sm text-gray-600 space-y-1">
+              <ul className="text-sm text-blue-100/65 space-y-1">
                 <li>• Δημιουργία κρατήσεων</li>
                 <li>• Check-in/Check-out</li>
                 <li>• Διαχείριση πελατών</li>

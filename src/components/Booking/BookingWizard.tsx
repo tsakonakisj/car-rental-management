@@ -322,12 +322,12 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="bg-white shadow-sm rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
+      <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)]">
+        <div className="px-6 py-4 border-b border-[#1e4e7d]/70">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">{t('newBooking')}</h2>
+            <h2 className="text-xl font-semibold text-white tracking-[-0.02em]">{t('newBooking')}</h2>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-blue-100/55">
                 {t('step')} {currentStep} / 3
               </span>
             </div>
@@ -341,10 +341,10 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                       step === currentStep
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-[#1268f3] text-white'
                         : step < currentStep
-                        ? 'bg-green-600 text-white'
-                        : 'bg-gray-200 text-gray-500'
+                        ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-inset ring-emerald-400/40'
+                        : 'bg-[#0b2949] text-blue-100/55'
                     }`}
                   >
                     {step}
@@ -352,7 +352,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
                   {step < 3 && (
                     <div
                       className={`flex-1 h-1 mx-2 ${
-                        step < currentStep ? 'bg-green-600' : 'bg-gray-200'
+                        step < currentStep ? 'bg-emerald-500/60' : 'bg-[#1e4e7d]/70'
                       }`}
                     />
                   )}
@@ -374,11 +374,11 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
           )}
         </div>
 
-        <div className="px-6 py-4 border-t border-gray-200 flex justify-between">
+        <div className="px-6 py-4 border-t border-[#1e4e7d]/70 flex justify-between">
           <button
             onClick={handlePrevious}
             disabled={currentStep === 1}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-4 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ChevronLeftIcon className="h-4 w-4 mr-2" />
             {t('previous')}
@@ -388,7 +388,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
             <button
               onClick={handleNext}
               disabled={!canProceed()}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {t('next')}
               <ChevronRightIcon className="h-4 w-4 ml-2" />
@@ -396,12 +396,12 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
           ) : (
             <div className="flex items-center gap-3">
               {saveError && (
-                <span className="text-sm text-red-600">{saveError}</span>
+                <span className="text-sm text-red-400">{saveError}</span>
               )}
               <button
                 onClick={handleComplete}
                 disabled={!canProceed() || saving}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="inline-flex items-center rounded-xl border border-transparent bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(16,185,129,0.28)] transition-colors hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? 'Αποθήκευση...' : t('complete')}
               </button>
@@ -413,16 +413,16 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
       {/* Duplicate customer warning */}
       {duplicateCustomer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-gray-900 bg-opacity-50" onClick={() => setDuplicateCustomer(null)} />
-          <div className="relative bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-5 z-10">
-            <p className="text-sm font-semibold text-amber-700 mb-3">
+          <div className="fixed inset-0 bg-black/60" onClick={() => setDuplicateCustomer(null)} />
+          <div className="relative rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)] max-w-md w-full mx-4 p-5 z-10">
+            <p className="text-sm font-semibold text-amber-300 mb-3">
               Υπάρχει ήδη πελάτης με αυτά τα στοιχεία
             </p>
 
             <div className="space-y-2 mb-4">
               <label
-                className={`flex items-start gap-3 p-3 rounded-md border cursor-pointer transition-colors ${
-                  customerChoice === 'existing' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'
+                className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                  customerChoice === 'existing' ? 'border-[#2f8cff] bg-[#1268f3]/15' : 'border-[#2b5b85]/80 bg-[#0b2949]/60 hover:border-[#55a8ff]'
                 }`}
               >
                 <input
@@ -433,15 +433,15 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
                   className="mt-0.5"
                 />
                 <div>
-                  <span className="text-sm font-medium text-gray-900">Χρήση υπάρχοντος πελάτη</span>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <span className="text-sm font-medium text-white">Χρήση υπάρχοντος πελάτη</span>
+                  <p className="text-xs text-blue-100/55 mt-0.5">
                     {duplicateCustomer.name} &mdash; {duplicateCustomer.phone}
                   </p>
                 </div>
               </label>
               <label
-                className={`flex items-start gap-3 p-3 rounded-md border cursor-pointer transition-colors ${
-                  customerChoice === 'new' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:bg-gray-50'
+                className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+                  customerChoice === 'new' ? 'border-[#2f8cff] bg-[#1268f3]/15' : 'border-[#2b5b85]/80 bg-[#0b2949]/60 hover:border-[#55a8ff]'
                 }`}
               >
                 <input
@@ -452,8 +452,8 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
                   className="mt-0.5"
                 />
                 <div>
-                  <span className="text-sm font-medium text-gray-900">Δημιουργία νέου πελάτη</span>
-                  <p className="text-xs text-gray-500 mt-0.5">
+                  <span className="text-sm font-medium text-white">Δημιουργία νέου πελάτη</span>
+                  <p className="text-xs text-blue-100/55 mt-0.5">
                     {bookingData.customer.name} &mdash; {bookingData.customer.phone}
                   </p>
                 </div>
@@ -463,14 +463,14 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
             <div className="flex gap-2 justify-end">
               <button
                 onClick={() => setDuplicateCustomer(null)}
-                className="px-3 py-1.5 text-sm border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                className="rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-1.5 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
               >
                 Ακύρωση
               </button>
               <button
                 onClick={confirmAndSave}
                 disabled={saving || customerChoice === null}
-                className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded-xl border border-transparent bg-[#1268f3] px-3 py-1.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? 'Αποθήκευση...' : 'Συνέχεια'}
               </button>

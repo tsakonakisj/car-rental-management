@@ -27,10 +27,10 @@ const statusLabels: Record<string, string> = {
 };
 
 const statusColors: Record<string, string> = {
-  active: 'bg-blue-100 text-blue-800',
-  upcoming: 'bg-yellow-100 text-yellow-800',
-  completed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-gray-100 text-gray-500',
+  active: 'bg-blue-500/15 text-[#8ec7ff] ring-1 ring-inset ring-blue-400/40',
+  upcoming: 'bg-amber-500/15 text-amber-300 ring-1 ring-inset ring-amber-400/40',
+  completed: 'bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-400/40',
+  cancelled: 'bg-slate-500/15 text-blue-100/70 ring-1 ring-inset ring-slate-400/35',
 };
 
 const VehicleReservationsModal: React.FC<Props> = ({ vehicle, onClose }) => {
@@ -69,33 +69,33 @@ const VehicleReservationsModal: React.FC<Props> = ({ vehicle, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[85vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#020b18]/80 backdrop-blur-sm">
+      <div className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-xl border border-[#1e4e7d]/70 bg-[#071d38] shadow-xl mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b">
+        <div className="flex items-center justify-between border-b border-[#1e4e7d]/70 px-6 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">{vehicle.plate}</h2>
-            <p className="text-sm text-gray-500">{vehicle.brand} {vehicle.model} &middot; {vehicle.category}</p>
+            <h2 className="text-lg font-semibold text-white">{vehicle.plate}</h2>
+            <p className="text-sm text-blue-100/55">{vehicle.brand} {vehicle.model} &middot; {vehicle.category}</p>
           </div>
-          <button onClick={onClose} className="p-1 rounded hover:bg-gray-100 transition-colors">
-            <XMarkIcon className="h-5 w-5 text-gray-500" />
+          <button onClick={onClose} className="rounded-lg p-1 text-blue-100/45 transition-colors hover:bg-[#0b2949] hover:text-white">
+            <XMarkIcon className="h-5 w-5" />
           </button>
         </div>
 
         {/* Availability badge */}
-        <div className="px-6 py-3 border-b bg-gray-50">
+        <div className="border-b border-[#1e4e7d]/70 bg-[#0b2949]/40 px-6 py-3">
           {vehicle.status === 'service' ? (
-            <span className="text-sm font-medium text-red-700">Σε συντήρηση</span>
+            <span className="text-sm font-medium text-red-300">Σε συντήρηση</span>
           ) : activeOrUpcoming ? (
-            <div className="flex items-center text-sm text-yellow-800">
-              <ClockIcon className="h-4 w-4 mr-1.5 flex-shrink-0" />
+            <div className="flex items-center text-sm text-amber-300">
+              <ClockIcon className="mr-1.5 h-4 w-4 flex-shrink-0" />
               <span>
                 {activeOrUpcoming.status === 'active' ? 'Ενοικιασμένο' : 'Κρατημένο'} από {formatDate(activeOrUpcoming.pickup_date).split(' ')[0]} έως {formatDate(activeOrUpcoming.return_date).split(' ')[0]}
               </span>
             </div>
           ) : (
-            <div className="flex items-center text-sm text-green-700">
-              <CheckCircleIcon className="h-4 w-4 mr-1.5 flex-shrink-0" />
+            <div className="flex items-center text-sm text-emerald-300">
+              <CheckCircleIcon className="mr-1.5 h-4 w-4 flex-shrink-0" />
               <span>Διαθέσιμο τώρα</span>
             </div>
           )}
@@ -103,26 +103,26 @@ const VehicleReservationsModal: React.FC<Props> = ({ vehicle, onClose }) => {
 
         {/* Reservation list */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
-          <h3 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
-            <CalendarDaysIcon className="h-4 w-4 mr-1.5" />
+          <h3 className="mb-3 flex items-center text-sm font-medium text-blue-100/85">
+            <CalendarDaysIcon className="mr-1.5 h-4 w-4 text-[#72b9ff]" />
             Κρατήσεις ({visibleReservations.length})
           </h3>
 
           {loading ? (
-            <p className="text-sm text-gray-400 py-4 text-center">Φόρτωση...</p>
+            <p className="py-4 text-center text-sm text-blue-100/45">Φόρτωση...</p>
           ) : visibleReservations.length === 0 ? (
-            <p className="text-sm text-gray-400 py-4 text-center">Δεν υπάρχουν κρατήσεις.</p>
+            <p className="py-4 text-center text-sm text-blue-100/45">Δεν υπάρχουν κρατήσεις.</p>
           ) : (
             <div className="space-y-3">
               {visibleReservations.map(r => (
-                <div key={r.id} className="border rounded-md p-3 text-sm">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="font-medium text-gray-900">{r.customer?.name || 'Άγνωστος'}</span>
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[r.status] || ''}`}>
+                <div key={r.id} className="rounded-xl border border-[#1e4e7d]/50 bg-[#0b2949]/50 p-3 text-sm">
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <span className="font-medium text-white">{r.customer?.name || 'Άγνωστος'}</span>
+                    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[r.status] || ''}`}>
                       {statusLabels[r.status] || r.status}
                     </span>
                   </div>
-                  <div className="text-gray-500 space-y-0.5">
+                  <div className="space-y-0.5 text-blue-100/55">
                     <p>Παραλαβή: {formatDate(r.pickup_date)}</p>
                     <p>Επιστροφή: {formatDate(r.return_date)}</p>
                     {r.pickup_station?.name && <p>Σταθμός: {r.pickup_station.name}</p>}
@@ -134,10 +134,10 @@ const VehicleReservationsModal: React.FC<Props> = ({ vehicle, onClose }) => {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 border-t flex justify-end">
+        <div className="flex justify-end border-t border-[#1e4e7d]/70 px-6 py-3">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium rounded-md border border-gray-300 text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+            className="rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-4 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
           >
             Κλείσιμο
           </button>

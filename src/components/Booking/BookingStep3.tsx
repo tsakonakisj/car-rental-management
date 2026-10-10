@@ -89,56 +89,56 @@ const BookingStep3: React.FC<BookingStep3Props> = ({ data, pricing, updateData }
     <div className="space-y-8">
       {/* Customer Information */}
       <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">{t('customerInfo')}</h3>
+        <h3 className="text-lg font-medium text-white tracking-[-0.02em] mb-4">{t('customerInfo')}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <input
             type="text"
             placeholder={t('name')}
             value={data.customer?.name || ''}
             onChange={(e) => updateCustomer('name', e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           />
           <input
             type="tel"
             placeholder={t('phone')}
             value={data.customer?.phone || ''}
             onChange={(e) => updateCustomer('phone', e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           />
           <input
             type="email"
             placeholder={t('email')}
             value={data.customer?.email || ''}
             onChange={(e) => updateCustomer('email', e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           />
           <input
             type="text"
             placeholder={t('country')}
             value={data.customer?.country || ''}
             onChange={(e) => updateCustomer('country', e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           />
           <input
             type="text"
             placeholder={t('licenseNumber')}
             value={data.customer?.licenseNumber || ''}
             onChange={(e) => updateCustomer('licenseNumber', e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           />
           <input
             type="date"
             placeholder={t('birthDate')}
             value={data.customer?.birthDate || ''}
             onChange={(e) => updateCustomer('birthDate', e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           />
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Πηγή Κράτησης</label>
+            <label className="block text-sm font-medium text-blue-100/65 mb-1">Πηγή Κράτησης</label>
             <select
               value={data.customer?.source || 'store'}
               onChange={(e) => updateCustomer('source', e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
             >
               <option value="store">Κατάστημα</option>
               <option value="phone">Τηλέφωνο</option>
@@ -154,9 +154,9 @@ const BookingStep3: React.FC<BookingStep3Props> = ({ data, pricing, updateData }
 
       {/* Pricing */}
       <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">{t('pricingSection')}</h3>
+        <h3 className="text-lg font-medium text-white tracking-[-0.02em] mb-4">{t('pricingSection')}</h3>
 
-        <div className="bg-gray-50 rounded-lg p-4 space-y-4">
+        <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)] p-4 space-y-4 text-blue-50">
           <div className="flex justify-between">
             <span>{t('dailyRate')} ({pricing.days} {t('days')})</span>
             <span>€{pricing.dailyTotal.toFixed(2)}</span>
@@ -168,9 +168,9 @@ const BookingStep3: React.FC<BookingStep3Props> = ({ data, pricing, updateData }
               <span>{t('insurance')}</span>
             </div>
             {loading ? (
-              <div className="text-sm text-gray-500">Φόρτωση ασφαλίσεων...</div>
+              <div className="text-sm text-blue-100/55">Φόρτωση ασφαλίσεων...</div>
             ) : insurances.length === 0 ? (
-              <div className="text-sm text-gray-500">Δεν βρέθηκαν ασφαλίσεις</div>
+              <div className="text-sm text-blue-100/55">Δεν βρέθηκαν ασφαλίσεις</div>
             ) : (
               <div className="space-y-2">
                 {insurances.map(ins => (
@@ -183,7 +183,7 @@ const BookingStep3: React.FC<BookingStep3Props> = ({ data, pricing, updateData }
                       className="mr-2"
                     />
                     <span className="flex-1">{ins.name}</span>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-blue-100/65">
                       €{Number(ins.daily_rate).toFixed(2)}/ημέρα
                     </span>
                   </label>
@@ -200,11 +200,11 @@ const BookingStep3: React.FC<BookingStep3Props> = ({ data, pricing, updateData }
 
           {/* Extras from DB */}
           <div>
-            <h4 className="font-medium mb-2">{t('extras')}</h4>
+            <h4 className="font-medium text-blue-50 mb-2">{t('extras')}</h4>
             {loading ? (
-              <div className="text-sm text-gray-500">Φόρτωση έξτρα...</div>
+              <div className="text-sm text-blue-100/55">Φόρτωση έξτρα...</div>
             ) : extras.length === 0 ? (
-              <div className="text-sm text-gray-500">Δεν βρέθηκαν έξτρα</div>
+              <div className="text-sm text-blue-100/55">Δεν βρέθηκαν έξτρα</div>
             ) : (
               extras.map(extra => (
                 <div key={extra.id} className="flex items-center justify-between mb-2">
@@ -216,9 +216,9 @@ const BookingStep3: React.FC<BookingStep3Props> = ({ data, pricing, updateData }
                       max="10"
                       value={data.extras?.[extra.id] || 0}
                       onChange={(e) => updateExtra(extra.id, parseInt(e.target.value) || 0)}
-                      className="w-16 border border-gray-300 rounded px-2 py-1"
+                      className="w-16 rounded-lg border border-[#2b5b85]/80 bg-[#0b2949]/80 px-2 py-1 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                     />
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm text-blue-100/65">
                       €{Number(extra.price).toFixed(2)}/{extra.type === 'daily' ? 'ημέρα' : 'εφάπαξ'}
                     </span>
                   </div>
@@ -227,8 +227,8 @@ const BookingStep3: React.FC<BookingStep3Props> = ({ data, pricing, updateData }
             )}
           </div>
 
-          <div className="border-t pt-4">
-            <div className="flex justify-between font-bold text-lg">
+          <div className="border-t border-[#1e4e7d]/70 pt-4">
+            <div className="flex justify-between font-bold text-lg text-white">
               <span>{t('total')}</span>
               <span>€{pricing.grandTotal.toFixed(2)}</span>
             </div>
@@ -238,14 +238,14 @@ const BookingStep3: React.FC<BookingStep3Props> = ({ data, pricing, updateData }
 
       {/* Notes */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="block text-sm font-medium text-blue-100/65 mb-2">
           {t('notes')}
         </label>
         <textarea
           value={data.notes || ''}
           onChange={(e) => updateData({ notes: e.target.value })}
           rows={3}
-          className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           placeholder="Επιπλέον σημειώσεις..."
         />
       </div>
