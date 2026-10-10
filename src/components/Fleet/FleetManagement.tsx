@@ -3,6 +3,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { vehicleService } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import type { Vehicle } from '../../types';
+import PageHero from '../Layout/PageHero';
 import {
   TruckIcon,
   PlusIcon,
@@ -198,16 +199,19 @@ const FleetManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-[-0.03em] text-white">{t('fleet')}</h1>
-        <button
-          onClick={() => setAddingVehicle(true)}
-          className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
-        >
-          <PlusIcon className="mr-2 h-4 w-4" />
-          Προσθήκη Οχήματος
-        </button>
-      </div>
+      <PageHero
+        title={t('fleet')}
+        subtitle="Διαχείριση οχημάτων και διαθεσιμότητας"
+        actions={(
+          <button
+            onClick={() => setAddingVehicle(true)}
+            className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
+          >
+            <PlusIcon className="mr-2 h-4 w-4" />
+            Προσθήκη Οχήματος
+          </button>
+        )}
+      />
 
       {/* Filters */}
       <div className="flex space-x-2">

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { customerService } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
+import PageHero from '../Layout/PageHero';
 import type { Customer } from '../../types';
 import {
   UsersIcon,
@@ -142,9 +143,10 @@ const CustomerManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-[-0.03em] text-white">{t('customers')}</h1>
-      </div>
+      <PageHero
+        title={t('customers')}
+        subtitle="Διαχείριση στοιχείων και ιστορικού πελατών"
+      />
 
       {/* Search */}
       <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">

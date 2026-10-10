@@ -12,6 +12,7 @@ import {
   PencilSquareIcon
 } from '@heroicons/react/24/outline';
 import ContractGenerator from '../PDF/ContractGenerator';
+import PageHero from '../Layout/PageHero';
 import type { Station, Vehicle, Pricing, Season, Reservation, Insurance, Extra } from '../../types';
 
 interface ReservationRow {
@@ -116,7 +117,6 @@ function calcDaysBetween(startDate: string, endDate: string): number {
 
 
 const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheckIn, refreshTrigger }) => {
-  const loginBackgroundImage = '/assets/login_background_car_left.jpg';
   const [reservations, setReservations] = useState<ReservationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -517,15 +517,11 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
 
   return (
     <div className="space-y-5 text-blue-50">
-      <div className="relative isolate overflow-hidden rounded-2xl border border-[#285b88]/70 bg-[#071d38] shadow-[0_18px_50px_rgba(0,0,0,0.28)]">
-        <img src={loginBackgroundImage} alt="" aria-hidden="true" className="absolute inset-0 -z-20 h-full w-full object-cover object-[center_58%]" />
-        <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(3,18,39,0.3)_0%,rgba(5,27,54,0.24)_44%,rgba(5,27,54,0.12)_100%)]" />
-        <div className="relative px-5 py-5 sm:px-7 sm:py-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#6ab3ff]">Reservation desk</p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-white sm:text-3xl">Κρατήσεις</h1>
-          <p className="mt-1 text-sm text-blue-100/75 sm:text-base">Διαχείριση κρατήσεων ανά σταθμό και ημερομηνία</p>
-        </div>
-      </div>
+      <PageHero
+        eyebrow="Reservation desk"
+        title="Κρατήσεις"
+        subtitle="Διαχείριση κρατήσεων ανά σταθμό και ημερομηνία"
+      />
 
       {actionError && (
         <div className="rounded-xl border border-red-400/30 bg-red-950/45 p-3 text-sm text-red-100 shadow-lg">

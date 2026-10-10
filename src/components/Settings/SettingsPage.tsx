@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { supabase } from '../../lib/supabase';
 import { clearCompanyCache } from '../../lib/company';
+import PageHero from '../Layout/PageHero';
 import {
   CogIcon,
   BuildingOfficeIcon,
@@ -545,9 +546,10 @@ const SettingsPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-white tracking-[-0.02em]">{t('settings')}</h1>
-      </div>
+      <PageHero
+        title={t('settings')}
+        subtitle="Ρυθμίσεις εταιρείας και εφαρμογής"
+      />
 
       {error && (
         <div className="p-4 bg-red-950/45 border border-red-400/30 rounded-lg text-sm text-red-100">{error}</div>

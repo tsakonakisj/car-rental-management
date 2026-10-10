@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase, isDemoMode } from '../../lib/supabase';
+import PageHero from '../Layout/PageHero';
 import {
   CalendarDaysIcon,
   CurrencyEuroIcon,
@@ -185,7 +186,10 @@ const DashboardPage: React.FC = () => {
   if (isDemoMode) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-semibold tracking-[-0.03em] text-white">Κεντρικό Ταμπλό</h1>
+        <PageHero
+          title="Κεντρικό Ταμπλό"
+          subtitle="Επισκόπηση κρατήσεων, στόλου και εσόδων"
+        />
         <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/85 py-12 text-center shadow-[0_16px_40px_rgba(0,0,0,0.2)]">
           <p className="text-blue-100/45">Το ταμπλό χρειάζεται σύνδεση βάσης δεδομένων.</p>
         </div>
@@ -198,16 +202,19 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-[-0.03em] text-white">Κεντρικό Ταμπλό</h1>
-        <button
-          onClick={fetchDashboard}
-          className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3.5 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
-        >
-          <ArrowPathIcon className="mr-1.5 h-4 w-4 text-[#72b9ff]" />
-          Ανανέωση
-        </button>
-      </div>
+      <PageHero
+        title="Κεντρικό Ταμπλό"
+        subtitle="Επισκόπηση κρατήσεων, στόλου και εσόδων"
+        actions={(
+          <button
+            onClick={fetchDashboard}
+            className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3.5 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
+          >
+            <ArrowPathIcon className="mr-1.5 h-4 w-4 text-[#72b9ff]" />
+            Ανανέωση
+          </button>
+        )}
+      />
 
       {/* Reservation Status Overview */}
       <div>

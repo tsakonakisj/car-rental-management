@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
+import PageHero from '../Layout/PageHero';
 import {
   CurrencyEuroIcon,
   CalendarDaysIcon,
@@ -253,31 +254,34 @@ const ReportsPageNew: React.FC = () => {
 
   return (
     <div className="space-y-8 text-blue-50">
-      <div className="flex flex-wrap gap-4 justify-between items-center">
-        <h1 className="text-2xl font-semibold text-white tracking-[-0.03em]">ΑΝΑΦΟΡΕΣ v2</h1>
-        <div className="flex items-center gap-3">
-          <input
-            type="date"
-            value={dateRange.from}
-            onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
-            className="rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
-          />
-          <span className="text-blue-100/45">—</span>
-          <input
-            type="date"
-            value={dateRange.to}
-            onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
-            className="rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
-          />
-          <button
-            onClick={fetchReport}
-            disabled={loading}
-            className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white disabled:opacity-50"
-          >
-            <ArrowPathIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
-        </div>
-      </div>
+      <PageHero
+        title="Αναφορές"
+        subtitle="Αναφορές και στατιστικά απόδοσης"
+        actions={(
+          <>
+            <input
+              type="date"
+              value={dateRange.from}
+              onChange={(e) => setDateRange(prev => ({ ...prev, from: e.target.value }))}
+              className="rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+            />
+            <span className="text-blue-100/45">—</span>
+            <input
+              type="date"
+              value={dateRange.to}
+              onChange={(e) => setDateRange(prev => ({ ...prev, to: e.target.value }))}
+              className="rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+            />
+            <button
+              onClick={fetchReport}
+              disabled={loading}
+              className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white disabled:opacity-50"
+            >
+              <ArrowPathIcon className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+          </>
+        )}
+      />
 
       {error && (
         <div className="rounded-xl border border-red-400/30 bg-red-500/10 p-4 text-sm text-red-300">{error}</div>

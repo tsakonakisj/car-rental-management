@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { pricingService, vehicleService } from '../../lib/database';
 import type { Season, Pricing } from '../../types';
+import PageHero from '../Layout/PageHero';
 import {
   CurrencyEuroIcon,
   PlusIcon,
@@ -152,16 +153,19 @@ const PricingManagement: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-white tracking-[-0.03em]">{t('pricing')}</h1>
-        <button
-          onClick={loadData}
-          className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
-        >
-          <ArrowPathIcon className="h-4 w-4 mr-1" />
-          Ανανέωση
-        </button>
-      </div>
+      <PageHero
+        title={t('pricing')}
+        subtitle="Διαχείριση τιμών και εποχών"
+        actions={(
+          <button
+            onClick={loadData}
+            className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
+          >
+            <ArrowPathIcon className="h-4 w-4 mr-1" />
+            Ανανέωση
+          </button>
+        )}
+      />
 
       {/* Seasons */}
       <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)]">

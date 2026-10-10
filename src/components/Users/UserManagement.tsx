@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { company } from '../../lib/company';
+import PageHero from '../Layout/PageHero';
 import {
   UserGroupIcon,
   PlusIcon,
@@ -96,16 +97,19 @@ const UserManagement: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-white tracking-[-0.02em]">{t('users')}</h1>
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
-        >
-          <PlusIcon className="h-4 w-4 mr-2" />
-          Νέος Χρήστης
-        </button>
-      </div>
+      <PageHero
+        title={t('users')}
+        subtitle="Διαχείριση χρηστών και δικαιωμάτων"
+        actions={(
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
+          >
+            <PlusIcon className="h-4 w-4 mr-2" />
+            Νέος Χρήστης
+          </button>
+        )}
+      />
 
       {/* Users Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
