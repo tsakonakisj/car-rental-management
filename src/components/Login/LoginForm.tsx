@@ -171,7 +171,7 @@ const LoginForm: React.FC = () => {
           </div>
         </section>
 
-        <section className="mx-auto w-full max-w-[440px] lg:ml-auto lg:mr-0 lg:max-w-[440px]">
+        <section className="mx-auto w-full max-w-[330px] lg:ml-auto lg:mr-0 lg:max-w-[330px]">
           <div className="rounded-[26px] border border-blue-200/35 bg-[#061a35]/75 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-xl sm:p-8 lg:p-9">
             <div className="text-center">
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0d315e]/70 ring-1 ring-blue-300/25 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
