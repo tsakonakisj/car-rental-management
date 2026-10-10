@@ -55,10 +55,10 @@ const MainApp: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-        <div className="bg-white p-8 rounded-lg shadow-lg">
+      <div className="flex min-h-screen items-center justify-center bg-[#061a35]">
+        <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[#0b2949] p-8 shadow-[0_20px_55px_rgba(0,0,0,0.3)]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Φόρτωση...</p>
+          <p className="text-blue-100/70">Φόρτωση...</p>
         </div>
       </div>
     );
@@ -157,7 +157,7 @@ const MainApp: React.FC = () => {
   // Show check-out form
   if (checkOutReservation) {
     return (
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-[#061a35]">
         <Header />
         <div className="py-4 sm:py-8">
           {checkOutError && (
@@ -178,7 +178,7 @@ const MainApp: React.FC = () => {
   // Show check-in form
   if (checkInReservation) {
     return (
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-[#061a35]">
         <Header />
         <div className="py-4 sm:py-8">
           {checkInError && (
@@ -199,7 +199,7 @@ const MainApp: React.FC = () => {
   // Show booking wizard
   if (showBookingWizard) {
     return (
-      <div className="min-h-screen bg-gray-100">
+      <div className="min-h-screen bg-[#061a35]">
         <Header />
         <div className="py-4 sm:py-8">
           <BookingWizard
@@ -209,10 +209,10 @@ const MainApp: React.FC = () => {
               setReservationRefresh(prev => prev + 1);
             }}
           />
-          <div className="max-w-4xl mx-auto mt-4">
+          <div className="mx-auto mt-4 max-w-4xl">
             <button
               onClick={() => setShowBookingWizard(false)}
-              className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
+              className="rounded-lg px-4 py-2 text-sm text-blue-100/65 transition-colors hover:text-white"
             >
               ← Επιστροφή στις κρατήσεις
             </button>
@@ -231,10 +231,10 @@ const MainApp: React.FC = () => {
         return (
           <div className="space-y-6">
             <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-semibold text-gray-900">{t('bookings')}</h1>
+              <h1 className="text-2xl font-semibold tracking-[-0.03em] text-white">{t('bookings')}</h1>
               <button
                 onClick={() => setShowBookingWizard(true)}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
               >
                 {t('newBooking')}
               </button>
@@ -264,7 +264,7 @@ const MainApp: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 overflow-x-hidden">
+    <div className="min-h-screen overflow-x-hidden bg-[#061a35]">
       <Header onToggleSidebar={toggleMobileSidebar} />
       <div className="flex">
         <Sidebar
@@ -273,7 +273,7 @@ const MainApp: React.FC = () => {
           mobileOpen={mobileSidebarOpen}
           onCloseMobile={closeMobileSidebar}
         />
-        <main className="flex-1 p-4 sm:p-8 min-w-0">
+        <main className="min-w-0 flex-1 bg-[radial-gradient(circle_at_top_right,rgba(22,104,243,0.09),transparent_36%),#061a35] p-4 sm:p-8">
           {renderContent()}
         </main>
       </div>

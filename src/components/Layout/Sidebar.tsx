@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { loadCompanyConfig } from '../../lib/company';
 import {
   HomeIcon,
   CalendarDaysIcon,
@@ -36,6 +37,14 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, mobileOpen = false, onCloseMobile }) => {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const [companyName, setCompanyName] = React.useState('');
+
+  useEffect(() => {
+    loadCompanyConfig().then((cfg) => setCompanyName(cfg.name));
+    const onStorage = () => loadCompanyConfig().then((cfg) => setCompanyName(cfg.name));
+    window.addEventListener('company-settings-updated', onStorage);
+    return () => window.removeEventListener('company-settings-updated', onStorage);
+  }, []);
 
   const allMenuItems = [
     { id: 'dashboard', label: t('dashboard'), icon: HomeIcon },
@@ -65,7 +74,16 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, mobileOpen =
   };
 
   const navContent = (
-    <nav className="mt-6 px-3">
+    <>
+      <div className="border-b border-[#1e4e7d]/60 px-5 pb-5 pt-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1268f3]/15 ring-1 ring-inset ring-[#3f98ff]/35">
+            <TruckIcon className="h-6 w-6 text-[#4da3ff]" />
+          </div>
+          <span className="truncate text-sm font-semibold tracking-[-0.01em] text-white">{companyName}</span>
+        </div>
+      </div>
+      <nav className="mt-6 px-3">
       <div className="space-y-1">
         {menuItems.map((item) => {
           const Icon = item.icon;
@@ -76,16 +94,16 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, mobileOpen =
               onClick={() => handleTabClick(item.id)}
               className={`${
                 isActive
-                  ? 'bg-primary-50 text-primary-700 font-semibold'
-                  : 'text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 font-medium'
+                  ? 'bg-[#1268f3]/20 text-white font-semibold shadow-[inset_0_0_0_1px_rgba(63,152,255,0.35)]'
+                  : 'text-blue-100/65 hover:bg-[#0b2949] hover:text-white font-medium'
               } group flex items-center px-3 py-2.5 text-sm rounded-lg w-full transition-all duration-150 relative`}
             >
               {isActive && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 h-7 w-1 rounded-r-full bg-primary-600" />
+                <span className="absolute left-0 top-1/2 h-7 w-1 -translate-y-1/2 rounded-r-full bg-[#2f8cff] shadow-[0_0_14px_rgba(47,140,255,0.7)]" />
               )}
               <Icon
                 className={`mr-3 h-5 w-5 flex-shrink-0 transition-colors ${
-                  isActive ? 'text-primary-600' : 'text-neutral-400 group-hover:text-neutral-600'
+                  isActive ? 'text-[#55a8ff]' : 'text-blue-100/45 group-hover:text-[#8ec7ff]'
                 }`}
               />
               {item.label}
@@ -93,27 +111,28 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, mobileOpen =
           );
         })}
       </div>
-    </nav>
+      </nav>
+    </>
   );
 
   return (
     <>
       {/* Desktop sidebar */}
-      <div className="hidden lg:block w-64 bg-neutral-50 min-h-screen border-r border-neutral-200 flex-shrink-0">
+      <div className="hidden min-h-screen w-64 flex-shrink-0 border-r border-[#1e4e7d]/70 bg-[#041a32] lg:block">
         {navContent}
       </div>
 
       {/* Mobile drawer backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-neutral-950/50 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-[#020b18]/75 backdrop-blur-sm lg:hidden"
           onClick={onCloseMobile}
         />
       )}
 
       {/* Mobile drawer */}
       <div
-        className={`fixed top-0 left-0 z-50 w-64 h-full bg-neutral-50 border-r border-neutral-200 transform transition-transform duration-200 ease-in-out lg:hidden shadow-xl ${
+        className={`fixed left-0 top-0 z-50 h-full w-64 transform border-r border-[#1e4e7d]/70 bg-[#041a32] shadow-[12px_0_40px_rgba(0,0,0,0.35)] transition-transform duration-200 ease-in-out lg:hidden ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
