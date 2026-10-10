@@ -228,7 +228,7 @@ const MainApp: React.FC = () => {
     const effectiveTab = isTabAllowed(user?.role, activeTab) ? activeTab : 'dashboard';
     switch (effectiveTab) {
       case 'dashboard':
-        return <DashboardPage onNavigateReservations={(f) => { setReservationsInitialFilter(f); setActiveTab('bookings'); }} onNavigateFleet={() => { setFleetInitialFilter('all'); setActiveTab('fleet'); }} />;
+        return <DashboardPage onNavigateReservations={(f) => { setReservationsInitialFilter(f); setActiveTab('bookings'); }} onNavigateFleet={() => { setFleetInitialFilter('all'); setActiveTab('fleet'); }} onNewBooking={() => setShowBookingWizard(true)} />;
       case 'bookings':
         return (
           <div className="space-y-6">

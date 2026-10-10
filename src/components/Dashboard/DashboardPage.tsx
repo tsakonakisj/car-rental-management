@@ -9,7 +9,8 @@ import {
   CheckCircleIcon,
   ClockIcon,
   ExclamationTriangleIcon,
-  XMarkIcon
+  XMarkIcon,
+  PlusIcon
 } from '@heroicons/react/24/outline';
 
 interface SourceStat {
@@ -67,9 +68,10 @@ const STATUS_COLORS: Record<string, string> = {
 interface DashboardPageProps {
   onNavigateReservations?: (filter: string) => void;
   onNavigateFleet?: () => void;
+  onNewBooking?: () => void;
 }
 
-const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, onNavigateFleet }) => {
+const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, onNavigateFleet, onNewBooking }) => {
   const [loading, setLoading] = useState(true);
   const [sourceStats, setSourceStats] = useState<SourceStat[]>([]);
   const [statusStats, setStatusStats] = useState<StatusStat[]>([]);
@@ -211,13 +213,24 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
         title="Κεντρικό Ταμπλό"
         subtitle="Επισκόπηση κρατήσεων, στόλου και εσόδων"
         actions={(
-          <button
-            onClick={fetchDashboard}
-            className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3.5 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
-          >
-            <ArrowPathIcon className="mr-1.5 h-4 w-4 text-[#72b9ff]" />
-            Ανανέωση
-          </button>
+          <>
+            <button
+              onClick={fetchDashboard}
+              className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3.5 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
+            >
+              <ArrowPathIcon className="mr-1.5 h-4 w-4 text-[#72b9ff]" />
+              Ανανέωση
+            </button>
+            {onNewBooking && (
+              <button
+                onClick={onNewBooking}
+                className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-3.5 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
+              >
+                <PlusIcon className="mr-1.5 h-4 w-4" />
+                Νέα Κράτηση
+              </button>
+            )}
+          </>
         )}
       />
 
