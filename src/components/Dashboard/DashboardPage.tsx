@@ -57,10 +57,10 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  'upcoming': 'bg-primary-50 text-primary-700 ring-1 ring-inset ring-primary-200',
-  'active': 'bg-success-50 text-success-700 ring-1 ring-inset ring-success-200',
-  'completed': 'bg-neutral-100 text-neutral-600 ring-1 ring-inset ring-neutral-200',
-  'cancelled': 'bg-danger-50 text-danger-700 ring-1 ring-inset ring-danger-200'
+  'upcoming': 'bg-blue-500/15 text-[#8ec7ff] ring-1 ring-inset ring-blue-400/40',
+  'active': 'bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-400/40',
+  'completed': 'bg-slate-500/15 text-blue-100/70 ring-1 ring-inset ring-slate-400/35',
+  'cancelled': 'bg-red-500/15 text-red-300 ring-1 ring-inset ring-red-400/40'
 };
 
 const DashboardPage: React.FC = () => {
@@ -176,8 +176,8 @@ const DashboardPage: React.FC = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">
-        <ArrowPathIcon className="h-5 w-5 text-primary-600 animate-spin mr-3" />
-        <span className="text-neutral-500">Φόρτωση ταμπλό...</span>
+        <ArrowPathIcon className="mr-3 h-5 w-5 animate-spin text-[#55a8ff]" />
+        <span className="text-blue-100/65">Φόρτωση ταμπλό...</span>
       </div>
     );
   }
@@ -185,9 +185,9 @@ const DashboardPage: React.FC = () => {
   if (isDemoMode) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-semibold text-neutral-900 tracking-tight">Κεντρικό Ταμπλό</h1>
-        <div className="text-center py-12 bg-white border border-neutral-200 shadow-sm rounded-xl">
-          <p className="text-neutral-400">Το ταμπλό χρειάζεται σύνδεση βάσης δεδομένων.</p>
+        <h1 className="text-2xl font-semibold tracking-[-0.03em] text-white">Κεντρικό Ταμπλό</h1>
+        <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/85 py-12 text-center shadow-[0_16px_40px_rgba(0,0,0,0.2)]">
+          <p className="text-blue-100/45">Το ταμπλό χρειάζεται σύνδεση βάσης δεδομένων.</p>
         </div>
       </div>
     );
@@ -199,32 +199,32 @@ const DashboardPage: React.FC = () => {
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-neutral-900 tracking-tight">Κεντρικό Ταμπλό</h1>
+        <h1 className="text-2xl font-semibold tracking-[-0.03em] text-white">Κεντρικό Ταμπλό</h1>
         <button
           onClick={fetchDashboard}
-          className="inline-flex items-center px-3.5 py-2 border border-neutral-200 text-sm font-medium rounded-lg text-neutral-700 bg-white hover:bg-neutral-50 hover:border-neutral-300 transition-colors shadow-sm"
+          className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3.5 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
         >
-          <ArrowPathIcon className="h-4 w-4 mr-1.5 text-neutral-500" />
+          <ArrowPathIcon className="mr-1.5 h-4 w-4 text-[#72b9ff]" />
           Ανανέωση
         </button>
       </div>
 
       {/* Reservation Status Overview */}
       <div>
-        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Κατάσταση Κρατήσεων</h2>
+        <h2 className="mb-4 text-lg font-semibold tracking-[-0.02em] text-white">Κατάσταση Κρατήσεων</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {statusStats.map((st) => (
-            <div key={st.status} className="bg-white border border-neutral-200 shadow-sm rounded-xl p-5 transition-shadow hover:shadow-md">
+            <div key={st.status} className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)]">
               <div className="flex items-center justify-between mb-3">
-                {st.status === 'upcoming' && <ClockIcon className="h-5 w-5 text-primary-600" />}
-                {st.status === 'active' && <CheckCircleIcon className="h-5 w-5 text-success-600" />}
-                {st.status === 'completed' && <CalendarDaysIcon className="h-5 w-5 text-neutral-400" />}
-                {st.status === 'cancelled' && <XMarkIcon className="h-5 w-5 text-danger-500" />}
-                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${STATUS_COLORS[st.status] || 'bg-neutral-100 text-neutral-600 ring-1 ring-inset ring-neutral-200'}`}>
+                {st.status === 'upcoming' && <ClockIcon className="h-5 w-5 text-[#55a8ff]" />}
+                {st.status === 'active' && <CheckCircleIcon className="h-5 w-5 text-emerald-400" />}
+                {st.status === 'completed' && <CalendarDaysIcon className="h-5 w-5 text-blue-100/45" />}
+                {st.status === 'cancelled' && <XMarkIcon className="h-5 w-5 text-red-400" />}
+                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${STATUS_COLORS[st.status] || 'bg-slate-500/15 text-blue-100/70 ring-1 ring-inset ring-slate-400/35'}`}>
                   {STATUS_LABELS[st.status] || st.status}
                 </span>
               </div>
-              <p className="text-2xl font-bold text-neutral-900 tabular-nums">{st.count}</p>
+              <p className="text-2xl font-bold tabular-nums text-white">{st.count}</p>
             </div>
           ))}
         </div>
@@ -232,68 +232,68 @@ const DashboardPage: React.FC = () => {
 
       {/* Fleet Availability */}
       <div>
-        <h2 className="text-lg font-semibold text-neutral-900 mb-4">Στόλος</h2>
+        <h2 className="mb-4 text-lg font-semibold tracking-[-0.02em] text-white">Στόλος</h2>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-          <div className="bg-white border border-neutral-200 shadow-sm rounded-xl p-5">
-            <div className="flex items-center mb-3">
-              <TruckIcon className="h-5 w-5 text-neutral-400 mr-2" />
-              <span className="text-sm text-neutral-500">Σύνολο</span>
+          <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)]">
+            <div className="mb-3 flex items-center">
+              <TruckIcon className="mr-2 h-5 w-5 text-blue-100/45" />
+              <span className="text-sm text-blue-100/55">Σύνολο</span>
             </div>
-            <p className="text-2xl font-bold text-neutral-900 tabular-nums">{fleetStats.total}</p>
+            <p className="text-2xl font-bold tabular-nums text-white">{fleetStats.total}</p>
           </div>
-          <div className="bg-white border border-neutral-200 shadow-sm rounded-xl p-5">
-            <div className="flex items-center mb-3">
-              <CheckCircleIcon className="h-5 w-5 text-success-600 mr-2" />
-              <span className="text-sm text-neutral-500">Διαθέσιμα</span>
+          <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)]">
+            <div className="mb-3 flex items-center">
+              <CheckCircleIcon className="mr-2 h-5 w-5 text-emerald-400" />
+              <span className="text-sm text-blue-100/55">Διαθέσιμα</span>
             </div>
-            <p className="text-2xl font-bold text-success-600 tabular-nums">{fleetStats.available}</p>
+            <p className="text-2xl font-bold tabular-nums text-emerald-300">{fleetStats.available}</p>
           </div>
-          <div className="bg-white border border-neutral-200 shadow-sm rounded-xl p-5">
-            <div className="flex items-center mb-3">
-              <ClockIcon className="h-5 w-5 text-warning-600 mr-2" />
-              <span className="text-sm text-neutral-500">Κρατημένα</span>
+          <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)]">
+            <div className="mb-3 flex items-center">
+              <ClockIcon className="mr-2 h-5 w-5 text-amber-400" />
+              <span className="text-sm text-blue-100/55">Κρατημένα</span>
             </div>
-            <p className="text-2xl font-bold text-warning-600 tabular-nums">{fleetStats.reserved}</p>
+            <p className="text-2xl font-bold tabular-nums text-amber-300">{fleetStats.reserved}</p>
           </div>
-          <div className="bg-white border border-neutral-200 shadow-sm rounded-xl p-5">
-            <div className="flex items-center mb-3">
-              <TruckIcon className="h-5 w-5 text-primary-600 mr-2" />
-              <span className="text-sm text-neutral-500">Ενεργά</span>
+          <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)]">
+            <div className="mb-3 flex items-center">
+              <TruckIcon className="mr-2 h-5 w-5 text-[#55a8ff]" />
+              <span className="text-sm text-blue-100/55">Ενεργά</span>
             </div>
-            <p className="text-2xl font-bold text-primary-600 tabular-nums">{fleetStats.active}</p>
+            <p className="text-2xl font-bold tabular-nums text-[#55a8ff]">{fleetStats.active}</p>
           </div>
-          <div className="bg-white border border-neutral-200 shadow-sm rounded-xl p-5">
-            <div className="flex items-center mb-3">
-              <ExclamationTriangleIcon className="h-5 w-5 text-danger-600 mr-2" />
-              <span className="text-sm text-neutral-500">Συντήρηση</span>
+          <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)]">
+            <div className="mb-3 flex items-center">
+              <ExclamationTriangleIcon className="mr-2 h-5 w-5 text-red-400" />
+              <span className="text-sm text-blue-100/55">Συντήρηση</span>
             </div>
-            <p className="text-2xl font-bold text-danger-600 tabular-nums">{fleetStats.service}</p>
+            <p className="text-2xl font-bold tabular-nums text-red-300">{fleetStats.service}</p>
           </div>
         </div>
       </div>
 
       {/* Reservations by Source + Revenue by Source */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white border border-neutral-200 shadow-sm rounded-xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-neutral-200">
-            <h3 className="text-base font-semibold text-neutral-900">Κρατήσεις ανά Πηγή</h3>
+        <div className="overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
+          <div className="border-b border-[#1e4e7d]/70 px-6 py-4">
+            <h3 className="text-base font-semibold text-white">Κρατήσεις ανά Πηγή</h3>
           </div>
           <div className="p-6">
             {sourceStats.length === 0 ? (
-              <p className="text-sm text-neutral-400 text-center py-4">Δεν υπάρχουν δεδομένα</p>
+              <p className="py-4 text-center text-sm text-blue-100/45">Δεν υπάρχουν δεδομένα</p>
             ) : (
               <div className="space-y-3">
                 {sourceStats.map((s) => (
                   <div key={s.source} className="flex items-center justify-between">
-                    <span className="text-sm text-neutral-700">{SOURCE_LABELS[s.source] || s.source}</span>
+                    <span className="text-sm text-blue-100/85">{SOURCE_LABELS[s.source] || s.source}</span>
                     <div className="flex items-center space-x-3">
-                      <div className="w-24 h-2 bg-neutral-100 rounded-full overflow-hidden">
+                      <div className="w-24 overflow-hidden rounded-full bg-[#0b2949]/80 h-2">
                         <div
-                          className="h-full bg-primary-500 rounded-full transition-all duration-300"
+                          className="h-full rounded-full bg-[#2f8cff] transition-all duration-300"
                           style={{ width: `${totalReservations > 0 ? (s.count / totalReservations) * 100 : 0}%` }}
                         />
                       </div>
-                      <span className="text-sm font-semibold text-neutral-900 w-8 text-right tabular-nums">{s.count}</span>
+                      <span className="w-8 text-right text-sm font-semibold tabular-nums text-white">{s.count}</span>
                     </div>
                   </div>
                 ))}
@@ -302,26 +302,26 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white border border-neutral-200 shadow-sm rounded-xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-neutral-200">
-            <h3 className="text-base font-semibold text-neutral-900">Έσοδα ανά Πηγή</h3>
+        <div className="overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
+          <div className="border-b border-[#1e4e7d]/70 px-6 py-4">
+            <h3 className="text-base font-semibold text-white">Έσοδα ανά Πηγή</h3>
           </div>
           <div className="p-6">
             {sourceStats.length === 0 ? (
-              <p className="text-sm text-neutral-400 text-center py-4">Δεν υπάρχουν δεδομένα</p>
+              <p className="py-4 text-center text-sm text-blue-100/45">Δεν υπάρχουν δεδομένα</p>
             ) : (
               <div className="space-y-3">
                 {sourceStats.map((s) => (
                   <div key={s.source} className="flex items-center justify-between">
-                    <span className="text-sm text-neutral-700">{SOURCE_LABELS[s.source] || s.source}</span>
+                    <span className="text-sm text-blue-100/85">{SOURCE_LABELS[s.source] || s.source}</span>
                     <div className="flex items-center space-x-3">
-                      <div className="w-24 h-2 bg-neutral-100 rounded-full overflow-hidden">
+                      <div className="w-24 overflow-hidden rounded-full bg-[#0b2949]/80 h-2">
                         <div
-                          className="h-full bg-success-500 rounded-full transition-all duration-300"
+                          className="h-full rounded-full bg-emerald-400 transition-all duration-300"
                           style={{ width: `${totalRevenue > 0 ? (s.revenue / totalRevenue) * 100 : 0}%` }}
                         />
                       </div>
-                      <span className="text-sm font-semibold text-success-700 w-20 text-right tabular-nums">
+                      <span className="w-20 text-right text-sm font-semibold tabular-nums text-emerald-300">
                         {'\u20AC'}{s.revenue.toFixed(0)}
                       </span>
                     </div>
@@ -335,30 +335,30 @@ const DashboardPage: React.FC = () => {
 
       {/* Today's Pickups & Returns */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white border border-neutral-200 shadow-sm rounded-xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-neutral-200">
+        <div className="overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
+          <div className="border-b border-[#1e4e7d]/70 px-6 py-4">
             <div className="flex items-center">
-              <TruckIcon className="h-5 w-5 text-primary-600 mr-2" />
-              <h3 className="text-base font-semibold text-neutral-900">Παραλαβές Σήμερα</h3>
-              <span className="ml-2 text-xs font-semibold bg-primary-50 text-primary-700 px-2 py-0.5 rounded-full ring-1 ring-inset ring-primary-200">
+              <TruckIcon className="mr-2 h-5 w-5 text-[#55a8ff]" />
+              <h3 className="text-base font-semibold text-white">Παραλαβές Σήμερα</h3>
+              <span className="ml-2 rounded-full bg-blue-500/15 px-2 py-0.5 text-xs font-semibold text-[#8ec7ff] ring-1 ring-inset ring-blue-400/40">
                 {todayPickups.length}
               </span>
             </div>
           </div>
           <div className="p-4">
             {todayPickups.length === 0 ? (
-              <p className="text-sm text-neutral-400 text-center py-6">Δεν υπάρχουν παραλαβές σήμερα</p>
+              <p className="py-6 text-center text-sm text-blue-100/45">Δεν υπάρχουν παραλαβές σήμερα</p>
             ) : (
-              <div className="divide-y divide-neutral-100">
+              <div className="divide-y divide-[#1e4e7d]/50">
                 {todayPickups.map((entry) => (
-                  <div key={entry.id} className="py-3 flex items-center justify-between">
+                  <div key={entry.id} className="flex items-center justify-between py-3">
                     <div>
-                      <p className="text-sm font-medium text-neutral-900">{entry.customerName}</p>
-                      <p className="text-xs text-neutral-400">{entry.vehicleLabel}</p>
+                      <p className="text-sm font-medium text-white">{entry.customerName}</p>
+                      <p className="text-xs text-blue-100/45">{entry.vehicleLabel}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium text-neutral-900 tabular-nums">{entry.time}</p>
-                      <p className="text-xs text-neutral-400">{entry.station}</p>
+                      <p className="text-sm font-medium tabular-nums text-white">{entry.time}</p>
+                      <p className="text-xs text-blue-100/45">{entry.station}</p>
                     </div>
                   </div>
                 ))}
@@ -367,30 +367,30 @@ const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white border border-neutral-200 shadow-sm rounded-xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-neutral-200">
+        <div className="overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
+          <div className="border-b border-[#1e4e7d]/70 px-6 py-4">
             <div className="flex items-center">
-              <CheckCircleIcon className="h-5 w-5 text-success-600 mr-2" />
-              <h3 className="text-base font-semibold text-neutral-900">Επιστροφές Σήμερα</h3>
-              <span className="ml-2 text-xs font-semibold bg-success-50 text-success-700 px-2 py-0.5 rounded-full ring-1 ring-inset ring-success-200">
+              <CheckCircleIcon className="mr-2 h-5 w-5 text-emerald-400" />
+              <h3 className="text-base font-semibold text-white">Επιστροφές Σήμερα</h3>
+              <span className="ml-2 rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold text-emerald-300 ring-1 ring-inset ring-emerald-400/40">
                 {todayReturns.length}
               </span>
             </div>
           </div>
           <div className="p-4">
             {todayReturns.length === 0 ? (
-              <p className="text-sm text-neutral-400 text-center py-6">Δεν υπάρχουν επιστροφές σήμερα</p>
+              <p className="py-6 text-center text-sm text-blue-100/45">Δεν υπάρχουν επιστροφές σήμερα</p>
             ) : (
-              <div className="divide-y divide-neutral-100">
+              <div className="divide-y divide-[#1e4e7d]/50">
                 {todayReturns.map((entry) => (
-                  <div key={entry.id} className="py-3 flex items-center justify-between">
+                  <div key={entry.id} className="flex items-center justify-between py-3">
                     <div>
-                      <p className="text-sm font-medium text-neutral-900">{entry.customerName}</p>
-                      <p className="text-xs text-neutral-400">{entry.vehicleLabel}</p>
+                      <p className="text-sm font-medium text-white">{entry.customerName}</p>
+                      <p className="text-xs text-blue-100/45">{entry.vehicleLabel}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium text-neutral-900 tabular-nums">{entry.time}</p>
-                      <p className="text-xs text-neutral-400">{entry.station}</p>
+                      <p className="text-sm font-medium tabular-nums text-white">{entry.time}</p>
+                      <p className="text-xs text-blue-100/45">{entry.station}</p>
                     </div>
                   </div>
                 ))}
@@ -401,19 +401,19 @@ const DashboardPage: React.FC = () => {
       </div>
 
       {/* Summary footer */}
-      <div className="bg-white border border-neutral-200 shadow-sm rounded-xl p-6">
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-6 text-center">
+      <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 p-6 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
+        <div className="grid grid-cols-2 gap-6 text-center sm:grid-cols-3">
           <div>
-            <p className="text-sm text-neutral-500 mb-1">Σύνολο Κρατήσεων</p>
-            <p className="text-2xl font-bold text-neutral-900 tabular-nums">{totalReservations}</p>
+            <p className="mb-1 text-sm text-blue-100/55">Σύνολο Κρατήσεων</p>
+            <p className="text-2xl font-bold tabular-nums text-white">{totalReservations}</p>
           </div>
           <div>
-            <p className="text-sm text-neutral-500 mb-1">Συνολικά Έσοδα</p>
-            <p className="text-2xl font-bold text-success-600 tabular-nums">{'\u20AC'}{totalRevenue.toFixed(2)}</p>
+            <p className="mb-1 text-sm text-blue-100/55">Συνολικά Έσοδα</p>
+            <p className="text-2xl font-bold tabular-nums text-emerald-300">{'\u20AC'}{totalRevenue.toFixed(2)}</p>
           </div>
           <div>
-            <p className="text-sm text-neutral-500 mb-1">Οχήματα Στόλου</p>
-            <p className="text-2xl font-bold text-neutral-900 tabular-nums">{fleetStats.total}</p>
+            <p className="mb-1 text-sm text-blue-100/55">Οχήματα Στόλου</p>
+            <p className="text-2xl font-bold tabular-nums text-white">{fleetStats.total}</p>
           </div>
         </div>
       </div>

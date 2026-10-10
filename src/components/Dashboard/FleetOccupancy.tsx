@@ -29,36 +29,36 @@ const FleetOccupancy: React.FC = () => {
   const occupancyData = generateOccupancyData();
 
   const getOccupancyColor = (percentage: number) => {
-    if (percentage < 50) return 'bg-green-500';
-    if (percentage < 80) return 'bg-yellow-500';
+    if (percentage < 50) return 'bg-emerald-500';
+    if (percentage < 80) return 'bg-amber-500';
     return 'bg-red-500';
   };
 
   return (
-    <div className="bg-white shadow-sm rounded-lg">
-      <div className="px-6 py-4 border-b border-gray-200">
-        <h3 className="text-lg font-medium text-gray-900">{t('fleetOccupancy')}</h3>
+    <div className="overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
+      <div className="border-b border-[#1e4e7d]/70 px-6 py-4">
+        <h3 className="text-lg font-semibold text-white">{t('fleetOccupancy')}</h3>
       </div>
       
       <div className="p-6">
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-2 text-sm font-medium text-gray-500">
+              <tr className="border-b border-[#1e4e7d]/70">
+                <th className="py-2 text-left text-sm font-medium text-blue-100/55">
                   {t('date')}
                 </th>
-                <th className="text-center py-2 text-sm font-medium text-gray-500">A</th>
-                <th className="text-center py-2 text-sm font-medium text-gray-500">B</th>
-                <th className="text-center py-2 text-sm font-medium text-gray-500">C</th>
-                <th className="text-center py-2 text-sm font-medium text-gray-500">SUV</th>
-                <th className="text-center py-2 text-sm font-medium text-gray-500">7-seater</th>
+                <th className="py-2 text-center text-sm font-medium text-blue-100/55">A</th>
+                <th className="py-2 text-center text-sm font-medium text-blue-100/55">B</th>
+                <th className="py-2 text-center text-sm font-medium text-blue-100/55">C</th>
+                <th className="py-2 text-center text-sm font-medium text-blue-100/55">SUV</th>
+                <th className="py-2 text-center text-sm font-medium text-blue-100/55">7-seater</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-[#1e4e7d]/50">
               {occupancyData.map((day, index) => (
-                <tr key={index} className="hover:bg-gray-50">
-                  <td className="py-3 text-sm font-medium text-gray-900">
+                <tr key={index} className="hover:bg-[#0b2949]/50">
+                  <td className="py-3 text-sm font-medium text-white">
                     {format(day.date, 'dd/MM', { locale: language === 'el' ? el : undefined })}
                   </td>
                   {day.categories.map((cat) => {
@@ -66,10 +66,10 @@ const FleetOccupancy: React.FC = () => {
                     return (
                       <td key={cat.category} className="text-center py-3">
                         <div className="flex items-center justify-center space-x-2">
-                          <span className="text-sm text-gray-900">
+                          <span className="text-sm text-white">
                             {cat.occupied}/{cat.total}
                           </span>
-                          <div className="w-12 h-2 bg-gray-200 rounded-full overflow-hidden">
+                          <div className="w-12 h-2 rounded-full overflow-hidden bg-[#0b2949]/80">
                             <div
                               className={`h-full ${getOccupancyColor(percentage)} transition-all duration-300`}
                               style={{ width: `${percentage}%` }}
