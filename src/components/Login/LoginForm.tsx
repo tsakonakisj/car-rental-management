@@ -147,11 +147,11 @@ const LoginForm: React.FC = () => {
         loading="eager"
         fetchPriority="high"
         decoding="async"
-        className="absolute inset-0 h-full w-full object-cover object-[72%_center]"
+        className="absolute inset-0 h-full w-full object-cover object-[88%_center]"
       />
-      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,22,49,0.62)_0%,rgba(4,28,59,0.28)_42%,rgba(3,19,42,0.5)_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(3,22,49,0.52)_0%,rgba(4,28,59,0.2)_42%,rgba(3,19,42,0.38)_100%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_38%_55%,rgba(35,103,185,0.16),transparent_42%)]" />
-      <div className="absolute -right-32 top-[-18%] h-[125%] w-[43%] rotate-[30deg] bg-[#0a2e5c]/25 blur-[1px]" />
+      <div className="absolute -right-32 top-[-18%] h-[125%] w-[43%] rotate-[30deg] bg-[#0a2e5c]/15 blur-[1px]" />
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-[1600px] items-center px-5 py-8 sm:px-8 lg:px-14 lg:py-12">
         <section className="hidden max-w-[620px] flex-1 py-10 lg:block xl:max-w-[680px]">
