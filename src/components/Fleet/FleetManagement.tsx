@@ -61,13 +61,17 @@ async function recalculateStatuses(vehicles: Vehicle[]): Promise<Vehicle[]> {
   return corrected;
 }
 
-const FleetManagement: React.FC = () => {
+interface FleetManagementProps {
+  initialFilter?: FleetFilter;
+}
+
+const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter }) => {
   const { t } = useLanguage();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
-  const [filter, setFilter] = useState<FleetFilter>('active');
+  const [filter, setFilter] = useState<FleetFilter>(initialFilter || 'active');
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [addingVehicle, setAddingVehicle] = useState(false);

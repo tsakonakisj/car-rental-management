@@ -64,7 +64,12 @@ const STATUS_COLORS: Record<string, string> = {
   'cancelled': 'bg-red-500/15 text-red-300 ring-1 ring-inset ring-red-400/40'
 };
 
-const DashboardPage: React.FC = () => {
+interface DashboardPageProps {
+  onNavigateReservations?: (filter: string) => void;
+  onNavigateFleet?: () => void;
+}
+
+const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, onNavigateFleet }) => {
   const [loading, setLoading] = useState(true);
   const [sourceStats, setSourceStats] = useState<SourceStat[]>([]);
   const [statusStats, setStatusStats] = useState<StatusStat[]>([]);
@@ -221,7 +226,14 @@ const DashboardPage: React.FC = () => {
         <h2 className="mb-4 text-lg font-semibold tracking-[-0.02em] text-white">Κατάσταση Κρατήσεων</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {statusStats.map((st) => (
-            <div key={st.status} className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)]">
+            <div
+              key={st.status}
+              role="button"
+              tabIndex={0}
+              onClick={() => onNavigateReservations?.(st.status)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigateReservations?.(st.status); } }}
+              className="cursor-pointer rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)]"
+            >
               <div className="flex items-center justify-between mb-3">
                 {st.status === 'upcoming' && <ClockIcon className="h-5 w-5 text-[#55a8ff]" />}
                 {st.status === 'active' && <CheckCircleIcon className="h-5 w-5 text-emerald-400" />}
@@ -241,35 +253,65 @@ const DashboardPage: React.FC = () => {
       <div>
         <h2 className="mb-4 text-lg font-semibold tracking-[-0.02em] text-white">Στόλος</h2>
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-          <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)]">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => onNavigateFleet?.()}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigateFleet?.(); } }}
+            className="cursor-pointer rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)]"
+          >
             <div className="mb-3 flex items-center">
               <TruckIcon className="mr-2 h-5 w-5 text-blue-100/45" />
               <span className="text-sm text-blue-100/55">Σύνολο</span>
             </div>
             <p className="text-2xl font-bold tabular-nums text-white">{fleetStats.total}</p>
           </div>
-          <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)]">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => onNavigateFleet?.()}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigateFleet?.(); } }}
+            className="cursor-pointer rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)]"
+          >
             <div className="mb-3 flex items-center">
               <CheckCircleIcon className="mr-2 h-5 w-5 text-emerald-400" />
               <span className="text-sm text-blue-100/55">Διαθέσιμα</span>
             </div>
             <p className="text-2xl font-bold tabular-nums text-emerald-300">{fleetStats.available}</p>
           </div>
-          <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)]">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => onNavigateFleet?.()}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigateFleet?.(); } }}
+            className="cursor-pointer rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)]"
+          >
             <div className="mb-3 flex items-center">
               <ClockIcon className="mr-2 h-5 w-5 text-amber-400" />
               <span className="text-sm text-blue-100/55">Κρατημένα</span>
             </div>
             <p className="text-2xl font-bold tabular-nums text-amber-300">{fleetStats.reserved}</p>
           </div>
-          <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)]">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => onNavigateReservations?.('active')}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigateReservations?.('active'); } }}
+            className="cursor-pointer rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)]"
+          >
             <div className="mb-3 flex items-center">
               <TruckIcon className="mr-2 h-5 w-5 text-[#55a8ff]" />
               <span className="text-sm text-blue-100/55">Ενεργά</span>
             </div>
             <p className="text-2xl font-bold tabular-nums text-[#55a8ff]">{fleetStats.active}</p>
           </div>
-          <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)]">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => onNavigateFleet?.()}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigateFleet?.(); } }}
+            className="cursor-pointer rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)]"
+          >
             <div className="mb-3 flex items-center">
               <ExclamationTriangleIcon className="mr-2 h-5 w-5 text-red-400" />
               <span className="text-sm text-blue-100/55">Συντήρηση</span>

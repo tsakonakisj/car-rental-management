@@ -89,6 +89,7 @@ interface ReservationsListProps {
   onCheckOut?: (reservationId: string) => void;
   onCheckIn?: (reservationId: string) => void;
   refreshTrigger?: number;
+  initialFilter?: string;
 }
 
 const statusOptions: { value: string; labelEl: string }[] = [
@@ -116,11 +117,11 @@ function calcDaysBetween(startDate: string, endDate: string): number {
 }
 
 
-const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheckIn, refreshTrigger }) => {
+const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheckIn, refreshTrigger, initialFilter }) => {
   const [reservations, setReservations] = useState<ReservationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filter, setFilter] = useState<string>('all');
+  const [filter, setFilter] = useState<string>(initialFilter || 'all');
   const [excelFilter, setExcelFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
