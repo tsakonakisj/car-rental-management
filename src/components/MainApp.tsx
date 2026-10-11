@@ -270,16 +270,16 @@ const MainApp: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[#061a35]">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#061a35]">
       <Header onToggleSidebar={toggleMobileSidebar} />
-      <div className="flex">
+      <div className="flex flex-1 overflow-hidden">
         <Sidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           mobileOpen={mobileSidebarOpen}
           onCloseMobile={closeMobileSidebar}
         />
-        <main className="min-w-0 flex-1 bg-[radial-gradient(circle_at_top_right,rgba(22,104,243,0.09),transparent_36%),#061a35] p-4 sm:p-8">
+        <main className="min-w-0 flex-1 overflow-y-auto bg-[radial-gradient(circle_at_top_right,rgba(22,104,243,0.09),transparent_36%),#061a35] p-4 sm:p-8">
           {renderContent()}
         </main>
       </div>
