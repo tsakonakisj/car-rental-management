@@ -32,6 +32,7 @@ export interface Vehicle {
   insurance_expiry?: string;
   inspection_expiry?: string;
   last_service?: string;
+  odometer?: number;
   created_at: string;
 }
 

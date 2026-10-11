@@ -19,6 +19,8 @@ const DEFAULT_FORM = {
   fuel_type: 'petrol' as Vehicle['fuel_type'],
   insurance_expiry: '',
   inspection_expiry: '',
+  odometer: 0,
+  last_service: '',
 };
 
 const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, onSaved }) => {
@@ -35,6 +37,8 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
           fuel_type: vehicle.fuel_type,
           insurance_expiry: vehicle.insurance_expiry || '',
           inspection_expiry: vehicle.inspection_expiry || '',
+          odometer: vehicle.odometer ?? 0,
+          last_service: vehicle.last_service || '',
         }
       : DEFAULT_FORM
   );
@@ -65,6 +69,8 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
         status: 'available' as Vehicle['status'],
         insurance_expiry: form.insurance_expiry || null,
         inspection_expiry: form.inspection_expiry || null,
+        odometer: Number(form.odometer) || 0,
+        last_service: form.last_service || null,
       };
       const saved = isEdit
         ? await vehicleService.update(vehicle!.id, payload)
@@ -195,6 +201,26 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
                 type="date"
                 value={form.inspection_expiry}
                 onChange={(e) => setForm((p) => ({ ...p, inspection_expiry: e.target.value }))}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-blue-100/65">Χιλιομετρητής (km)</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={form.odometer}
+                onChange={(e) => setForm((p) => ({ ...p, odometer: Number(e.target.value) }))}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-blue-100/65">Τελευταίο Service</label>
+              <input
+                type="date"
+                value={form.last_service}
+                onChange={(e) => setForm((p) => ({ ...p, last_service: e.target.value }))}
                 className={inputClass}
               />
             </div>
