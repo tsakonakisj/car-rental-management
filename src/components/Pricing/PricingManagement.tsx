@@ -148,16 +148,15 @@ const PricingManagement: React.FC = () => {
     setEditExtraForm(null);
   };
 
+  const [seasonEditError, setSeasonEditError] = useState<string | null>(null);
+
   const startSeasonEdit = (season: Season) => {
     setEditingSeasonId(season.id);
+    setSeasonEditError(null);
     setEditSeasonForm({
       name: season.name,
       start_date: season.start_date,
       end_date: season.end_date,
-      start_month: season.start_month,
-      start_day: season.start_day,
-      end_month: season.end_month,
-      end_day: season.end_day,
     });
   };
 
@@ -168,14 +167,27 @@ const PricingManagement: React.FC = () => {
 
   const saveSeasonEdit = async () => {
     if (!editingSeasonId || !editSeasonForm) return;
+    if (!editSeasonForm.name?.trim()) {
+      setSeasonEditError('Το όνομα είναι υποχρεωτικό.');
+      return;
+    }
+    if (!editSeasonForm.start_date || !editSeasonForm.end_date) {
+      setSeasonEditError('Οι ημερομηνίες είναι υποχρεωτικές.');
+      return;
+    }
     setSavingSeason(true);
+    setSeasonEditError(null);
     try {
-      await pricingService.updateSeason(editingSeasonId, editSeasonForm);
-      setSeasons(prev => prev.map(s => s.id === editingSeasonId ? { ...s, ...editSeasonForm } as Season : s));
+      await pricingService.updateSeason(editingSeasonId, {
+        name: editSeasonForm.name,
+        start_date: editSeasonForm.start_date,
+        end_date: editSeasonForm.end_date,
+      });
+      setSeasons(prev => prev.map(s => s.id === editingSeasonId ? { ...s, name: editSeasonForm.name!, start_date: editSeasonForm.start_date!, end_date: editSeasonForm.end_date! } : s));
       setEditingSeasonId(null);
       setEditSeasonForm(null);
     } catch (err) {
-      console.error('Failed to update season:', err);
+      setSeasonEditError(err instanceof Error ? err.message : 'Αποτυχία αποθήκευσης σεζόν.');
     } finally {
       setSavingSeason(false);
     }
@@ -314,6 +326,9 @@ const PricingManagement: React.FC = () => {
                       </div>
 
                     </div>
+                    {seasonEditError && (
+                      <p className="text-xs text-red-400">{seasonEditError}</p>
+                    )}
                     <div className="flex justify-end space-x-2">
                       <button
                         onClick={cancelSeasonEdit}

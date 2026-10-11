@@ -480,7 +480,7 @@ export const pricingService = {
   async updateSeason(id: string, updates: Partial<Pick<Season, 'name' | 'start_date' | 'end_date' | 'multiplier' | 'start_month' | 'start_day' | 'end_month' | 'end_day' | 'priority'>>): Promise<void> {
     if (isDemo) return Promise.resolve();
 
-    const { error } = await supabase!
+    const { data, error } = await supabase!
       .from('seasons')
       .update({
         ...(updates.name !== undefined && { name: updates.name }),
@@ -493,9 +493,13 @@ export const pricingService = {
         ...(updates.end_day !== undefined && { end_day: updates.end_day }),
         ...(updates.priority !== undefined && { priority: updates.priority }),
       })
-      .eq('id', id);
+      .eq('id', id)
+      .select();
 
     if (error) throw error;
+    if (!data || data.length === 0) {
+      throw new Error('Δεν επιτρέπεται η επεξεργασία σεζόν. Ελέγξτε τα δικαιώματα χρήστη.');
+    }
   }
 };
 
