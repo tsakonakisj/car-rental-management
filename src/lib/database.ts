@@ -542,6 +542,21 @@ export const pricingService = {
     if (error) throw error;
   },
 
+  async deactivateExtra(id: string): Promise<void> {
+    if (isDemo) return Promise.resolve();
+
+    const { data, error } = await supabase!
+      .from('extras')
+      .update({ active: false })
+      .eq('id', id)
+      .select();
+
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      throw new Error('Δεν επιτρέπεται η διαγραφή έξτρα. Ελέγξτε τα δικαιώματα χρήστη.');
+    }
+  },
+
   async updateSeason(id: string, updates: Partial<Pick<Season, 'name' | 'start_date' | 'end_date' | 'multiplier' | 'start_month' | 'start_day' | 'end_month' | 'end_day' | 'priority' | 'start_month_2' | 'start_day_2' | 'end_month_2' | 'end_day_2' | 'start_month_3' | 'start_day_3' | 'end_month_3' | 'end_day_3'>>): Promise<void> {
     if (isDemo) return Promise.resolve();
 
@@ -627,6 +642,21 @@ export const insuranceService = {
       .eq('id', id);
 
     if (error) throw error;
+  },
+
+  async deactivateInsurance(id: string): Promise<void> {
+    if (isDemo) return Promise.resolve();
+
+    const { data, error } = await supabase!
+      .from('insurance_types')
+      .update({ active: false })
+      .eq('id', id)
+      .select();
+
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      throw new Error('Δεν επιτρέπεται η διαγραφή ασφάλειας. Ελέγξτε τα δικαιώματα χρήστη.');
+    }
   }
 };
 
