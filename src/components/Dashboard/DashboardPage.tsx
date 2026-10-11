@@ -579,34 +579,32 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
                       key={`${group.vehicleId}-${idx}`}
                       type="button"
                       onClick={() => onNavigateVehicle ? onNavigateVehicle(group.vehicleId) : onNavigateFleet?.()}
-                      className="flex w-full items-start justify-between px-4 py-3 text-left transition-colors hover:bg-[#0b2949]/40"
+                      className="flex w-full flex-col gap-2 px-4 py-3 text-left transition-colors hover:bg-[#0b2949]/40"
                     >
-                      <div className="flex items-center gap-3 flex-shrink-0">
+                      <div className="flex items-center gap-2">
                         <TruckIcon className="h-4 w-4 flex-shrink-0 text-blue-100/45" />
-                        <div>
-                          <p className="text-sm font-medium text-white">{group.plate}</p>
-                          <p className="text-xs text-blue-100/45">{group.brand} {group.model}</p>
-                        </div>
+                        <p className="text-sm font-medium text-white">{group.plate}</p>
+                        <span className="text-xs text-blue-100/45">{group.brand} {group.model}</span>
                       </div>
-                      <div className="flex flex-col items-end gap-1">
+                      <div className="ml-6 space-y-1.5">
                         {group.alerts.map((alert, aIdx) => (
-                          <div key={aIdx} className="flex items-center gap-2">
-                            <div className="text-right">
-                              <p className="text-xs text-blue-100/55">{alert.documentType}</p>
+                          <div key={aIdx} className="flex items-center justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <span className="text-xs text-blue-100/55">{alert.documentType}</span>
                               {alert.serviceReasons && alert.serviceReasons.length > 0
                                 ? <div className="space-y-0.5">
                                     {alert.serviceReasons.map((reason, i) => (
-                                      <p key={i} className="text-xs text-blue-100/40">{reason}</p>
+                                      <p key={i} className="truncate text-xs text-blue-100/40">{reason}</p>
                                     ))}
                                   </div>
                                 : alert.expiryDate
-                                  ? <p className="text-xs text-blue-100/40">{new Date(alert.expiryDate + 'T00:00:00').toLocaleDateString('el-GR')}</p>
+                                  ? <p className="truncate text-xs text-blue-100/40">{new Date(alert.expiryDate + 'T00:00:00').toLocaleDateString('el-GR')}</p>
                                   : alert.alertReason
-                                    ? <p className="text-xs text-blue-100/40">{alert.alertReason}</p>
+                                    ? <p className="truncate text-xs text-blue-100/40">{alert.alertReason}</p>
                                     : null
                               }
                             </div>
-                            <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${ALERT_STYLES[alert.level]}`}>
+                            <span className={`inline-flex flex-shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-medium ${ALERT_STYLES[alert.level]}`}>
                               {alert.serviceReasons
                                 ? alert.alertReason
                                 : alert.alertReason && !alert.expiryDate
