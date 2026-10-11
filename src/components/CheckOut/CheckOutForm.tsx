@@ -24,19 +24,22 @@ interface CheckOutData {
 
 interface CheckOutFormProps {
   reservationId: string;
+  vehicleOdometer?: number;
   onComplete: (data: CheckOutData) => void;
   onCancel: () => void;
 }
 
-const CheckOutForm: React.FC<CheckOutFormProps> = ({ reservationId, onComplete, onCancel }) => {
+const CheckOutForm: React.FC<CheckOutFormProps> = ({ reservationId, vehicleOdometer, onComplete, onCancel }) => {
   const { t } = useLanguage();
   const [checkOutData, setCheckOutData] = useState<CheckOutData>({
     fuel_level: 100,
-    odometer: 0,
+    odometer: vehicleOdometer ?? 0,
     photos: [],
     damages: [],
     accessories_given: []
   });
+
+  const [odometerError, setOdometerError] = useState('');
 
   const [newDamage, setNewDamage] = useState('');
   const [showDamageForm, setShowDamageForm] = useState(false);
@@ -142,6 +145,11 @@ const CheckOutForm: React.FC<CheckOutFormProps> = ({ reservationId, onComplete, 
   };
 
   const handleSubmit = () => {
+    if (vehicleOdometer != null && checkOutData.odometer < vehicleOdometer) {
+      setOdometerError(`Τα χιλιόμετρα δεν μπορούν να είναι μικρότερα από ${vehicleOdometer}.`);
+      return;
+    }
+    setOdometerError('');
     onComplete(checkOutData);
   };
 
@@ -197,10 +205,29 @@ const CheckOutForm: React.FC<CheckOutFormProps> = ({ reservationId, onComplete, 
               <input
                 type="number"
                 value={checkOutData.odometer}
-                onChange={(e) => setCheckOutData(prev => ({ ...prev, odometer: parseInt(e.target.value) || 0 }))}
-                className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 0;
+                  setCheckOutData(prev => ({ ...prev, odometer: val }));
+                  if (vehicleOdometer != null && val < vehicleOdometer) {
+                    setOdometerError(`Τα χιλιόμετρα δεν μπορούν να είναι μικρότερα από ${vehicleOdometer}.`);
+                  } else {
+                    setOdometerError('');
+                  }
+                }}
+                min={vehicleOdometer ?? 0}
+                className={`w-full rounded-xl border bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50 ${
+                  odometerError ? 'border-red-400/70' : 'border-[#2b5b85]/80'
+                }`}
                 placeholder="Εισάγετε χιλιόμετρα..."
               />
+              {vehicleOdometer != null && (
+                <p className="text-xs text-blue-100/45 mt-1">
+                  Τρέχοντα χιλιόμετρα οχήματος: {vehicleOdometer}
+                </p>
+              )}
+              {odometerError && (
+                <p className="text-xs text-red-300 mt-1">{odometerError}</p>
+              )}
             </div>
           </div>
 

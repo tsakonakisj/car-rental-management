@@ -24,6 +24,7 @@ const MainApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showBookingWizard, setShowBookingWizard] = useState(false);
   const [checkOutReservation, setCheckOutReservation] = useState<string | null>(null);
+  const [checkOutVehicleOdometer, setCheckOutVehicleOdometer] = useState<number | undefined>(undefined);
   const [checkInReservation, setCheckInReservation] = useState<string | null>(null);
   const [reservationRefresh, setReservationRefresh] = useState(0);
   const [checkOutError, setCheckOutError] = useState('');
@@ -86,6 +87,7 @@ const MainApp: React.FC = () => {
         alert('Δεν έχει επιλεγεί όχημα για αυτή την κράτηση');
         return;
       }
+      setCheckOutVehicleOdometer((reservation as any).vehicle?.odometer);
       setCheckOutReservation(reservationId);
     } catch {
       setCheckOutError('Αποτυχία φόρτωσης κράτησης.');
@@ -171,6 +173,7 @@ const MainApp: React.FC = () => {
           )}
           <CheckOutForm
             reservationId={checkOutReservation}
+            vehicleOdometer={checkOutVehicleOdometer}
             onComplete={handleCheckOutComplete}
             onCancel={() => setCheckOutReservation(null)}
           />
