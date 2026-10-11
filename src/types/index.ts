@@ -58,6 +58,14 @@ export interface Season {
   end_month?: number | null;
   end_day?: number | null;
   priority?: number | null;
+  start_month_2?: number | null;
+  start_day_2?: number | null;
+  end_month_2?: number | null;
+  end_day_2?: number | null;
+  start_month_3?: number | null;
+  start_day_3?: number | null;
+  end_month_3?: number | null;
+  end_day_3?: number | null;
 }
 
 export interface Pricing {

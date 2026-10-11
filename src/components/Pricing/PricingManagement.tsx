@@ -15,6 +15,25 @@ import {
   ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 
+interface SeasonFormData {
+  name: string;
+  priority: number;
+  periods: Array<{ start_date: string; end_date: string }>;
+}
+
+const dateFromMonthDay = (month: number | null | undefined, day: number | null | undefined): string => {
+  if (!month || !day) return '';
+  return `2024-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+};
+
+const parseDateParts = (dateStr: string): { month: number; day: number } | null => {
+  const parts = dateStr.split('T')[0].split('-');
+  const month = parseInt(parts[1], 10);
+  const day = parseInt(parts[2], 10);
+  if (!month || !day) return null;
+  return { month, day };
+};
+
 const PricingManagement: React.FC = () => {
   const { t } = useLanguage();
 
@@ -39,7 +58,7 @@ const PricingManagement: React.FC = () => {
   const [savingInsurance, setSavingInsurance] = useState(false);
 
   const [editingSeasonId, setEditingSeasonId] = useState<string | null>(null);
-  const [editSeasonForm, setEditSeasonForm] = useState<Partial<Season> | null>(null);
+  const [editSeasonForm, setEditSeasonForm] = useState<SeasonFormData | null>(null);
   const [savingSeason, setSavingSeason] = useState(false);
 
   const loadData = useCallback(async () => {
@@ -57,7 +76,7 @@ const PricingManagement: React.FC = () => {
       setInsurances(insuranceData);
 
       const sortedSeasons = [...seasonData].sort(
-        (a, b) => (b.priority ?? 0) - (a.priority ?? 0)
+        (a, b) => (a.priority ?? 0) - (b.priority ?? 0)
       );
       setSeasons(sortedSeasons);
       setPricing(pricingData);
@@ -155,6 +174,11 @@ const PricingManagement: React.FC = () => {
   const [deletingSeason, setDeletingSeason] = useState(false);
   const [seasonDeleteError, setSeasonDeleteError] = useState<string | null>(null);
 
+  const [showNewSeasonForm, setShowNewSeasonForm] = useState(false);
+  const [newSeasonForm, setNewSeasonForm] = useState<SeasonFormData | null>(null);
+  const [newSeasonError, setNewSeasonError] = useState<string | null>(null);
+  const [savingNewSeason, setSavingNewSeason] = useState(false);
+
   const handleDeleteSeason = async () => {
     if (!seasonToDelete) return;
     setDeletingSeason(true);
@@ -173,10 +197,25 @@ const PricingManagement: React.FC = () => {
   const startSeasonEdit = (season: Season) => {
     setEditingSeasonId(season.id);
     setSeasonEditError(null);
+    const periods: Array<{ start_date: string; end_date: string }> = [
+      { start_date: season.start_date?.split('T')[0] || '', end_date: season.end_date?.split('T')[0] || '' },
+    ];
+    if (season.start_month_2 != null && season.end_month_2 != null) {
+      periods.push({
+        start_date: dateFromMonthDay(season.start_month_2, season.start_day_2),
+        end_date: dateFromMonthDay(season.end_month_2, season.end_day_2),
+      });
+    }
+    if (season.start_month_3 != null && season.end_month_3 != null) {
+      periods.push({
+        start_date: dateFromMonthDay(season.start_month_3, season.start_day_3),
+        end_date: dateFromMonthDay(season.end_month_3, season.end_day_3),
+      });
+    }
     setEditSeasonForm({
       name: season.name,
-      start_date: season.start_date,
-      end_date: season.end_date,
+      priority: season.priority ?? 0,
+      periods,
     });
   };
 
@@ -185,47 +224,135 @@ const PricingManagement: React.FC = () => {
     setEditSeasonForm(null);
   };
 
+  const saveNewSeason = async () => {
+    if (!newSeasonForm) return;
+    if (!newSeasonForm.name?.trim()) {
+      setNewSeasonError('Το όνομα είναι υποχρεωτικό.');
+      return;
+    }
+    const firstPeriod = newSeasonForm.periods[0];
+    if (!firstPeriod || !firstPeriod.start_date || !firstPeriod.end_date) {
+      setNewSeasonError('Η πρώτη περίοδος είναι υποχρεωτική.');
+      return;
+    }
+    setSavingNewSeason(true);
+    setNewSeasonError(null);
+    try {
+      const p1Start = parseDateParts(firstPeriod.start_date);
+      const p1End = parseDateParts(firstPeriod.end_date);
+      if (!p1Start || !p1End) {
+        setNewSeasonError('Μη έγκυρες ημερομηνίες.');
+        setSavingNewSeason(false);
+        return;
+      }
+      const createData: Parameters<typeof pricingService.createSeason>[0] = {
+        name: newSeasonForm.name,
+        start_date: firstPeriod.start_date.split('T')[0],
+        end_date: firstPeriod.end_date.split('T')[0],
+        priority: newSeasonForm.priority,
+        start_month: p1Start.month,
+        start_day: p1Start.day,
+        end_month: p1End.month,
+        end_day: p1End.day,
+      };
+      if (newSeasonForm.periods[1]?.start_date && newSeasonForm.periods[1]?.end_date) {
+        const p2Start = parseDateParts(newSeasonForm.periods[1].start_date);
+        const p2End = parseDateParts(newSeasonForm.periods[1].end_date);
+        if (p2Start && p2End) {
+          createData.start_month_2 = p2Start.month;
+          createData.start_day_2 = p2Start.day;
+          createData.end_month_2 = p2End.month;
+          createData.end_day_2 = p2End.day;
+        }
+      }
+      if (newSeasonForm.periods[2]?.start_date && newSeasonForm.periods[2]?.end_date) {
+        const p3Start = parseDateParts(newSeasonForm.periods[2].start_date);
+        const p3End = parseDateParts(newSeasonForm.periods[2].end_date);
+        if (p3Start && p3End) {
+          createData.start_month_3 = p3Start.month;
+          createData.start_day_3 = p3Start.day;
+          createData.end_month_3 = p3End.month;
+          createData.end_day_3 = p3End.day;
+        }
+      }
+      await pricingService.createSeason(createData);
+      setShowNewSeasonForm(false);
+      setNewSeasonForm(null);
+      await loadData();
+    } catch (err) {
+      setNewSeasonError(err instanceof Error ? err.message : 'Αποτυχία δημιουργίας σεζόν.');
+    } finally {
+      setSavingNewSeason(false);
+    }
+  };
+
   const saveSeasonEdit = async () => {
     if (!editingSeasonId || !editSeasonForm) return;
     if (!editSeasonForm.name?.trim()) {
       setSeasonEditError('Το όνομα είναι υποχρεωτικό.');
       return;
     }
-    if (!editSeasonForm.start_date || !editSeasonForm.end_date) {
-      setSeasonEditError('Οι ημερομηνίες είναι υποχρεωτικές.');
+    const firstPeriod = editSeasonForm.periods[0];
+    if (!firstPeriod || !firstPeriod.start_date || !firstPeriod.end_date) {
+      setSeasonEditError('Η πρώτη περίοδος είναι υποχρεωτική.');
       return;
     }
     setSavingSeason(true);
     setSeasonEditError(null);
     try {
-      const startDateStr = editSeasonForm.start_date.split('T')[0];
-      const endDateStr = editSeasonForm.end_date.split('T')[0];
-      const startDateParts = startDateStr.split('-');
-      const endDateParts = endDateStr.split('-');
-      const start_month = parseInt(startDateParts[1], 10);
-      const start_day = parseInt(startDateParts[2], 10);
-      const end_month = parseInt(endDateParts[1], 10);
-      const end_day = parseInt(endDateParts[2], 10);
-
-      await pricingService.updateSeason(editingSeasonId, {
+      const updates: Partial<Season> = {
         name: editSeasonForm.name,
-        start_date: startDateStr,
-        end_date: endDateStr,
-        start_month,
-        start_day,
-        end_month,
-        end_day,
-      });
-      setSeasons(prev => prev.map(s => s.id === editingSeasonId ? {
-        ...s,
-        name: editSeasonForm.name!,
-        start_date: startDateStr,
-        end_date: endDateStr,
-        start_month,
-        start_day,
-        end_month,
-        end_day,
-      } : s));
+        priority: editSeasonForm.priority,
+      };
+
+      const p1Start = parseDateParts(firstPeriod.start_date);
+      const p1End = parseDateParts(firstPeriod.end_date);
+      if (!p1Start || !p1End) {
+        setSeasonEditError('Μη έγκυρες ημερομηνίες περιόδου 1.');
+        setSavingSeason(false);
+        return;
+      }
+      updates.start_date = firstPeriod.start_date.split('T')[0];
+      updates.end_date = firstPeriod.end_date.split('T')[0];
+      updates.start_month = p1Start.month;
+      updates.start_day = p1Start.day;
+      updates.end_month = p1End.month;
+      updates.end_day = p1End.day;
+
+      if (editSeasonForm.periods[1]?.start_date && editSeasonForm.periods[1]?.end_date) {
+        const p2Start = parseDateParts(editSeasonForm.periods[1].start_date);
+        const p2End = parseDateParts(editSeasonForm.periods[1].end_date);
+        if (p2Start && p2End) {
+          updates.start_month_2 = p2Start.month;
+          updates.start_day_2 = p2Start.day;
+          updates.end_month_2 = p2End.month;
+          updates.end_day_2 = p2End.day;
+        }
+      } else {
+        updates.start_month_2 = null;
+        updates.start_day_2 = null;
+        updates.end_month_2 = null;
+        updates.end_day_2 = null;
+      }
+
+      if (editSeasonForm.periods[2]?.start_date && editSeasonForm.periods[2]?.end_date) {
+        const p3Start = parseDateParts(editSeasonForm.periods[2].start_date);
+        const p3End = parseDateParts(editSeasonForm.periods[2].end_date);
+        if (p3Start && p3End) {
+          updates.start_month_3 = p3Start.month;
+          updates.start_day_3 = p3Start.day;
+          updates.end_month_3 = p3End.month;
+          updates.end_day_3 = p3End.day;
+        }
+      } else {
+        updates.start_month_3 = null;
+        updates.start_day_3 = null;
+        updates.end_month_3 = null;
+        updates.end_day_3 = null;
+      }
+
+      await pricingService.updateSeason(editingSeasonId, updates);
+      await loadData();
       setEditingSeasonId(null);
       setEditSeasonForm(null);
     } catch (err) {
@@ -271,11 +398,17 @@ const PricingManagement: React.FC = () => {
   };
 
   const formatSeasonRange = (s: Season): string => {
+    const parts: string[] = [];
     if (s.start_month && s.end_month) {
-      const start = `${s.start_day ?? 1}/${s.start_month}`;
-      const end = `${s.end_day ?? 31}/${s.end_month}`;
-      return `${start} - ${end}`;
+      parts.push(`${s.start_day ?? 1}/${s.start_month} - ${s.end_day ?? 31}/${s.end_month}`);
     }
+    if (s.start_month_2 && s.end_month_2) {
+      parts.push(`${s.start_day_2 ?? 1}/${s.start_month_2} - ${s.end_day_2 ?? 31}/${s.end_month_2}`);
+    }
+    if (s.start_month_3 && s.end_month_3) {
+      parts.push(`${s.start_day_3 ?? 1}/${s.start_month_3} - ${s.end_day_3 ?? 31}/${s.end_month_3}`);
+    }
+    if (parts.length > 0) return parts.join(', ');
     return `${new Date(s.start_date).toLocaleDateString('el-GR')} - ${new Date(s.end_date).toLocaleDateString('el-GR')}`;
   };
 
@@ -324,7 +457,14 @@ const PricingManagement: React.FC = () => {
         <div className="px-6 py-4 border-b border-[#1e4e7d]/70">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-white">Σεζόν</h2>
-            <button className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]">
+            <button
+              onClick={() => {
+                setShowNewSeasonForm(true);
+                setNewSeasonForm({ name: '', priority: 0, periods: [{ start_date: '', end_date: '' }] });
+                setNewSeasonError(null);
+              }}
+              className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
+            >
               <PlusIcon className="h-4 w-4 mr-1" />
               Νέα Σεζόν
             </button>
@@ -349,25 +489,64 @@ const PricingManagement: React.FC = () => {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs text-blue-100/55 mb-1">Ημ. Έναρξης</label>
+                        <label className="block text-xs text-blue-100/55 mb-1">Προτεραιότητα</label>
                         <input
-                          type="date"
-                          value={editSeasonForm.start_date ? editSeasonForm.start_date.split('T')[0] : ''}
-                          onChange={e => setEditSeasonForm({ ...editSeasonForm, start_date: e.target.value })}
+                          type="number"
+                          value={editSeasonForm.priority ?? 0}
+                          onChange={e => setEditSeasonForm({ ...editSeasonForm, priority: parseInt(e.target.value, 10) || 0 })}
                           className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                         />
                       </div>
-                      <div>
-                        <label className="block text-xs text-blue-100/55 mb-1">Ημ. Λήξης</label>
-                        <input
-                          type="date"
-                          value={editSeasonForm.end_date ? editSeasonForm.end_date.split('T')[0] : ''}
-                          onChange={e => setEditSeasonForm({ ...editSeasonForm, end_date: e.target.value })}
-                          className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
-                        />
-                      </div>
-
                     </div>
+                    {editSeasonForm.periods.map((period, pIdx) => (
+                      <div key={pIdx} className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+                        <div>
+                          <label className="block text-xs text-blue-100/55 mb-1">Περίοδος {pIdx + 1} — Έναρξη</label>
+                          <input
+                            type="date"
+                            value={period.start_date ? period.start_date.split('T')[0] : ''}
+                            onChange={e => {
+                              const periods = [...editSeasonForm.periods];
+                              periods[pIdx] = { ...periods[pIdx], start_date: e.target.value };
+                              setEditSeasonForm({ ...editSeasonForm, periods });
+                            }}
+                            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                          />
+                        </div>
+                        <div className="flex gap-2 items-end">
+                          <div className="flex-1">
+                            <label className="block text-xs text-blue-100/55 mb-1">Περίοδος {pIdx + 1} — Λήξη</label>
+                            <input
+                              type="date"
+                              value={period.end_date ? period.end_date.split('T')[0] : ''}
+                              onChange={e => {
+                                const periods = [...editSeasonForm.periods];
+                                periods[pIdx] = { ...periods[pIdx], end_date: e.target.value };
+                                setEditSeasonForm({ ...editSeasonForm, periods });
+                              }}
+                              className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                            />
+                          </div>
+                          {pIdx > 0 && (
+                            <button
+                              onClick={() => setEditSeasonForm({ ...editSeasonForm, periods: editSeasonForm.periods.filter((_, i) => i !== pIdx) })}
+                              className="flex-shrink-0 inline-flex items-center justify-center rounded-xl border border-red-400/40 bg-red-500/15 px-2 py-2 text-red-300 transition-colors hover:bg-red-500/25"
+                            >
+                              <XMarkIcon className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {editSeasonForm.periods.length < 3 && (
+                      <button
+                        onClick={() => setEditSeasonForm({ ...editSeasonForm, periods: [...editSeasonForm.periods, { start_date: '', end_date: '' }] })}
+                        className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-1.5 text-xs font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
+                      >
+                        <PlusIcon className="h-3 w-3 mr-1" />
+                        Προσθήκη Περιόδου
+                      </button>
+                    )}
                     {seasonEditError && (
                       <p className="text-xs text-red-400">{seasonEditError}</p>
                     )}
@@ -749,6 +928,108 @@ const PricingManagement: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {showNewSeasonForm && newSeasonForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.98),rgba(5,24,48,0.99))] shadow-[0_18px_45px_rgba(0,0,0,0.4)] p-6 max-h-[90vh] overflow-y-auto">
+            <h3 className="text-base font-semibold text-white mb-4">Νέα Σεζόν</h3>
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs text-blue-100/55 mb-1">Όνομα</label>
+                  <input
+                    type="text"
+                    value={newSeasonForm.name || ''}
+                    onChange={e => setNewSeasonForm({ ...newSeasonForm, name: e.target.value })}
+                    className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-blue-100/55 mb-1">Προτεραιότητα</label>
+                  <input
+                    type="number"
+                    value={newSeasonForm.priority ?? 0}
+                    onChange={e => setNewSeasonForm({ ...newSeasonForm, priority: parseInt(e.target.value, 10) || 0 })}
+                    className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                  />
+                </div>
+              </div>
+              {newSeasonForm.periods.map((period, pIdx) => (
+                <div key={pIdx} className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+                  <div>
+                    <label className="block text-xs text-blue-100/55 mb-1">Περίοδος {pIdx + 1} — Έναρξη</label>
+                    <input
+                      type="date"
+                      value={period.start_date ? period.start_date.split('T')[0] : ''}
+                      onChange={e => {
+                        const periods = [...newSeasonForm.periods];
+                        periods[pIdx] = { ...periods[pIdx], start_date: e.target.value };
+                        setNewSeasonForm({ ...newSeasonForm, periods });
+                      }}
+                      className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                    />
+                  </div>
+                  <div className="flex gap-2 items-end">
+                    <div className="flex-1">
+                      <label className="block text-xs text-blue-100/55 mb-1">Περίοδος {pIdx + 1} — Λήξη</label>
+                      <input
+                        type="date"
+                        value={period.end_date ? period.end_date.split('T')[0] : ''}
+                        onChange={e => {
+                          const periods = [...newSeasonForm.periods];
+                          periods[pIdx] = { ...periods[pIdx], end_date: e.target.value };
+                          setNewSeasonForm({ ...newSeasonForm, periods });
+                        }}
+                        className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                      />
+                    </div>
+                    {pIdx > 0 && (
+                      <button
+                        onClick={() => setNewSeasonForm({ ...newSeasonForm, periods: newSeasonForm.periods.filter((_, i) => i !== pIdx) })}
+                        className="flex-shrink-0 inline-flex items-center justify-center rounded-xl border border-red-400/40 bg-red-500/15 px-2 py-2 text-red-300 transition-colors hover:bg-red-500/25"
+                      >
+                        <XMarkIcon className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {newSeasonForm.periods.length < 3 && (
+                <button
+                  onClick={() => setNewSeasonForm({ ...newSeasonForm, periods: [...newSeasonForm.periods, { start_date: '', end_date: '' }] })}
+                  className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-1.5 text-xs font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
+                >
+                  <PlusIcon className="h-3 w-3 mr-1" />
+                  Προσθήκη Περιόδου
+                </button>
+              )}
+              {newSeasonError && (
+                <p className="text-xs text-red-400">{newSeasonError}</p>
+              )}
+            </div>
+            <div className="flex justify-end space-x-2 mt-4">
+              <button
+                onClick={() => {
+                  setShowNewSeasonForm(false);
+                  setNewSeasonForm(null);
+                  setNewSeasonError(null);
+                }}
+                disabled={savingNewSeason}
+                className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-4 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:bg-[#12375d]"
+              >
+                Άκυρο
+              </button>
+              <button
+                onClick={saveNewSeason}
+                disabled={savingNewSeason}
+                className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#2478ff] disabled:opacity-50"
+              >
+                {savingNewSeason ? 'Αποθήκευση...' : 'Δημιουργία'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {seasonToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">

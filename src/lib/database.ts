@@ -327,11 +327,7 @@ export const stationService = {
 };
 
 // Shared season-matching + rate resolution logic
-function dateMatchesSeason(month: number, day: number, season: Season): boolean {
-  const sm = season.start_month;
-  const sd = season.start_day;
-  const em = season.end_month;
-  const ed = season.end_day;
+function matchSinglePeriod(month: number, day: number, sm: number | null | undefined, sd: number | null | undefined, em: number | null | undefined, ed: number | null | undefined): boolean {
   if (sm == null || sd == null || em == null || ed == null) return false;
 
   const startMd = sm * 100 + sd;
@@ -341,8 +337,14 @@ function dateMatchesSeason(month: number, day: number, season: Season): boolean 
   if (startMd <= endMd) {
     return checkMd >= startMd && checkMd <= endMd;
   }
-  // Season crosses year-end
   return checkMd >= startMd || checkMd <= endMd;
+}
+
+function dateMatchesSeason(month: number, day: number, season: Season): boolean {
+  if (matchSinglePeriod(month, day, season.start_month, season.start_day, season.end_month, season.end_day)) return true;
+  if (matchSinglePeriod(month, day, season.start_month_2, season.start_day_2, season.end_month_2, season.end_day_2)) return true;
+  if (matchSinglePeriod(month, day, season.start_month_3, season.start_day_3, season.end_month_3, season.end_day_3)) return true;
+  return false;
 }
 
 export function resolveDailyRate(
@@ -388,10 +390,73 @@ export const pricingService = {
       .from('seasons')
       .select('*')
       .eq('active', true)
-      .order('start_date');
+      .order('priority', { ascending: true });
 
     if (error) throw error;
     return data || [];
+  },
+
+  async createSeason(season: {
+    name: string;
+    start_date: string;
+    end_date: string;
+    multiplier?: number;
+    priority?: number;
+    start_month: number;
+    start_day: number;
+    end_month: number;
+    end_day: number;
+    start_month_2?: number | null;
+    start_day_2?: number | null;
+    end_month_2?: number | null;
+    end_day_2?: number | null;
+    start_month_3?: number | null;
+    start_day_3?: number | null;
+    end_month_3?: number | null;
+    end_day_3?: number | null;
+  }): Promise<Season> {
+    if (isDemo) {
+      return Promise.resolve({
+        id: Date.now().toString(),
+        name: season.name,
+        start_date: season.start_date,
+        end_date: season.end_date,
+        multiplier: season.multiplier ?? 1.0,
+        priority: season.priority ?? 0,
+        start_month: season.start_month,
+        start_day: season.start_day,
+        end_month: season.end_month,
+        end_day: season.end_day,
+      });
+    }
+
+    const { data, error } = await supabase!
+      .from('seasons')
+      .insert({
+        name: season.name,
+        start_date: season.start_date,
+        end_date: season.end_date,
+        multiplier: season.multiplier ?? 1.0,
+        priority: season.priority ?? 0,
+        active: true,
+        start_month: season.start_month,
+        start_day: season.start_day,
+        end_month: season.end_month,
+        end_day: season.end_day,
+        ...(season.start_month_2 != null && { start_month_2: season.start_month_2 }),
+        ...(season.start_day_2 != null && { start_day_2: season.start_day_2 }),
+        ...(season.end_month_2 != null && { end_month_2: season.end_month_2 }),
+        ...(season.end_day_2 != null && { end_day_2: season.end_day_2 }),
+        ...(season.start_month_3 != null && { start_month_3: season.start_month_3 }),
+        ...(season.start_day_3 != null && { start_day_3: season.start_day_3 }),
+        ...(season.end_month_3 != null && { end_month_3: season.end_month_3 }),
+        ...(season.end_day_3 != null && { end_day_3: season.end_day_3 }),
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
   },
 
   async getPricing(): Promise<Pricing[]> {
@@ -477,7 +542,7 @@ export const pricingService = {
     if (error) throw error;
   },
 
-  async updateSeason(id: string, updates: Partial<Pick<Season, 'name' | 'start_date' | 'end_date' | 'multiplier' | 'start_month' | 'start_day' | 'end_month' | 'end_day' | 'priority'>>): Promise<void> {
+  async updateSeason(id: string, updates: Partial<Pick<Season, 'name' | 'start_date' | 'end_date' | 'multiplier' | 'start_month' | 'start_day' | 'end_month' | 'end_day' | 'priority' | 'start_month_2' | 'start_day_2' | 'end_month_2' | 'end_day_2' | 'start_month_3' | 'start_day_3' | 'end_month_3' | 'end_day_3'>>): Promise<void> {
     if (isDemo) return Promise.resolve();
 
     const { data, error } = await supabase!
@@ -492,6 +557,14 @@ export const pricingService = {
         ...(updates.end_month !== undefined && { end_month: updates.end_month }),
         ...(updates.end_day !== undefined && { end_day: updates.end_day }),
         ...(updates.priority !== undefined && { priority: updates.priority }),
+        ...(updates.start_month_2 !== undefined && { start_month_2: updates.start_month_2 }),
+        ...(updates.start_day_2 !== undefined && { start_day_2: updates.start_day_2 }),
+        ...(updates.end_month_2 !== undefined && { end_month_2: updates.end_month_2 }),
+        ...(updates.end_day_2 !== undefined && { end_day_2: updates.end_day_2 }),
+        ...(updates.start_month_3 !== undefined && { start_month_3: updates.start_month_3 }),
+        ...(updates.start_day_3 !== undefined && { start_day_3: updates.start_day_3 }),
+        ...(updates.end_month_3 !== undefined && { end_month_3: updates.end_month_3 }),
+        ...(updates.end_day_3 !== undefined && { end_day_3: updates.end_day_3 }),
       })
       .eq('id', id)
       .select();
