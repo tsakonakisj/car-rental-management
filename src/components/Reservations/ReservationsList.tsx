@@ -90,6 +90,7 @@ interface ReservationsListProps {
   onCheckIn?: (reservationId: string) => void;
   refreshTrigger?: number;
   initialFilter?: string;
+  initialViewReservationId?: string | null;
 }
 
 const statusOptions: { value: string; labelEl: string }[] = [
@@ -117,7 +118,7 @@ function calcDaysBetween(startDate: string, endDate: string): number {
 }
 
 
-const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheckIn, refreshTrigger, initialFilter }) => {
+const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheckIn, refreshTrigger, initialFilter, initialViewReservationId }) => {
   const [reservations, setReservations] = useState<ReservationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -168,6 +169,14 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
   useEffect(() => {
     stationService.getAll().then(setStations).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!initialViewReservationId) return;
+    const match = reservations.find(r => r.id === initialViewReservationId);
+    if (match) {
+      setViewReservation(match);
+    }
+  }, [initialViewReservationId, reservations]);
 
   useEffect(() => {
     if (!viewReservation) {

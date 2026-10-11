@@ -32,6 +32,7 @@ const MainApp: React.FC = () => {
   const [reservationsInitialFilter, setReservationsInitialFilter] = useState<string>('all');
   const [fleetInitialFilter, setFleetInitialFilter] = useState<'active' | 'inactive' | 'all'>('active');
   const [fleetEditVehicleId, setFleetEditVehicleId] = useState<string | null>(null);
+  const [viewReservationId, setViewReservationId] = useState<string | null>(null);
 
   const toggleMobileSidebar = useCallback(() => {
     setMobileSidebarOpen(prev => !prev);
@@ -247,11 +248,12 @@ const MainApp: React.FC = () => {
               onCheckIn={handleCheckIn}
               refreshTrigger={reservationRefresh}
               initialFilter={reservationsInitialFilter}
+              initialViewReservationId={viewReservationId}
             />
           </div>
         );
       case 'customers':
-        return <CustomerManagement />;
+        return <CustomerManagement onViewReservation={(reservationId) => { setViewReservationId(reservationId); setActiveTab('bookings'); }} />;
       case 'fleet':
         return <FleetManagement initialFilter={fleetInitialFilter} editVehicleId={fleetEditVehicleId} onEditVehicleConsumed={() => setFleetEditVehicleId(null)} />;
       case 'pricing':

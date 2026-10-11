@@ -24,7 +24,11 @@ interface CustomerReservation {
   vehicle: { plate: string; brand: string; model: string } | null;
 }
 
-const CustomerManagement: React.FC = () => {
+interface CustomerManagementProps {
+  onViewReservation?: (reservationId: string) => void;
+}
+
+const CustomerManagement: React.FC<CustomerManagementProps> = ({ onViewReservation }) => {
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -295,7 +299,11 @@ const CustomerManagement: React.FC = () => {
                   ) : (
                     <div className="space-y-2">
                       {customerReservations.map(r => (
-                        <div key={r.id} className="rounded-xl border border-[#1e4e7d]/50 bg-[#0b2949]/50 p-3 text-sm">
+                        <div
+                          key={r.id}
+                          onClick={() => onViewReservation?.(r.id)}
+                          className={`rounded-xl border border-[#1e4e7d]/50 bg-[#0b2949]/50 p-3 text-sm transition-colors ${onViewReservation ? 'cursor-pointer hover:border-[#55a8ff] hover:bg-[#12375d]' : ''}`}
+                        >
                           <div className="mb-1 flex items-center justify-between">
                             <span className="font-medium text-white">
                               {r.vehicle ? `${r.vehicle.plate} - ${r.vehicle.brand} ${r.vehicle.model}` : '-'}
