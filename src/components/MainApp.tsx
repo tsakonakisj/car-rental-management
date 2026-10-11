@@ -31,6 +31,7 @@ const MainApp: React.FC = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [reservationsInitialFilter, setReservationsInitialFilter] = useState<string>('all');
   const [fleetInitialFilter, setFleetInitialFilter] = useState<'active' | 'inactive' | 'all'>('active');
+  const [fleetEditVehicleId, setFleetEditVehicleId] = useState<string | null>(null);
 
   const toggleMobileSidebar = useCallback(() => {
     setMobileSidebarOpen(prev => !prev);
@@ -228,7 +229,7 @@ const MainApp: React.FC = () => {
     const effectiveTab = isTabAllowed(user?.role, activeTab) ? activeTab : 'dashboard';
     switch (effectiveTab) {
       case 'dashboard':
-        return <DashboardPage onNavigateReservations={(f) => { setReservationsInitialFilter(f); setActiveTab('bookings'); }} onNavigateFleet={() => { setFleetInitialFilter('all'); setActiveTab('fleet'); }} onNewBooking={() => setShowBookingWizard(true)} />;
+        return <DashboardPage onNavigateReservations={(f) => { setReservationsInitialFilter(f); setActiveTab('bookings'); }} onNavigateFleet={() => { setFleetInitialFilter('all'); setActiveTab('fleet'); }} onNavigateVehicle={(vehicleId) => { setFleetEditVehicleId(vehicleId); setFleetInitialFilter('all'); setActiveTab('fleet'); }} onNewBooking={() => setShowBookingWizard(true)} />;
       case 'bookings':
         return (
           <div className="space-y-6">
@@ -252,7 +253,7 @@ const MainApp: React.FC = () => {
       case 'customers':
         return <CustomerManagement />;
       case 'fleet':
-        return <FleetManagement initialFilter={fleetInitialFilter} />;
+        return <FleetManagement initialFilter={fleetInitialFilter} editVehicleId={fleetEditVehicleId} onEditVehicleConsumed={() => setFleetEditVehicleId(null)} />;
       case 'pricing':
         return <PricingManagement />;
       case 'reports':

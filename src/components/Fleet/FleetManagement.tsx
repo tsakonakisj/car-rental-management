@@ -63,9 +63,11 @@ async function recalculateStatuses(vehicles: Vehicle[]): Promise<Vehicle[]> {
 
 interface FleetManagementProps {
   initialFilter?: FleetFilter;
+  editVehicleId?: string | null;
+  onEditVehicleConsumed?: () => void;
 }
 
-const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter }) => {
+const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVehicleId, onEditVehicleConsumed }) => {
   const { t } = useLanguage();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,6 +97,14 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter }) => {
   useEffect(() => {
     fetchVehicles();
   }, [fetchVehicles]);
+
+  useEffect(() => {
+    if (editVehicleId && vehicles.length > 0) {
+      const v = vehicles.find(v => v.id === editVehicleId && v.status !== 'inactive');
+      if (v) setEditingVehicle(v);
+      onEditVehicleConsumed?.();
+    }
+  }, [editVehicleId, vehicles, onEditVehicleConsumed]);
 
   useEffect(() => {
     const paths = vehicles
@@ -402,6 +412,37 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter }) => {
                           </div>
                         </div>
                       )}
+                      {vehicle.next_service_date && (() => {
+                        const level = getExpiryLevel(vehicle.next_service_date);
+                        if (level === 'ok') return null;
+                        return (
+                          <div className={`flex items-center justify-between rounded-lg p-2 text-xs ${expiryStyles[level]}`}>
+                            <span>Επόμενο Service:</span>
+                            <div className="flex items-center gap-2">
+                              <span>{expiryLabel(vehicle.next_service_date)}</span>
+                              <span className="text-blue-100/40">{new Date(vehicle.next_service_date + 'T00:00:00').toLocaleDateString('el-GR')}</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                      {vehicle.next_service_odometer != null && vehicle.odometer != null && (() => {
+                        const kmRemaining = vehicle.next_service_odometer - vehicle.odometer;
+                        if (kmRemaining > 1000) return null;
+                        const kmLevel: ExpiryLevel =
+                          kmRemaining < 0 ? 'expired' :
+                          kmRemaining <= 100 ? 'critical' :
+                          kmRemaining <= 300 ? 'warning' :
+                          'soon';
+                        return (
+                          <div className={`flex items-center justify-between rounded-lg p-2 text-xs ${expiryStyles[kmLevel]}`}>
+                            <span>Service (χλμ):</span>
+                            <div className="flex items-center gap-2">
+                              <span>{kmRemaining < 0 ? `Έχει ξεπεραστεί ${Math.abs(kmRemaining)} km` : `${kmRemaining} km απομένουν`}</span>
+                              <span className="text-blue-100/40">{vehicle.odometer.toLocaleString('el-GR')} / {vehicle.next_service_odometer.toLocaleString('el-GR')} km</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
 

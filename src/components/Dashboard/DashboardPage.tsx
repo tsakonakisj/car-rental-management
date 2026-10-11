@@ -151,10 +151,11 @@ const STATUS_COLORS: Record<string, string> = {
 interface DashboardPageProps {
   onNavigateReservations?: (filter: string) => void;
   onNavigateFleet?: () => void;
+  onNavigateVehicle?: (vehicleId: string) => void;
   onNewBooking?: () => void;
 }
 
-const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, onNavigateFleet, onNewBooking }) => {
+const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, onNavigateFleet, onNavigateVehicle, onNewBooking }) => {
   const [loading, setLoading] = useState(true);
   const [sourceStats, setSourceStats] = useState<SourceStat[]>([]);
   const [statusStats, setStatusStats] = useState<StatusStat[]>([]);
@@ -585,7 +586,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
                     <button
                       key={`${alert.vehicleId}-${alert.documentType}-${idx}`}
                       type="button"
-                      onClick={() => onNavigateFleet?.()}
+                      onClick={() => onNavigateVehicle ? onNavigateVehicle(alert.vehicleId) : onNavigateFleet?.()}
                       className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-[#0b2949]/40"
                     >
                       <div className="flex items-center gap-3">
