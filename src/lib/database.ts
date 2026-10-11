@@ -557,6 +557,21 @@ export const pricingService = {
     }
   },
 
+  async createExtra(data: { name: string; name_en: string; type: 'daily' | 'one-time'; price: number }): Promise<Extra> {
+    if (isDemo) {
+      return Promise.resolve({ id: Date.now().toString(), ...data });
+    }
+
+    const { data: row, error } = await supabase!
+      .from('extras')
+      .insert({ name: data.name, name_en: data.name_en, type: data.type, price: data.price, active: true })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return row;
+  },
+
   async updateSeason(id: string, updates: Partial<Pick<Season, 'name' | 'start_date' | 'end_date' | 'multiplier' | 'start_month' | 'start_day' | 'end_month' | 'end_day' | 'priority' | 'start_month_2' | 'start_day_2' | 'end_month_2' | 'end_day_2' | 'start_month_3' | 'start_day_3' | 'end_month_3' | 'end_day_3'>>): Promise<void> {
     if (isDemo) return Promise.resolve();
 
@@ -657,6 +672,21 @@ export const insuranceService = {
     if (!data || data.length === 0) {
       throw new Error('Δεν επιτρέπεται η διαγραφή ασφάλειας. Ελέγξτε τα δικαιώματα χρήστη.');
     }
+  },
+
+  async createInsurance(data: { name: string; name_en: string; daily_rate: number }): Promise<Insurance> {
+    if (isDemo) {
+      return Promise.resolve({ id: Date.now().toString(), category: 'all', ...data });
+    }
+
+    const { data: row, error } = await supabase!
+      .from('insurance_types')
+      .insert({ name: data.name, name_en: data.name_en, daily_rate: data.daily_rate, category: 'all', active: true })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { ...row, daily_rate: Number(row.daily_rate) || 0 };
   }
 };
 

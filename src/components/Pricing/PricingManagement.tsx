@@ -187,6 +187,16 @@ const PricingManagement: React.FC = () => {
   const [deletingExtra, setDeletingExtra] = useState(false);
   const [extraDeleteError, setExtraDeleteError] = useState<string | null>(null);
 
+  const [showNewInsuranceForm, setShowNewInsuranceForm] = useState(false);
+  const [newInsuranceForm, setNewInsuranceForm] = useState<{ name: string; name_en: string; daily_rate: number } | null>(null);
+  const [newInsuranceError, setNewInsuranceError] = useState<string | null>(null);
+  const [savingNewInsurance, setSavingNewInsurance] = useState(false);
+
+  const [showNewExtraForm, setShowNewExtraForm] = useState(false);
+  const [newExtraForm, setNewExtraForm] = useState<{ name: string; name_en: string; type: 'daily' | 'one-time'; price: number } | null>(null);
+  const [newExtraError, setNewExtraError] = useState<string | null>(null);
+  const [savingNewExtra, setSavingNewExtra] = useState(false);
+
   const handleDeleteSeason = async () => {
     if (!seasonToDelete) return;
     setDeletingSeason(true);
@@ -229,6 +239,63 @@ const PricingManagement: React.FC = () => {
       setExtraDeleteError(err instanceof Error ? err.message : 'Αποτυχία διαγραφής έξτρα.');
     } finally {
       setDeletingExtra(false);
+    }
+  };
+
+  const saveNewInsurance = async () => {
+    if (!newInsuranceForm) return;
+    if (!newInsuranceForm.name?.trim()) {
+      setNewInsuranceError('Το όνομα είναι υποχρεωτικό.');
+      return;
+    }
+    if (!newInsuranceForm.name_en?.trim()) {
+      setNewInsuranceError('Το όνομα (EN) είναι υποχρεωτικό.');
+      return;
+    }
+    setSavingNewInsurance(true);
+    setNewInsuranceError(null);
+    try {
+      await insuranceService.createInsurance({
+        name: newInsuranceForm.name,
+        name_en: newInsuranceForm.name_en,
+        daily_rate: newInsuranceForm.daily_rate,
+      });
+      setShowNewInsuranceForm(false);
+      setNewInsuranceForm(null);
+      await loadData();
+    } catch (err) {
+      setNewInsuranceError(err instanceof Error ? err.message : 'Αποτυχία δημιουργίας ασφάλειας.');
+    } finally {
+      setSavingNewInsurance(false);
+    }
+  };
+
+  const saveNewExtra = async () => {
+    if (!newExtraForm) return;
+    if (!newExtraForm.name?.trim()) {
+      setNewExtraError('Το όνομα είναι υποχρεωτικό.');
+      return;
+    }
+    if (!newExtraForm.name_en?.trim()) {
+      setNewExtraError('Το όνομα (EN) είναι υποχρεωτικό.');
+      return;
+    }
+    setSavingNewExtra(true);
+    setNewExtraError(null);
+    try {
+      await pricingService.createExtra({
+        name: newExtraForm.name,
+        name_en: newExtraForm.name_en,
+        type: newExtraForm.type,
+        price: newExtraForm.price,
+      });
+      setShowNewExtraForm(false);
+      setNewExtraForm(null);
+      await loadData();
+    } catch (err) {
+      setNewExtraError(err instanceof Error ? err.message : 'Αποτυχία δημιουργίας έξτρα.');
+    } finally {
+      setSavingNewExtra(false);
     }
   };
 
@@ -753,7 +820,14 @@ const PricingManagement: React.FC = () => {
         <div className="px-6 py-4 border-b border-[#1e4e7d]/70">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-white">Ασφάλεια</h2>
-            <button className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]">
+            <button
+              onClick={() => {
+                setShowNewInsuranceForm(true);
+                setNewInsuranceForm({ name: '', name_en: '', daily_rate: 0 });
+                setNewInsuranceError(null);
+              }}
+              className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
+            >
               <PlusIcon className="h-4 w-4 mr-1" />
               Νέα Ασφάλεια
             </button>
@@ -856,7 +930,14 @@ const PricingManagement: React.FC = () => {
         <div className="px-6 py-4 border-b border-[#1e4e7d]/70">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-white">Έξτρα</h2>
-            <button className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]">
+            <button
+              onClick={() => {
+                setShowNewExtraForm(true);
+                setNewExtraForm({ name: '', name_en: '', type: 'daily', price: 0 });
+                setNewExtraError(null);
+              }}
+              className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
+            >
               <PlusIcon className="h-4 w-4 mr-1" />
               Νέο Έξτρα
             </button>
@@ -1075,6 +1156,143 @@ const PricingManagement: React.FC = () => {
                 className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#2478ff] disabled:opacity-50"
               >
                 {savingNewSeason ? 'Αποθήκευση...' : 'Δημιουργία'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showNewInsuranceForm && newInsuranceForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.98),rgba(5,24,48,0.99))] shadow-[0_18px_45px_rgba(0,0,0,0.4)] p-6">
+            <h3 className="text-base font-semibold text-white mb-4">Νέα Ασφάλεια</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-blue-100/55 mb-1">Όνομα</label>
+                <input
+                  type="text"
+                  value={newInsuranceForm.name || ''}
+                  onChange={e => setNewInsuranceForm({ ...newInsuranceForm, name: e.target.value })}
+                  className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-blue-100/55 mb-1">Όνομα (EN)</label>
+                <input
+                  type="text"
+                  value={newInsuranceForm.name_en || ''}
+                  onChange={e => setNewInsuranceForm({ ...newInsuranceForm, name_en: e.target.value })}
+                  className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-blue-100/55 mb-1">Ημερήσιο Τέλος (€)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={newInsuranceForm.daily_rate ?? 0}
+                  onChange={e => setNewInsuranceForm({ ...newInsuranceForm, daily_rate: parseFloat(e.target.value) || 0 })}
+                  className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                />
+              </div>
+              {newInsuranceError && (
+                <p className="text-xs text-red-400">{newInsuranceError}</p>
+              )}
+            </div>
+            <div className="flex justify-end space-x-2 mt-4">
+              <button
+                onClick={() => {
+                  setShowNewInsuranceForm(false);
+                  setNewInsuranceForm(null);
+                  setNewInsuranceError(null);
+                }}
+                disabled={savingNewInsurance}
+                className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-4 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:bg-[#12375d]"
+              >
+                Άκυρο
+              </button>
+              <button
+                onClick={saveNewInsurance}
+                disabled={savingNewInsurance}
+                className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#2478ff] disabled:opacity-50"
+              >
+                {savingNewInsurance ? 'Αποθήκευση...' : 'Δημιουργία'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showNewExtraForm && newExtraForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.98),rgba(5,24,48,0.99))] shadow-[0_18px_45px_rgba(0,0,0,0.4)] p-6">
+            <h3 className="text-base font-semibold text-white mb-4">Νέο Έξτρα</h3>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs text-blue-100/55 mb-1">Όνομα</label>
+                <input
+                  type="text"
+                  value={newExtraForm.name || ''}
+                  onChange={e => setNewExtraForm({ ...newExtraForm, name: e.target.value })}
+                  className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-blue-100/55 mb-1">Όνομα (EN)</label>
+                <input
+                  type="text"
+                  value={newExtraForm.name_en || ''}
+                  onChange={e => setNewExtraForm({ ...newExtraForm, name_en: e.target.value })}
+                  className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-blue-100/55 mb-1">Τύπος</label>
+                  <select
+                    value={newExtraForm.type || 'daily'}
+                    onChange={e => setNewExtraForm({ ...newExtraForm, type: e.target.value as ExtraType['type'] })}
+                    className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                  >
+                    <option value="daily">Ημερήσιο</option>
+                    <option value="one-time">Εφάπαξ</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-blue-100/55 mb-1">Τιμή (€)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={newExtraForm.price ?? 0}
+                    onChange={e => setNewExtraForm({ ...newExtraForm, price: parseFloat(e.target.value) || 0 })}
+                    className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                  />
+                </div>
+              </div>
+              {newExtraError && (
+                <p className="text-xs text-red-400">{newExtraError}</p>
+              )}
+            </div>
+            <div className="flex justify-end space-x-2 mt-4">
+              <button
+                onClick={() => {
+                  setShowNewExtraForm(false);
+                  setNewExtraForm(null);
+                  setNewExtraError(null);
+                }}
+                disabled={savingNewExtra}
+                className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-4 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:bg-[#12375d]"
+              >
+                Άκυρο
+              </button>
+              <button
+                onClick={saveNewExtra}
+                disabled={savingNewExtra}
+                className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#2478ff] disabled:opacity-50"
+              >
+                {savingNewExtra ? 'Αποθήκευση...' : 'Δημιουργία'}
               </button>
             </div>
           </div>
