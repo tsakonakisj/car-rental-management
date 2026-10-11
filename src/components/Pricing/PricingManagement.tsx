@@ -283,19 +283,19 @@ const PricingManagement: React.FC = () => {
             {seasons.map((season) => {
               const isEditingSeason = editingSeasonId === season.id;
               return (
-              <div key={season.id} className="rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)] p-4">
+              <div key={season.id} className={`rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)] p-4 ${isEditingSeason ? 'md:col-span-2 lg:col-span-4' : ''}`}>
                 {isEditingSeason && editSeasonForm ? (
                   <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs text-blue-100/55 mb-1">Όνομα</label>
-                      <input
-                        type="text"
-                        value={editSeasonForm.name || ''}
-                        onChange={e => setEditSeasonForm({ ...editSeasonForm, name: e.target.value })}
-                        className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs text-blue-100/55 mb-1">Όνομα</label>
+                        <input
+                          type="text"
+                          value={editSeasonForm.name || ''}
+                          onChange={e => setEditSeasonForm({ ...editSeasonForm, name: e.target.value })}
+                          className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                        />
+                      </div>
                       <div>
                         <label className="block text-xs text-blue-100/55 mb-1">Ημ. Έναρξης</label>
                         <input
@@ -314,8 +314,6 @@ const PricingManagement: React.FC = () => {
                           className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                         />
                       </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs text-blue-100/55 mb-1">Προτεραιότητα</label>
                         <input
