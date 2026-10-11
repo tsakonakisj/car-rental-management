@@ -1,7 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import type { Vehicle } from '../../types';
-import { vehicleService } from '../../lib/database';
-import { XMarkIcon, ArrowPathIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { vehicleService, photoService } from '../../lib/database';
+import { compressImage } from '../../lib/imageUtils';
+import { supabase } from '../../lib/supabase';
+import {
+  XMarkIcon,
+  ArrowPathIcon,
+  CheckIcon,
+  CameraIcon,
+  TrashIcon,
+  StarIcon,
+} from '@heroicons/react/24/outline';
 
 interface VehicleFormModalProps {
   vehicle?: Vehicle | null;
@@ -45,6 +54,11 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
+  const [photoPaths, setPhotoPaths] = useState<string[]>([]);
+  const [mainPhotoPath, setMainPhotoPath] = useState<string | null>(null);
+  const [photoUrls, setPhotoUrls] = useState<Map<string, string>>(new Map());
+  const [uploading, setUploading] = useState(false);
+
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -52,6 +66,80 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, [onClose]);
+
+  useEffect(() => {
+    if (!vehicle) return;
+    const loadPhotos = async () => {
+      try {
+        const paths = await photoService.getPhotos('vehicle', vehicle.id);
+        setPhotoPaths(paths);
+        const main = vehicle.photo_url || paths[0] || null;
+        setMainPhotoPath(main);
+      } catch {
+        setPhotoPaths([]);
+      }
+    };
+    loadPhotos();
+  }, [vehicle]);
+
+  const refreshSignedUrls = useCallback(async (paths: string[]) => {
+    if (paths.length === 0) {
+      setPhotoUrls(new Map());
+      return;
+    }
+    try {
+      const urls = await photoService.getSignedUrls(paths, 3600);
+      setPhotoUrls(urls);
+    } catch {
+      setPhotoUrls(new Map());
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshSignedUrls(photoPaths);
+  }, [photoPaths, refreshSignedUrls]);
+
+  const handlePhotoCapture = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0 || !vehicle) return;
+
+    setUploading(true);
+    try {
+      for (const file of Array.from(files)) {
+        const compressed = await compressImage(file, 1600, 0.8);
+        const path = await photoService.upload(compressed, 'vehicle', vehicle.id);
+        setPhotoPaths((prev) => [...prev, path]);
+        if (!mainPhotoPath) {
+          setMainPhotoPath(path);
+        }
+      }
+    } catch {
+      setError('Αποτυχία μεταφόρτωσης φωτογραφίας.');
+    } finally {
+      setUploading(false);
+      event.target.value = '';
+    }
+  };
+
+  const removePhoto = async (path: string) => {
+    try {
+      await photoService.deletePhoto(path);
+    } catch {
+      // storage delete failed silently
+    }
+    setPhotoPaths((prev) => prev.filter((p) => p !== path));
+    setPhotoUrls((prev) => {
+      const next = new Map(prev);
+      next.delete(path);
+      return next;
+    });
+    if (mainPhotoPath === path) {
+      setMainPhotoPath((prev) => {
+        const remaining = photoPaths.filter((p) => p !== path);
+        return remaining[0] || null;
+      });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,6 +159,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
         inspection_expiry: form.inspection_expiry || null,
         odometer: Number(form.odometer) || 0,
         last_service: form.last_service || null,
+        photo_url: mainPhotoPath || null,
       };
       const saved = isEdit
         ? await vehicleService.update(vehicle!.id, payload)
@@ -105,6 +194,74 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
         <form onSubmit={handleSubmit} className="space-y-4 px-6 py-5">
           {error && (
             <div className="rounded-xl border border-red-400/30 bg-red-950/45 p-3 text-sm text-red-100">{error}</div>
+          )}
+
+          {/* Photo upload section */}
+          {isEdit && (
+            <div>
+              <label className="mb-2 block text-sm font-medium text-blue-100/65">Φωτογραφίες Οχήματος</label>
+              <div className="grid grid-cols-3 gap-3">
+                {photoPaths.map((photoPath) => (
+                  <div key={photoPath} className="group relative">
+                    <img
+                      src={photoUrls.get(photoPath) || ''}
+                      alt="Vehicle"
+                      className="h-24 w-full rounded-lg border border-[#1e4e7d]/70 object-cover"
+                    />
+                    <div className="absolute inset-x-0 bottom-0 flex items-center justify-between rounded-b-lg bg-[#020b18]/80 px-1.5 py-1 opacity-0 transition-opacity group-hover:opacity-100">
+                      <button
+                        type="button"
+                        onClick={() => setMainPhotoPath(photoPath)}
+                        className={`rounded p-0.5 transition-colors ${mainPhotoPath === photoPath ? 'text-amber-400' : 'text-blue-100/60 hover:text-amber-400'}`}
+                        title="Ορισμός ως κύρια"
+                      >
+                        <StarIcon className="h-4 w-4" fill={mainPhotoPath === photoPath ? 'currentColor' : 'none'} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(photoPath)}
+                        className="rounded p-0.5 text-red-400 transition-colors hover:text-red-300"
+                        title="Διαγραφή"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                    {mainPhotoPath === photoPath && (
+                      <div className="absolute left-1 top-1 rounded-full bg-amber-500/90 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                        Κύρια
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                <label className="flex h-24 cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-[#2b5b85]/80 bg-[#0b2949]/50 transition-colors hover:bg-[#0b2949]/80">
+                  {uploading ? (
+                    <ArrowPathIcon className="mb-1 h-6 w-6 animate-spin text-[#55a8ff]" />
+                  ) : (
+                    <CameraIcon className="mb-1 h-6 w-6 text-blue-100/55" />
+                  )}
+                  <span className="text-center text-[11px] text-blue-100/55">
+                    {uploading ? '...' : 'Προσθήκη'}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    multiple
+                    onChange={handlePhotoCapture}
+                    className="hidden"
+                    disabled={uploading}
+                  />
+                </label>
+              </div>
+              <p className="mt-2 text-xs text-blue-100/40">Κάντε κλικ στο αστέρι για να ορίσετε την κύρια φωτογραφία.</p>
+            </div>
+          )}
+
+          {!isEdit && (
+            <div className="rounded-xl border border-[#1e4e7d]/50 bg-[#0b2949]/40 p-3 text-xs text-blue-100/45">
+              Αποθηκεύστε το όχημα πρώτα για να προσθέσετε φωτογραφίες.
+            </div>
           )}
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">

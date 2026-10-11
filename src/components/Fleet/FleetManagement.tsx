@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { vehicleService } from '../../lib/database';
+import { vehicleService, photoService } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
 import type { Vehicle } from '../../types';
 import PageHero from '../Layout/PageHero';
@@ -75,6 +75,7 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter }) => {
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [addingVehicle, setAddingVehicle] = useState(false);
+  const [cardPhotoUrls, setCardPhotoUrls] = useState<Map<string, string>>(new Map());
 
   const fetchVehicles = useCallback(async () => {
     setLoading(true);
@@ -94,6 +95,23 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter }) => {
   useEffect(() => {
     fetchVehicles();
   }, [fetchVehicles]);
+
+  useEffect(() => {
+    const paths = vehicles
+      .map((v) => v.photo_url)
+      .filter((p): p is string => !!p);
+    if (paths.length === 0) {
+      setCardPhotoUrls(new Map());
+      return;
+    }
+    let cancelled = false;
+    photoService.getSignedUrls(paths, 3600).then((urls) => {
+      if (!cancelled) setCardPhotoUrls(urls);
+    }).catch(() => {
+      if (!cancelled) setCardPhotoUrls(new Map());
+    });
+    return () => { cancelled = true; };
+  }, [vehicles]);
 
   const handleDeactivate = async (vehicle: Vehicle) => {
     const confirmed = window.confirm(
@@ -322,7 +340,17 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter }) => {
                 <div className="p-5">
                   <div className="mb-4 flex items-center justify-between">
                     <div className="flex items-center">
-                      <TruckIcon className="mr-3 h-8 w-8 text-blue-100/45" />
+                      {vehicle.photo_url && cardPhotoUrls.get(vehicle.photo_url) ? (
+                        <img
+                          src={cardPhotoUrls.get(vehicle.photo_url)!}
+                          alt={`${vehicle.brand} ${vehicle.model}`}
+                          className="mr-3 h-12 w-12 flex-shrink-0 rounded-lg border border-[#1e4e7d]/70 object-cover"
+                        />
+                      ) : (
+                        <div className="mr-3 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg border border-[#1e4e7d]/50 bg-[#0b2949]/60">
+                          <TruckIcon className="h-7 w-7 text-blue-100/45" />
+                        </div>
+                      )}
                       <div>
                         <h3 className="text-lg font-semibold tracking-[-0.02em] text-white">{vehicle.plate}</h3>
                         <p className="text-sm text-blue-100/65">{vehicle.brand} {vehicle.model}</p>

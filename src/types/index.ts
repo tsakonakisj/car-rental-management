@@ -33,6 +33,7 @@ export interface Vehicle {
   inspection_expiry?: string;
   last_service?: string;
   odometer?: number;
+  photo_url?: string | null;
   created_at: string;
 }
 
