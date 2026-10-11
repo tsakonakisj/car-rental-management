@@ -50,6 +50,26 @@ interface VehicleAlert {
   expiryDate: string;
   daysRemaining: number;
   level: 'expired' | 'critical' | 'warning' | 'soon' | 'ok';
+  alertReason?: string;
+}
+
+const DEFAULT_SERVICE_WARNING_DAYS = 30;
+const DEFAULT_SERVICE_WARNING_KM = 1000;
+
+function getServiceLevelFromDays(days: number): ExpiryLevel {
+  if (days < 0) return 'expired';
+  if (days <= 7) return 'critical';
+  if (days <= 15) return 'warning';
+  if (days <= 30) return 'soon';
+  return 'ok';
+}
+
+function getServiceLevelFromKm(kmRemaining: number, warningKm: number): ExpiryLevel {
+  if (kmRemaining < 0) return 'expired';
+  if (kmRemaining <= Math.round(warningKm * 0.1)) return 'critical';
+  if (kmRemaining <= Math.round(warningKm * 0.3)) return 'warning';
+  if (kmRemaining <= warningKm) return 'soon';
+  return 'ok';
 }
 
 type ExpiryLevel = 'expired' | 'critical' | 'warning' | 'soon' | 'ok';
@@ -157,7 +177,21 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
       // Fetch vehicles
       const { data: vehicles } = await supabase
         .from('vehicles')
-        .select('id, plate, brand, model, status, insurance_expiry, inspection_expiry');
+        .select('id, plate, brand, model, status, insurance_expiry, inspection_expiry, odometer, next_service_date, next_service_odometer');
+
+      // Fetch service-reminder thresholds from settings (default 30 days / 1000 km)
+      let serviceWarningDays = DEFAULT_SERVICE_WARNING_DAYS;
+      let serviceWarningKm = DEFAULT_SERVICE_WARNING_KM;
+      const { data: serviceSettings } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'service_reminders')
+        .maybeSingle();
+      if (serviceSettings?.value && typeof serviceSettings.value === 'object') {
+        const v = serviceSettings.value as Record<string, unknown>;
+        if (typeof v.warning_days === 'number' && v.warning_days > 0) serviceWarningDays = v.warning_days;
+        if (typeof v.warning_km === 'number' && v.warning_km > 0) serviceWarningKm = v.warning_km;
+      }
 
       // Process source stats
       const sourceMap = new Map<string, { count: number; revenue: number }>();
@@ -222,6 +256,42 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
               expiryDate: v.inspection_expiry,
               daysRemaining: daysUntilExpiry(v.inspection_expiry),
               level,
+            });
+          }
+        }
+        // Service reminder — date threshold
+        if (v.next_service_date) {
+          const days = daysUntilExpiry(v.next_service_date);
+          const level = getServiceLevelFromDays(days);
+          if (days <= serviceWarningDays) {
+            alerts.push({
+              vehicleId: v.id,
+              plate: v.plate,
+              brand: v.brand,
+              model: v.model,
+              documentType: 'Service (Ημερομηνία)',
+              expiryDate: v.next_service_date,
+              daysRemaining: days,
+              level,
+              alertReason: days < 0 ? 'Έχει περάσει' : `${days} ημέρες`,
+            });
+          }
+        }
+        // Service reminder — odometer threshold
+        if (v.next_service_odometer != null && v.odometer != null) {
+          const kmRemaining = v.next_service_odometer - v.odometer;
+          if (kmRemaining <= serviceWarningKm) {
+            const level = getServiceLevelFromKm(kmRemaining, serviceWarningKm);
+            alerts.push({
+              vehicleId: v.id,
+              plate: v.plate,
+              brand: v.brand,
+              model: v.model,
+              documentType: 'Service (Χιλιόμετρα)',
+              expiryDate: '',
+              daysRemaining: kmRemaining,
+              level,
+              alertReason: kmRemaining < 0 ? `Έχει ξεπεραστεί ${Math.abs(kmRemaining)} km` : `${kmRemaining} km απομένουν`,
             });
           }
         }
@@ -466,10 +536,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
                       <div className="flex items-center gap-3">
                         <div className="text-right">
                           <p className="text-xs text-blue-100/55">{alert.documentType}</p>
-                          <p className="text-xs text-blue-100/40">{new Date(alert.expiryDate + 'T00:00:00').toLocaleDateString('el-GR')}</p>
+                          {alert.expiryDate
+                            ? <p className="text-xs text-blue-100/40">{new Date(alert.expiryDate + 'T00:00:00').toLocaleDateString('el-GR')}</p>
+                            : alert.alertReason
+                              ? <p className="text-xs text-blue-100/40">{alert.alertReason}</p>
+                              : null
+                          }
                         </div>
                         <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${ALERT_STYLES[alert.level]}`}>
-                          {expiryDaysLabel(alert.daysRemaining)}
+                          {alert.alertReason && !alert.expiryDate
+                            ? alert.alertReason
+                            : expiryDaysLabel(alert.daysRemaining)
+                          }
                         </span>
                       </div>
                     </button>

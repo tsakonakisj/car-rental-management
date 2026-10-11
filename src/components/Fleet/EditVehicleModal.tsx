@@ -30,6 +30,8 @@ const DEFAULT_FORM = {
   inspection_expiry: '',
   odometer: 0,
   last_service: '',
+  next_service_date: '',
+  next_service_odometer: '' as string | number,
 };
 
 const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, onSaved }) => {
@@ -48,6 +50,8 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
           inspection_expiry: vehicle.inspection_expiry || '',
           odometer: vehicle.odometer ?? 0,
           last_service: vehicle.last_service || '',
+          next_service_date: vehicle.next_service_date || '',
+          next_service_odometer: vehicle.next_service_odometer ?? '',
         }
       : DEFAULT_FORM
   );
@@ -159,6 +163,8 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
         inspection_expiry: form.inspection_expiry || null,
         odometer: Number(form.odometer) || 0,
         last_service: form.last_service || null,
+        next_service_date: (form.next_service_date as string) || null,
+        next_service_odometer: form.next_service_odometer !== '' ? Number(form.next_service_odometer) : null,
         photo_url: mainPhotoPath || null,
       };
       const saved = isEdit
@@ -378,6 +384,27 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
                 type="date"
                 value={form.last_service}
                 onChange={(e) => setForm((p) => ({ ...p, last_service: e.target.value }))}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-blue-100/65">Επόμενο Service (Ημερομηνία)</label>
+              <input
+                type="date"
+                value={form.next_service_date}
+                onChange={(e) => setForm((p) => ({ ...p, next_service_date: e.target.value }))}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-blue-100/65">Επόμενο Service (Χιλιόμετρα)</label>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                placeholder="π.χ. 150000"
+                value={form.next_service_odometer}
+                onChange={(e) => setForm((p) => ({ ...p, next_service_odometer: e.target.value }))}
                 className={inputClass}
               />
             </div>
