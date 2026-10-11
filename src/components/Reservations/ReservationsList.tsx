@@ -703,24 +703,15 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                 </div>
 
                 <div className="flex flex-wrap space-x-2 gap-y-2 justify-end">
-                  {reservation.status === 'upcoming' && (() => {
-                    const pickupTime = new Date(reservation.pickup_date).getTime();
-                    const now = Date.now();
-                    const canCheckOut = pickupTime <= now;
-                    return canCheckOut ? (
-                      <button
-                        onClick={() => onCheckOut?.(reservation.id)}
-                        className="inline-flex min-h-10 items-center rounded-xl border border-transparent bg-[#1268f3] px-3 py-1.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
-                      >
-                        <TruckIcon className="h-4 w-4 mr-1" />
-                        Check-out
-                      </button>
-                    ) : (
-                      <span className="inline-flex items-center px-3 py-1.5 text-xs text-blue-100/55">
-                        Checkout μετά την ώρα παραλαβής
-                      </span>
-                    );
-                  })()}
+                  {reservation.status === 'upcoming' && (
+                    <button
+                      onClick={() => onCheckOut?.(reservation.id)}
+                      className="inline-flex min-h-10 items-center rounded-xl border border-transparent bg-[#1268f3] px-3 py-1.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
+                    >
+                      <TruckIcon className="h-4 w-4 mr-1" />
+                      Check-out
+                    </button>
+                  )}
                   {reservation.status === 'active' && (
                     <button
                       onClick={() => handleCheckInClick(reservation)}
