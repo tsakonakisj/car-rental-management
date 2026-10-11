@@ -51,6 +51,7 @@ interface VehicleAlert {
   daysRemaining: number;
   level: 'expired' | 'critical' | 'warning' | 'soon' | 'ok';
   alertReason?: string;
+  serviceReasons?: string[];
 }
 
 const DEFAULT_SERVICE_WARNING_DAYS = 30;
@@ -105,6 +106,21 @@ function expiryDaysLabel(days: number): string {
   if (days < 0) return 'Έληξε';
   if (days === 0) return 'Σήμερα';
   return `${days} ημέρες`;
+}
+
+const SEVERITY_RANK: Record<ExpiryLevel, number> = {
+  expired: 0,
+  critical: 1,
+  warning: 2,
+  soon: 3,
+  ok: 4,
+};
+
+interface ServiceTrigger {
+  level: ExpiryLevel;
+  daysRemaining: number;
+  reason: string;
+  expiryDate: string;
 }
 
 const SOURCE_LABELS: Record<string, string> = {
@@ -259,41 +275,47 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
             });
           }
         }
-        // Service reminder — date threshold
+        // Service reminders — collect date and km triggers, then group into one alert
+        const serviceTriggers: ServiceTrigger[] = [];
         if (v.next_service_date) {
           const days = daysUntilExpiry(v.next_service_date);
           const level = getServiceLevelFromDays(days);
           if (days <= serviceWarningDays) {
-            alerts.push({
-              vehicleId: v.id,
-              plate: v.plate,
-              brand: v.brand,
-              model: v.model,
-              documentType: 'Service (Ημερομηνία)',
-              expiryDate: v.next_service_date,
-              daysRemaining: days,
+            serviceTriggers.push({
               level,
-              alertReason: days < 0 ? 'Έχει περάσει' : `${days} ημέρες`,
+              daysRemaining: days,
+              reason: days < 0 ? `Έχει περάσει (${Math.abs(days)} ημέρες)` : `${days} ημέρες`,
+              expiryDate: v.next_service_date,
             });
           }
         }
-        // Service reminder — odometer threshold
         if (v.next_service_odometer != null && v.odometer != null) {
           const kmRemaining = v.next_service_odometer - v.odometer;
           if (kmRemaining <= serviceWarningKm) {
             const level = getServiceLevelFromKm(kmRemaining, serviceWarningKm);
-            alerts.push({
-              vehicleId: v.id,
-              plate: v.plate,
-              brand: v.brand,
-              model: v.model,
-              documentType: 'Service (Χιλιόμετρα)',
-              expiryDate: '',
-              daysRemaining: kmRemaining,
+            serviceTriggers.push({
               level,
-              alertReason: kmRemaining < 0 ? `Έχει ξεπεραστεί ${Math.abs(kmRemaining)} km` : `${kmRemaining} km απομένουν`,
+              daysRemaining: kmRemaining,
+              reason: kmRemaining < 0 ? `Έχει ξεπεραστεί ${Math.abs(kmRemaining)} km` : `${kmRemaining} km απομένουν`,
+              expiryDate: '',
             });
           }
+        }
+        if (serviceTriggers.length > 0) {
+          serviceTriggers.sort((a, b) => SEVERITY_RANK[a.level] - SEVERITY_RANK[b.level] || a.daysRemaining - b.daysRemaining);
+          const top = serviceTriggers[0];
+          alerts.push({
+            vehicleId: v.id,
+            plate: v.plate,
+            brand: v.brand,
+            model: v.model,
+            documentType: 'Service',
+            expiryDate: top.expiryDate,
+            daysRemaining: top.daysRemaining,
+            level: top.level,
+            alertReason: top.reason,
+            serviceReasons: serviceTriggers.map(t => t.reason),
+          });
         }
       });
       alerts.sort((a, b) => a.daysRemaining - b.daysRemaining);
@@ -536,17 +558,25 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
                       <div className="flex items-center gap-3">
                         <div className="text-right">
                           <p className="text-xs text-blue-100/55">{alert.documentType}</p>
-                          {alert.expiryDate
-                            ? <p className="text-xs text-blue-100/40">{new Date(alert.expiryDate + 'T00:00:00').toLocaleDateString('el-GR')}</p>
-                            : alert.alertReason
-                              ? <p className="text-xs text-blue-100/40">{alert.alertReason}</p>
-                              : null
+                          {alert.serviceReasons && alert.serviceReasons.length > 0
+                            ? <div className="space-y-0.5">
+                                {alert.serviceReasons.map((reason, i) => (
+                                  <p key={i} className="text-xs text-blue-100/40">{reason}</p>
+                                ))}
+                              </div>
+                            : alert.expiryDate
+                              ? <p className="text-xs text-blue-100/40">{new Date(alert.expiryDate + 'T00:00:00').toLocaleDateString('el-GR')}</p>
+                              : alert.alertReason
+                                ? <p className="text-xs text-blue-100/40">{alert.alertReason}</p>
+                                : null
                           }
                         </div>
                         <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${ALERT_STYLES[alert.level]}`}>
-                          {alert.alertReason && !alert.expiryDate
+                          {alert.serviceReasons
                             ? alert.alertReason
-                            : expiryDaysLabel(alert.daysRemaining)
+                            : alert.alertReason && !alert.expiryDate
+                              ? alert.alertReason
+                              : expiryDaysLabel(alert.daysRemaining)
                           }
                         </span>
                       </div>
