@@ -157,11 +157,37 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter }) => {
     }
   };
 
-  const isDocumentExpiring = (date: string) => {
-    const expiry = new Date(date);
+  type ExpiryLevel = 'expired' | 'critical' | 'warning' | 'soon' | 'ok';
+
+  const getExpiryLevel = (date: string): ExpiryLevel => {
     const today = new Date();
-    const daysUntilExpiry = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    return daysUntilExpiry <= 30;
+    today.setHours(0, 0, 0, 0);
+    const expiry = new Date(date + 'T00:00:00');
+    const diffMs = expiry.getTime() - today.getTime();
+    const days = Math.round(diffMs / (1000 * 60 * 60 * 24));
+    if (days < 0) return 'expired';
+    if (days <= 7) return 'critical';
+    if (days <= 15) return 'warning';
+    if (days <= 30) return 'soon';
+    return 'ok';
+  };
+
+  const expiryStyles: Record<ExpiryLevel, string> = {
+    expired: 'bg-red-500/20 text-red-300 ring-1 ring-inset ring-red-400/50',
+    critical: 'bg-orange-500/20 text-orange-300 ring-1 ring-inset ring-orange-400/50',
+    warning: 'bg-amber-500/20 text-amber-300 ring-1 ring-inset ring-amber-400/50',
+    soon: 'bg-yellow-500/15 text-yellow-200 ring-1 ring-inset ring-yellow-400/40',
+    ok: 'bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-400/40',
+  };
+
+  const expiryLabel = (date: string): string => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expiry = new Date(date + 'T00:00:00');
+    const days = Math.round((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    if (days < 0) return 'Έληξε';
+    if (days === 0) return 'Σήμερα';
+    return `${days} ημέρες`;
   };
 
   const filteredVehicles = vehicles
@@ -331,19 +357,21 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter }) => {
                   {!isInactive && (
                     <div className="mb-4 space-y-2">
                       {vehicle.insurance_expiry && (
-                        <div className={`flex items-center justify-between rounded-lg p-2 text-xs ${
-                          isDocumentExpiring(vehicle.insurance_expiry) ? 'bg-red-500/15 text-red-300' : 'bg-emerald-500/15 text-emerald-300'
-                        }`}>
+                        <div className={`flex items-center justify-between rounded-lg p-2 text-xs ${expiryStyles[getExpiryLevel(vehicle.insurance_expiry)]}`}>
                           <span>Ασφάλεια:</span>
-                          <span>{new Date(vehicle.insurance_expiry).toLocaleDateString('el-GR')}</span>
+                          <div className="flex items-center gap-2">
+                            <span>{expiryLabel(vehicle.insurance_expiry)}</span>
+                            <span className="text-blue-100/40">{new Date(vehicle.insurance_expiry + 'T00:00:00').toLocaleDateString('el-GR')}</span>
+                          </div>
                         </div>
                       )}
                       {vehicle.inspection_expiry && (
-                        <div className={`flex items-center justify-between rounded-lg p-2 text-xs ${
-                          isDocumentExpiring(vehicle.inspection_expiry) ? 'bg-red-500/15 text-red-300' : 'bg-emerald-500/15 text-emerald-300'
-                        }`}>
+                        <div className={`flex items-center justify-between rounded-lg p-2 text-xs ${expiryStyles[getExpiryLevel(vehicle.inspection_expiry)]}`}>
                           <span>ΚΤΕΟ:</span>
-                          <span>{new Date(vehicle.inspection_expiry).toLocaleDateString('el-GR')}</span>
+                          <div className="flex items-center gap-2">
+                            <span>{expiryLabel(vehicle.inspection_expiry)}</span>
+                            <span className="text-blue-100/40">{new Date(vehicle.inspection_expiry + 'T00:00:00').toLocaleDateString('el-GR')}</span>
+                          </div>
                         </div>
                       )}
                     </div>
