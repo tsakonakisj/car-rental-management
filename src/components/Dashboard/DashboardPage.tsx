@@ -40,6 +40,52 @@ interface TodayEntry {
   station: string;
 }
 
+interface VehicleAlert {
+  vehicleId: string;
+  plate: string;
+  brand: string;
+  model: string;
+  documentType: string;
+  expiryDate: string;
+  daysRemaining: number;
+  level: 'expired' | 'critical' | 'warning' | 'soon' | 'ok';
+}
+
+type ExpiryLevel = 'expired' | 'critical' | 'warning' | 'soon' | 'ok';
+
+function getExpiryLevel(date: string): ExpiryLevel {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const expiry = new Date(date + 'T00:00:00');
+  const days = Math.round((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  if (days < 0) return 'expired';
+  if (days <= 7) return 'critical';
+  if (days <= 15) return 'warning';
+  if (days <= 30) return 'soon';
+  return 'ok';
+}
+
+function daysUntilExpiry(date: string): number {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const expiry = new Date(date + 'T00:00:00');
+  return Math.round((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+const ALERT_STYLES: Record<ExpiryLevel, string> = {
+  expired: 'bg-red-500/15 text-red-300 ring-1 ring-inset ring-red-400/40',
+  critical: 'bg-orange-500/15 text-orange-300 ring-1 ring-inset ring-orange-400/40',
+  warning: 'bg-amber-500/15 text-amber-300 ring-1 ring-inset ring-amber-400/40',
+  soon: 'bg-yellow-500/15 text-yellow-200 ring-1 ring-inset ring-yellow-400/40',
+  ok: 'bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-400/40',
+};
+
+function expiryDaysLabel(days: number): string {
+  if (days < 0) return 'Έληξε';
+  if (days === 0) return 'Σήμερα';
+  return `${days} ημέρες`;
+}
+
 const SOURCE_LABELS: Record<string, string> = {
   'store': 'Κατάστημα',
   'walk-in': 'Κατάστημα',
@@ -78,6 +124,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
   const [fleetStats, setFleetStats] = useState<FleetStat>({ available: 0, reserved: 0, active: 0, service: 0, total: 0 });
   const [todayPickups, setTodayPickups] = useState<TodayEntry[]>([]);
   const [todayReturns, setTodayReturns] = useState<TodayEntry[]>([]);
+  const [vehicleAlerts, setVehicleAlerts] = useState<VehicleAlert[]>([]);
 
   const fetchDashboard = useCallback(async () => {
     if (isDemoMode || !supabase) {
@@ -107,7 +154,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
       // Fetch vehicles
       const { data: vehicles } = await supabase
         .from('vehicles')
-        .select('id, status');
+        .select('id, plate, brand, model, status, insurance_expiry, inspection_expiry');
 
       // Process source stats
       const sourceMap = new Map<string, { count: number; revenue: number }>();
@@ -137,12 +184,47 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
 
       // Process fleet stats
       const fleet: FleetStat = { available: 0, reserved: 0, active: 0, service: 0, total: 0 };
+      const alerts: VehicleAlert[] = [];
       (vehicles || []).forEach((v: any) => {
         fleet.total += 1;
         if (v.status === 'available') fleet.available += 1;
         else if (v.status === 'reserved') fleet.reserved += 1;
         else if (v.status === 'service') fleet.service += 1;
+
+        if (v.status === 'inactive') return;
+        if (v.insurance_expiry) {
+          const level = getExpiryLevel(v.insurance_expiry);
+          if (level !== 'ok') {
+            alerts.push({
+              vehicleId: v.id,
+              plate: v.plate,
+              brand: v.brand,
+              model: v.model,
+              documentType: 'Ασφάλεια',
+              expiryDate: v.insurance_expiry,
+              daysRemaining: daysUntilExpiry(v.insurance_expiry),
+              level,
+            });
+          }
+        }
+        if (v.inspection_expiry) {
+          const level = getExpiryLevel(v.inspection_expiry);
+          if (level !== 'ok') {
+            alerts.push({
+              vehicleId: v.id,
+              plate: v.plate,
+              brand: v.brand,
+              model: v.model,
+              documentType: 'ΚΤΕΟ',
+              expiryDate: v.inspection_expiry,
+              daysRemaining: daysUntilExpiry(v.inspection_expiry),
+              level,
+            });
+          }
+        }
       });
+      alerts.sort((a, b) => a.daysRemaining - b.daysRemaining);
+      setVehicleAlerts(alerts);
       // Count active rentals from reservations
       fleet.active = statusMap.get('active') || 0;
       setFleetStats(fleet);
@@ -333,6 +415,49 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
           </div>
         </div>
       </div>
+
+      {/* Vehicle Alerts */}
+      {vehicleAlerts.length > 0 && (
+        <div className="overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
+          <div className="border-b border-[#1e4e7d]/70 px-6 py-4">
+            <div className="flex items-center">
+              <ExclamationTriangleIcon className="mr-2 h-5 w-5 text-amber-400" />
+              <h3 className="text-base font-semibold text-white">Ειδοποιήσεις Οχημάτων</h3>
+              <span className="ml-2 rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-300 ring-1 ring-inset ring-amber-400/40">
+                {vehicleAlerts.length}
+              </span>
+            </div>
+          </div>
+          <div className="p-4">
+            <div className="divide-y divide-[#1e4e7d]/50">
+              {vehicleAlerts.map((alert, idx) => (
+                <button
+                  key={`${alert.vehicleId}-${alert.documentType}-${idx}`}
+                  onClick={() => onNavigateFleet?.()}
+                  className="flex w-full items-center justify-between py-3 text-left transition-colors hover:bg-[#0b2949]/40"
+                >
+                  <div className="flex items-center gap-3">
+                    <TruckIcon className="h-4 w-4 flex-shrink-0 text-blue-100/45" />
+                    <div>
+                      <p className="text-sm font-medium text-white">{alert.plate}</p>
+                      <p className="text-xs text-blue-100/45">{alert.brand} {alert.model}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="text-xs text-blue-100/55">{alert.documentType}</p>
+                      <p className="text-xs text-blue-100/40">{new Date(alert.expiryDate + 'T00:00:00').toLocaleDateString('el-GR')}</p>
+                    </div>
+                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${ALERT_STYLES[alert.level]}`}>
+                      {expiryDaysLabel(alert.daysRemaining)}
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Reservations by Source + Revenue by Source */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
