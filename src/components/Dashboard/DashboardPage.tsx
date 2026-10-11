@@ -123,6 +123,15 @@ interface ServiceTrigger {
   expiryDate: string;
 }
 
+interface VehicleAlertGroup {
+  vehicleId: string;
+  plate: string;
+  brand: string;
+  model: string;
+  alerts: VehicleAlert[];
+  highestLevel: ExpiryLevel;
+}
+
 const SOURCE_LABELS: Record<string, string> = {
   'store': 'Κατάστημα',
   'walk-in': 'Κατάστημα',
@@ -162,7 +171,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
   const [fleetStats, setFleetStats] = useState<FleetStat>({ available: 0, reserved: 0, active: 0, service: 0, total: 0 });
   const [todayPickups, setTodayPickups] = useState<TodayEntry[]>([]);
   const [todayReturns, setTodayReturns] = useState<TodayEntry[]>([]);
-  const [vehicleAlerts, setVehicleAlerts] = useState<VehicleAlert[]>([]);
+  const [vehicleAlertGroups, setVehicleAlertGroups] = useState<VehicleAlertGroup[]>([]);
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [showAllAlerts, setShowAllAlerts] = useState(false);
 
@@ -320,47 +329,30 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
         }
       });
 
-      // Group Service alerts by vehicleId — guarantee at most ONE Service alert per vehicle
-      const serviceByVehicle = new Map<string, VehicleAlert[]>();
-      const nonServiceAlerts: VehicleAlert[] = [];
+      // Group ALL alerts by vehicleId — each vehicle appears once with all its alerts
+      const alertsByVehicle = new Map<string, VehicleAlert[]>();
       for (const a of alerts) {
-        if (a.documentType === 'Service') {
-          const list = serviceByVehicle.get(a.vehicleId) || [];
-          list.push(a);
-          serviceByVehicle.set(a.vehicleId, list);
-        } else {
-          nonServiceAlerts.push(a);
-        }
+        const list = alertsByVehicle.get(a.vehicleId) || [];
+        list.push(a);
+        alertsByVehicle.set(a.vehicleId, list);
       }
-      const groupedServiceAlerts: VehicleAlert[] = [];
-      for (const [, list] of serviceByVehicle) {
-        if (list.length === 1) {
-          groupedServiceAlerts.push(list[0]);
-          continue;
-        }
-        // Merge: collect all serviceReasons, pick highest severity
-        const allReasons = new Set<string>();
-        let best = list[0];
-        for (const a of list) {
-          if (a.serviceReasons) a.serviceReasons.forEach(r => allReasons.add(r));
-          else if (a.alertReason) allReasons.add(a.alertReason);
-          if (SEVERITY_RANK[a.level] < SEVERITY_RANK[best.level]) best = a;
-        }
-        const reasons = Array.from(allReasons);
-        groupedServiceAlerts.push({
-          ...best,
-          serviceReasons: reasons,
-          alertReason: reasons[0],
-        });
-      }
-
-      const groupedAlerts = [...nonServiceAlerts, ...groupedServiceAlerts];
-      groupedAlerts.sort((a, b) => {
-        const sevDiff = SEVERITY_RANK[a.level] - SEVERITY_RANK[b.level];
-        if (sevDiff !== 0) return sevDiff;
-        return a.daysRemaining - b.daysRemaining;
+      const alertGroups: VehicleAlertGroup[] = Array.from(alertsByVehicle.entries()).map(([vehicleId, list]) => {
+        const highestLevel = list.reduce<ExpiryLevel>(
+          (best, a) => SEVERITY_RANK[a.level] < SEVERITY_RANK[best] ? a.level : best,
+          list[0].level
+        );
+        list.sort((a, b) => SEVERITY_RANK[a.level] - SEVERITY_RANK[b.level] || a.daysRemaining - b.daysRemaining);
+        return {
+          vehicleId,
+          plate: list[0].plate,
+          brand: list[0].brand,
+          model: list[0].model,
+          alerts: list,
+          highestLevel,
+        };
       });
-      setVehicleAlerts(groupedAlerts);
+      alertGroups.sort((a, b) => SEVERITY_RANK[a.highestLevel] - SEVERITY_RANK[b.highestLevel]);
+      setVehicleAlertGroups(alertGroups);
       // Count active rentals from reservations
       fleet.active = statusMap.get('active') || 0;
       setFleetStats(fleet);
@@ -553,7 +545,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
       </div>
 
       {/* Vehicle Alerts — accordion */}
-      {vehicleAlerts.length > 0 && (
+      {vehicleAlertGroups.length > 0 && (
         <div className="overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
           {/* Header — always visible, toggles accordion */}
           <button
@@ -565,7 +557,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
               <ExclamationTriangleIcon className="mr-2 h-5 w-5 text-amber-400" />
               <h3 className="text-base font-semibold text-white">Ειδοποιήσεις Οχημάτων</h3>
               <span className="ml-2 rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-300 ring-1 ring-inset ring-amber-400/40">
-                {vehicleAlerts.length}
+                {vehicleAlertGroups.length}
               </span>
             </div>
             <ChevronDownIcon
@@ -575,63 +567,67 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
 
           {/* Collapsible body */}
           {alertsOpen && (() => {
-            const visible = showAllAlerts ? vehicleAlerts : vehicleAlerts.slice(0, 5);
+            const visible = showAllAlerts ? vehicleAlertGroups : vehicleAlertGroups.slice(0, 5);
             return (
               <div className="border-t border-[#1e4e7d]/70">
                 <div
                   className="divide-y divide-[#1e4e7d]/50 overflow-y-auto"
                   style={{ maxHeight: '350px' }}
                 >
-                  {visible.map((alert, idx) => (
+                  {visible.map((group, idx) => (
                     <button
-                      key={`${alert.vehicleId}-${alert.documentType}-${idx}`}
+                      key={`${group.vehicleId}-${idx}`}
                       type="button"
-                      onClick={() => onNavigateVehicle ? onNavigateVehicle(alert.vehicleId) : onNavigateFleet?.()}
-                      className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-[#0b2949]/40"
+                      onClick={() => onNavigateVehicle ? onNavigateVehicle(group.vehicleId) : onNavigateFleet?.()}
+                      className="flex w-full items-start justify-between px-4 py-3 text-left transition-colors hover:bg-[#0b2949]/40"
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 flex-shrink-0">
                         <TruckIcon className="h-4 w-4 flex-shrink-0 text-blue-100/45" />
                         <div>
-                          <p className="text-sm font-medium text-white">{alert.plate}</p>
-                          <p className="text-xs text-blue-100/45">{alert.brand} {alert.model}</p>
+                          <p className="text-sm font-medium text-white">{group.plate}</p>
+                          <p className="text-xs text-blue-100/45">{group.brand} {group.model}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
-                          <p className="text-xs text-blue-100/55">{alert.documentType}</p>
-                          {alert.serviceReasons && alert.serviceReasons.length > 0
-                            ? <div className="space-y-0.5">
-                                {alert.serviceReasons.map((reason, i) => (
-                                  <p key={i} className="text-xs text-blue-100/40">{reason}</p>
-                                ))}
-                              </div>
-                            : alert.expiryDate
-                              ? <p className="text-xs text-blue-100/40">{new Date(alert.expiryDate + 'T00:00:00').toLocaleDateString('el-GR')}</p>
-                              : alert.alertReason
-                                ? <p className="text-xs text-blue-100/40">{alert.alertReason}</p>
-                                : null
-                          }
-                        </div>
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${ALERT_STYLES[alert.level]}`}>
-                          {alert.serviceReasons
-                            ? alert.alertReason
-                            : alert.alertReason && !alert.expiryDate
-                              ? alert.alertReason
-                              : expiryDaysLabel(alert.daysRemaining)
-                          }
-                        </span>
+                      <div className="flex flex-col items-end gap-1">
+                        {group.alerts.map((alert, aIdx) => (
+                          <div key={aIdx} className="flex items-center gap-2">
+                            <div className="text-right">
+                              <p className="text-xs text-blue-100/55">{alert.documentType}</p>
+                              {alert.serviceReasons && alert.serviceReasons.length > 0
+                                ? <div className="space-y-0.5">
+                                    {alert.serviceReasons.map((reason, i) => (
+                                      <p key={i} className="text-xs text-blue-100/40">{reason}</p>
+                                    ))}
+                                  </div>
+                                : alert.expiryDate
+                                  ? <p className="text-xs text-blue-100/40">{new Date(alert.expiryDate + 'T00:00:00').toLocaleDateString('el-GR')}</p>
+                                  : alert.alertReason
+                                    ? <p className="text-xs text-blue-100/40">{alert.alertReason}</p>
+                                    : null
+                              }
+                            </div>
+                            <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${ALERT_STYLES[alert.level]}`}>
+                              {alert.serviceReasons
+                                ? alert.alertReason
+                                : alert.alertReason && !alert.expiryDate
+                                  ? alert.alertReason
+                                  : expiryDaysLabel(alert.daysRemaining)
+                              }
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     </button>
                   ))}
                 </div>
-                {vehicleAlerts.length > 5 && (
+                {vehicleAlertGroups.length > 5 && (
                   <div className="border-t border-[#1e4e7d]/70 px-4 py-2.5">
                     <button
                       type="button"
                       onClick={() => setShowAllAlerts(s => !s)}
                       className="text-xs font-medium text-[#55a8ff] transition-colors hover:text-[#7bc0ff]"
                     >
-                      {showAllAlerts ? 'Λιγότερα' : `Προβολή όλων (${vehicleAlerts.length})`}
+                      {showAllAlerts ? 'Λιγότερα' : `Προβολή όλων (${vehicleAlertGroups.length})`}
                     </button>
                   </div>
                 )}
