@@ -10,7 +10,8 @@ import {
   ClockIcon,
   ExclamationTriangleIcon,
   XMarkIcon,
-  PlusIcon
+  PlusIcon,
+  ChevronDownIcon
 } from '@heroicons/react/24/outline';
 
 interface SourceStat {
@@ -125,6 +126,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
   const [todayPickups, setTodayPickups] = useState<TodayEntry[]>([]);
   const [todayReturns, setTodayReturns] = useState<TodayEntry[]>([]);
   const [vehicleAlerts, setVehicleAlerts] = useState<VehicleAlert[]>([]);
+  const [alertsOpen, setAlertsOpen] = useState(false);
+  const [showAllAlerts, setShowAllAlerts] = useState(false);
 
   const fetchDashboard = useCallback(async () => {
     if (isDemoMode || !supabase) {
@@ -416,10 +419,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
         </div>
       </div>
 
-      {/* Vehicle Alerts */}
+      {/* Vehicle Alerts — accordion */}
       {vehicleAlerts.length > 0 && (
         <div className="overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
-          <div className="border-b border-[#1e4e7d]/70 px-6 py-4">
+          {/* Header — always visible, toggles accordion */}
+          <button
+            type="button"
+            onClick={() => { setAlertsOpen(o => !o); setShowAllAlerts(false); }}
+            className="flex w-full items-center justify-between px-6 py-4 text-left transition-colors hover:bg-[#0b2949]/40"
+          >
             <div className="flex items-center">
               <ExclamationTriangleIcon className="mr-2 h-5 w-5 text-amber-400" />
               <h3 className="text-base font-semibold text-white">Ειδοποιήσεις Οχημάτων</h3>
@@ -427,35 +435,60 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
                 {vehicleAlerts.length}
               </span>
             </div>
-          </div>
-          <div className="p-4">
-            <div className="divide-y divide-[#1e4e7d]/50">
-              {vehicleAlerts.map((alert, idx) => (
-                <button
-                  key={`${alert.vehicleId}-${alert.documentType}-${idx}`}
-                  onClick={() => onNavigateFleet?.()}
-                  className="flex w-full items-center justify-between py-3 text-left transition-colors hover:bg-[#0b2949]/40"
+            <ChevronDownIcon
+              className={`h-4 w-4 text-blue-100/45 transition-transform duration-200 ${alertsOpen ? 'rotate-180' : ''}`}
+            />
+          </button>
+
+          {/* Collapsible body */}
+          {alertsOpen && (() => {
+            const visible = showAllAlerts ? vehicleAlerts : vehicleAlerts.slice(0, 5);
+            return (
+              <div className="border-t border-[#1e4e7d]/70">
+                <div
+                  className="divide-y divide-[#1e4e7d]/50 overflow-y-auto"
+                  style={{ maxHeight: '350px' }}
                 >
-                  <div className="flex items-center gap-3">
-                    <TruckIcon className="h-4 w-4 flex-shrink-0 text-blue-100/45" />
-                    <div>
-                      <p className="text-sm font-medium text-white">{alert.plate}</p>
-                      <p className="text-xs text-blue-100/45">{alert.brand} {alert.model}</p>
-                    </div>
+                  {visible.map((alert, idx) => (
+                    <button
+                      key={`${alert.vehicleId}-${alert.documentType}-${idx}`}
+                      type="button"
+                      onClick={() => onNavigateFleet?.()}
+                      className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-[#0b2949]/40"
+                    >
+                      <div className="flex items-center gap-3">
+                        <TruckIcon className="h-4 w-4 flex-shrink-0 text-blue-100/45" />
+                        <div>
+                          <p className="text-sm font-medium text-white">{alert.plate}</p>
+                          <p className="text-xs text-blue-100/45">{alert.brand} {alert.model}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="text-xs text-blue-100/55">{alert.documentType}</p>
+                          <p className="text-xs text-blue-100/40">{new Date(alert.expiryDate + 'T00:00:00').toLocaleDateString('el-GR')}</p>
+                        </div>
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${ALERT_STYLES[alert.level]}`}>
+                          {expiryDaysLabel(alert.daysRemaining)}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                {vehicleAlerts.length > 5 && (
+                  <div className="border-t border-[#1e4e7d]/70 px-4 py-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setShowAllAlerts(s => !s)}
+                      className="text-xs font-medium text-[#55a8ff] transition-colors hover:text-[#7bc0ff]"
+                    >
+                      {showAllAlerts ? 'Λιγότερα' : `Προβολή όλων (${vehicleAlerts.length})`}
+                    </button>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <p className="text-xs text-blue-100/55">{alert.documentType}</p>
-                      <p className="text-xs text-blue-100/40">{new Date(alert.expiryDate + 'T00:00:00').toLocaleDateString('el-GR')}</p>
-                    </div>
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${ALERT_STYLES[alert.level]}`}>
-                      {expiryDaysLabel(alert.daysRemaining)}
-                    </span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
 
