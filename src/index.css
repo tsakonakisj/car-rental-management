@@ -58,6 +58,13 @@
 }
 
 @layer base {
+  select option {
+    background-color: #0b2949;
+    color: #e7f2ff;
+  }
+}
+
+@layer base {
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
   input:-webkit-autofill:focus,

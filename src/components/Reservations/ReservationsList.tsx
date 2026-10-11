@@ -777,7 +777,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                           value={viewReservation.status}
                           onChange={(e) => handleStatusChange(viewReservation.id, e.target.value)}
                           disabled={changingStatus === viewReservation.id}
-                          className="border border-[#2b5b85]/80 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                          className="border border-[#2b5b85]/80 rounded-lg px-2 py-1 text-sm text-white bg-[#0b2949] focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                         >
                           {statusOptions.map(s => (
                             <option key={s.value} value={s.value}>{s.labelEl}</option>
@@ -926,7 +926,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                                 type="text"
                                 value={editForm.customerName}
                                 onChange={(e) => setEditForm({ ...editForm, customerName: e.target.value })}
-                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm text-white bg-[#0b2949] focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               />
                             </div>
                             <div>
@@ -935,7 +935,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                                 type="tel"
                                 value={editForm.phone}
                                 onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm text-white bg-[#0b2949] focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               />
                             </div>
                             <div>
@@ -944,7 +944,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                                 type="email"
                                 value={editForm.email}
                                 onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm text-white bg-[#0b2949] focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               />
                             </div>
                             <div>
@@ -953,7 +953,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                                 type="text"
                                 value={editForm.country}
                                 onChange={(e) => setEditForm({ ...editForm, country: e.target.value })}
-                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm text-white bg-[#0b2949] focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               />
                             </div>
                             <div>
@@ -962,7 +962,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                                 type="text"
                                 value={editForm.licenseNumber}
                                 onChange={(e) => setEditForm({ ...editForm, licenseNumber: e.target.value })}
-                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm text-white bg-[#0b2949] focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               />
                             </div>
                             <div>
@@ -971,7 +971,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                                 type="date"
                                 value={editForm.birthDate}
                                 onChange={(e) => setEditForm({ ...editForm, birthDate: e.target.value })}
-                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm text-white bg-[#0b2949] focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               />
                             </div>
                           </div>
@@ -986,7 +986,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                                 type="date"
                                 value={editForm.pickupDate}
                                 onChange={(e) => setEditForm({ ...editForm, pickupDate: e.target.value })}
-                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm text-white bg-[#0b2949] focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               />
                             </div>
                             <div>
@@ -995,7 +995,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                                 type="time"
                                 value={editForm.pickupTime}
                                 onChange={(e) => setEditForm({ ...editForm, pickupTime: e.target.value })}
-                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm text-white bg-[#0b2949] focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               />
                             </div>
                             <div>
@@ -1004,7 +1004,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                                 type="date"
                                 value={editForm.returnDate}
                                 onChange={(e) => setEditForm({ ...editForm, returnDate: e.target.value })}
-                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm text-white bg-[#0b2949] focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               />
                             </div>
                             <div>
@@ -1013,7 +1013,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                                 type="time"
                                 value={editForm.returnTime}
                                 onChange={(e) => setEditForm({ ...editForm, returnTime: e.target.value })}
-                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm text-white bg-[#0b2949] focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               />
                             </div>
                             <div>
@@ -1021,7 +1021,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                               <select
                                 value={editForm.pickupStationId}
                                 onChange={(e) => setEditForm({ ...editForm, pickupStationId: e.target.value })}
-                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm text-white bg-[#0b2949] focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               >
                                 <option value="">-- Επιλέξτε --</option>
                                 {stations.map(st => (
@@ -1034,7 +1034,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                               <select
                                 value={editForm.returnStationId}
                                 onChange={(e) => setEditForm({ ...editForm, returnStationId: e.target.value })}
-                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                                className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm text-white bg-[#0b2949] focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                               >
                                 <option value="">-- Επιλέξτε --</option>
                                 {stations.map(st => (
@@ -1075,7 +1075,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                                 setEditForm({ ...editForm, vehicleId: '', category: '', dailyRate: 0 });
                               }
                             }}
-                            className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                            className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm text-white bg-[#0b2949] focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                           >
                             <option value="">-- Επιλέξτε όχημα --</option>
                             {editVehicles.map(v => {
@@ -1229,7 +1229,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                             value={editForm.notes}
                             onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
                             rows={3}
-                            className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                            className="w-full border border-[#2b5b85]/80 rounded-lg px-3 py-2 text-sm text-white bg-[#0b2949] focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                           />
                         </div>
 
