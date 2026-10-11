@@ -345,9 +345,9 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
             return (
               <div
                 key={vehicle.id}
-                className={`overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)] ${isInactive ? 'opacity-50' : ''}`}
+                className={`flex flex-col overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)] ${isInactive ? 'opacity-50' : ''}`}
               >
-                <div className="p-5">
+                <div className="flex flex-1 flex-col p-5">
                   <div className="mb-4 flex items-center justify-between">
                     <div className="flex items-center">
                       {vehicle.photo_url && cardPhotoUrls.get(vehicle.photo_url) ? (
@@ -446,7 +446,7 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
                     </div>
                   )}
 
-                  <div className="flex space-x-2">
+                  <div className="mt-auto flex space-x-2 pt-4">
                     <button
                       onClick={() => setSelectedVehicle(vehicle)}
                       className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
