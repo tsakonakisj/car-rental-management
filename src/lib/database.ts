@@ -500,6 +500,21 @@ export const pricingService = {
     if (!data || data.length === 0) {
       throw new Error('Δεν επιτρέπεται η επεξεργασία σεζόν. Ελέγξτε τα δικαιώματα χρήστη.');
     }
+  },
+
+  async deactivateSeason(id: string): Promise<void> {
+    if (isDemo) return Promise.resolve();
+
+    const { data, error } = await supabase!
+      .from('seasons')
+      .update({ active: false })
+      .eq('id', id)
+      .select();
+
+    if (error) throw error;
+    if (!data || data.length === 0) {
+      throw new Error('Δεν επιτρέπεται η διαγραφή σεζόν. Ελέγξτε τα δικαιώματα χρήστη.');
+    }
   }
 };
 

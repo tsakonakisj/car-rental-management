@@ -12,6 +12,7 @@ import {
   CheckIcon,
   XMarkIcon,
   ArrowPathIcon,
+  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 
 const PricingManagement: React.FC = () => {
@@ -149,6 +150,25 @@ const PricingManagement: React.FC = () => {
   };
 
   const [seasonEditError, setSeasonEditError] = useState<string | null>(null);
+
+  const [seasonToDelete, setSeasonToDelete] = useState<Season | null>(null);
+  const [deletingSeason, setDeletingSeason] = useState(false);
+  const [seasonDeleteError, setSeasonDeleteError] = useState<string | null>(null);
+
+  const handleDeleteSeason = async () => {
+    if (!seasonToDelete) return;
+    setDeletingSeason(true);
+    setSeasonDeleteError(null);
+    try {
+      await pricingService.deactivateSeason(seasonToDelete.id);
+      setSeasonToDelete(null);
+      await loadData();
+    } catch (err) {
+      setSeasonDeleteError(err instanceof Error ? err.message : 'Αποτυχία διαγραφής σεζόν.');
+    } finally {
+      setDeletingSeason(false);
+    }
+  };
 
   const startSeasonEdit = (season: Season) => {
     setEditingSeasonId(season.id);
@@ -390,7 +410,13 @@ const PricingManagement: React.FC = () => {
                       <PencilIcon className="h-3 w-3 mr-1" />
                       Επεξεργασία
                     </button>
-                    <button className="inline-flex items-center rounded-xl border border-red-400/40 bg-red-500/15 px-2 py-1 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/25">
+                    <button
+                      onClick={() => {
+                        setSeasonDeleteError(null);
+                        setSeasonToDelete(season);
+                      }}
+                      className="inline-flex items-center rounded-xl border border-red-400/40 bg-red-500/15 px-2 py-1 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/25"
+                    >
                       <TrashIcon className="h-3 w-3" />
                     </button>
                   </div>
@@ -723,6 +749,49 @@ const PricingManagement: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {seasonToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.98),rgba(5,24,48,0.99))] shadow-[0_18px_45px_rgba(0,0,0,0.4)] p-6">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="flex-shrink-0 rounded-xl bg-red-500/15 p-2 ring-1 ring-inset ring-red-400/30">
+                <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-white">Διαγραφή Σεζόν</h3>
+                <p className="text-sm text-blue-100/65 mt-1">
+                  Είστε σίγουροι ότι θέλετε να απενεργοποιήσετε τη σεζόν <span className="font-medium text-white">«{seasonToDelete.name}»</span>;
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-blue-100/45 mb-4">
+              Η σεζόν θα απενεργοποιηθεί και θα αφαιρεθεί από τη λίστα. Οι υπάρχουσες κρατήσεις και τιμές διατηρούνται.
+            </p>
+            {seasonDeleteError && (
+              <p className="text-xs text-red-400 mb-4">{seasonDeleteError}</p>
+            )}
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => {
+                  setSeasonToDelete(null);
+                  setSeasonDeleteError(null);
+                }}
+                disabled={deletingSeason}
+                className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-4 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:bg-[#12375d]"
+              >
+                Άκυρο
+              </button>
+              <button
+                onClick={handleDeleteSeason}
+                disabled={deletingSeason}
+                className="inline-flex items-center rounded-xl border border-transparent bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600 disabled:opacity-50"
+              >
+                {deletingSeason ? 'Διαγραφή...' : 'Διαγραφή'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
