@@ -481,29 +481,12 @@ export const pricingService = {
       return Promise.resolve({ id: Date.now().toString(), category, daily_rate: dailyRate, season_id: seasonId });
     }
 
-    const { data: existing } = await supabase!
-      .from('pricing')
-      .select('id')
-      .eq('category', category)
-      .eq('season_id', seasonId)
-      .maybeSingle();
-
-    if (existing) {
-      const { data, error } = await supabase!
-        .from('pricing')
-        .update({ daily_rate: dailyRate })
-        .eq('id', existing.id)
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
-    }
-
     const { data, error } = await supabase!
       .from('pricing')
-      .insert({ category, season_id: seasonId, daily_rate: dailyRate })
+      .upsert({ category, season_id: seasonId, daily_rate: dailyRate }, { onConflict: 'category,season_id' })
       .select()
       .single();
+
     if (error) throw error;
     return data;
   },

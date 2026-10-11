@@ -110,32 +110,29 @@ const PricingManagement: React.FC = () => {
     setEditValue('');
   };
 
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   const saveEdit = async () => {
     if (!editCell) return;
     const rate = parseFloat(editValue);
-    if (isNaN(rate) || rate < 0) return;
+    if (isNaN(rate) || rate < 0) {
+      setSaveError('Μη έγκυρη τιμή.');
+      return;
+    }
 
     setSaving(true);
+    setSaveError(null);
     try {
       await pricingService.upsertRate(editCell.category, editCell.seasonId, rate);
-      setPricing(prev => {
-        const idx = prev.findIndex(
-          p => p.category === editCell.category && p.season_id === editCell.seasonId
-        );
-        if (idx >= 0) {
-          const updated = [...prev];
-          updated[idx] = { ...updated[idx], daily_rate: rate };
-          return updated;
-        }
-        return [...prev, { id: Date.now().toString(), category: editCell.category, daily_rate: rate, season_id: editCell.seasonId }];
-      });
+      await loadData();
       setSaveStatus({ category: editCell.category, seasonId: editCell.seasonId, ok: true });
       setEditCell(null);
       setEditValue('');
       setTimeout(() => setSaveStatus(null), 2000);
     } catch (err) {
       setSaveStatus({ category: editCell.category, seasonId: editCell.seasonId, ok: false });
-      setTimeout(() => setSaveStatus(null), 3000);
+      setSaveError(err instanceof Error ? err.message : 'Αποτυχία αποθήκευσης τιμής.');
+      setTimeout(() => { setSaveStatus(null); setSaveError(null); }, 3000);
     } finally {
       setSaving(false);
     }
@@ -722,6 +719,11 @@ const PricingManagement: React.FC = () => {
           </p>
         </div>
         <div className="p-6">
+          {saveError && (
+            <div className="mb-4 rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-2.5 text-sm text-red-300">
+              {saveError}
+            </div>
+          )}
           <div className="overflow-x-auto">
             <table className="min-w-full">
               <thead>
