@@ -154,12 +154,10 @@ const PricingManagement: React.FC = () => {
       name: season.name,
       start_date: season.start_date,
       end_date: season.end_date,
-      multiplier: season.multiplier,
       start_month: season.start_month,
       start_day: season.start_day,
       end_month: season.end_month,
       end_day: season.end_day,
-      priority: season.priority,
     });
   };
 
@@ -314,25 +312,7 @@ const PricingManagement: React.FC = () => {
                           className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                         />
                       </div>
-                      <div>
-                        <label className="block text-xs text-blue-100/55 mb-1">Προτεραιότητα</label>
-                        <input
-                          type="number"
-                          value={editSeasonForm.priority ?? 0}
-                          onChange={e => setEditSeasonForm({ ...editSeasonForm, priority: parseInt(e.target.value) })}
-                          className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs text-blue-100/55 mb-1">Πολλαπλασιαστής</label>
-                        <input
-                          type="number"
-                          step="0.1"
-                          value={editSeasonForm.multiplier ?? 1}
-                          onChange={e => setEditSeasonForm({ ...editSeasonForm, multiplier: parseFloat(e.target.value) })}
-                          className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
-                        />
-                      </div>
+
                     </div>
                     <div className="flex justify-end space-x-2">
                       <button
