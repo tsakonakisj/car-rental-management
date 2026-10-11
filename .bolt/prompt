@@ -3,3 +3,16 @@ For all designs I ask you to make, have them be beautiful, not cookie cutter. Ma
 By default, this template supports JSX syntax with Tailwind CSS classes, React hooks, and Lucide React for icons. Do not install other packages for UI themes, icons, etc unless absolutely necessary or I request them.
 
 Use icons from lucide-react for logos.
+
+PROJECT DEVELOPMENT RULES
+
+- Before any task, check whether it is already implemented. If complete, do not repeat it.
+- Inspect only relevant files. Avoid unnecessary project-wide audits.
+- Make the smallest safe change; preserve existing working functionality.
+- Do not duplicate components, services, business logic or database structures.
+- Never alter Auth, RLS, database schema or existing data unless explicitly requested.
+- Keep the app reusable for different rental companies. Avoid company-specific hardcoding.
+- Preserve the approved premium UI and mobile responsiveness unless redesign is requested.
+- Prefer existing utilities and services over new dependencies.
+- Keep responses concise: changes made, build result and blockers only.
+- If no changes are needed, respond briefly without editing code.
