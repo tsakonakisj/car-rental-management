@@ -475,6 +475,27 @@ export const pricingService = {
       .eq('id', id);
 
     if (error) throw error;
+  },
+
+  async updateSeason(id: string, updates: Partial<Pick<Season, 'name' | 'start_date' | 'end_date' | 'multiplier' | 'start_month' | 'start_day' | 'end_month' | 'end_day' | 'priority'>>): Promise<void> {
+    if (isDemo) return Promise.resolve();
+
+    const { error } = await supabase!
+      .from('seasons')
+      .update({
+        ...(updates.name !== undefined && { name: updates.name }),
+        ...(updates.start_date !== undefined && { start_date: updates.start_date }),
+        ...(updates.end_date !== undefined && { end_date: updates.end_date }),
+        ...(updates.multiplier !== undefined && { multiplier: updates.multiplier }),
+        ...(updates.start_month !== undefined && { start_month: updates.start_month }),
+        ...(updates.start_day !== undefined && { start_day: updates.start_day }),
+        ...(updates.end_month !== undefined && { end_month: updates.end_month }),
+        ...(updates.end_day !== undefined && { end_day: updates.end_day }),
+        ...(updates.priority !== undefined && { priority: updates.priority }),
+      })
+      .eq('id', id);
+
+    if (error) throw error;
   }
 };
 
@@ -499,6 +520,21 @@ export const insuranceService = {
       ...row,
       daily_rate: Number(row.daily_rate) || 0
     }));
+  },
+
+  async updateInsurance(id: string, updates: Partial<Pick<Insurance, 'name' | 'name_en' | 'daily_rate'>>): Promise<void> {
+    if (isDemo) return Promise.resolve();
+
+    const { error } = await supabase!
+      .from('insurance_types')
+      .update({
+        ...(updates.name !== undefined && { name: updates.name }),
+        ...(updates.name_en !== undefined && { name_en: updates.name_en }),
+        ...(updates.daily_rate !== undefined && { daily_rate: updates.daily_rate }),
+      })
+      .eq('id', id);
+
+    if (error) throw error;
   }
 };
 

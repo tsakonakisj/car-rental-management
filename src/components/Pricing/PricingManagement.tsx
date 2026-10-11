@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { pricingService, vehicleService } from '../../lib/database';
-import type { Season, Pricing, Extra as ExtraType } from '../../types';
+import { pricingService, vehicleService, insuranceService } from '../../lib/database';
+import type { Season, Pricing, Extra as ExtraType, Insurance as InsuranceType } from '../../types';
 import PageHero from '../Layout/PageHero';
 import {
   CurrencyEuroIcon,
@@ -32,17 +32,28 @@ const PricingManagement: React.FC = () => {
   const [editExtraForm, setEditExtraForm] = useState<Partial<ExtraType> | null>(null);
   const [savingExtra, setSavingExtra] = useState(false);
 
+  const [insurances, setInsurances] = useState<InsuranceType[]>([]);
+  const [editingInsuranceId, setEditingInsuranceId] = useState<string | null>(null);
+  const [editInsuranceForm, setEditInsuranceForm] = useState<Partial<InsuranceType> | null>(null);
+  const [savingInsurance, setSavingInsurance] = useState(false);
+
+  const [editingSeasonId, setEditingSeasonId] = useState<string | null>(null);
+  const [editSeasonForm, setEditSeasonForm] = useState<Partial<Season> | null>(null);
+  const [savingSeason, setSavingSeason] = useState(false);
+
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [seasonData, pricingData, vehicles, extrasData] = await Promise.all([
+      const [seasonData, pricingData, vehicles, extrasData, insuranceData] = await Promise.all([
         pricingService.getSeasons(),
         pricingService.getPricing(),
         vehicleService.getAll(),
         pricingService.getExtras(),
+        insuranceService.getAll(),
       ]);
       setExtras(extrasData);
+      setInsurances(insuranceData);
 
       const sortedSeasons = [...seasonData].sort(
         (a, b) => (b.priority ?? 0) - (a.priority ?? 0)
@@ -137,6 +148,76 @@ const PricingManagement: React.FC = () => {
     setEditExtraForm(null);
   };
 
+  const startSeasonEdit = (season: Season) => {
+    setEditingSeasonId(season.id);
+    setEditSeasonForm({
+      name: season.name,
+      start_date: season.start_date,
+      end_date: season.end_date,
+      multiplier: season.multiplier,
+      start_month: season.start_month,
+      start_day: season.start_day,
+      end_month: season.end_month,
+      end_day: season.end_day,
+      priority: season.priority,
+    });
+  };
+
+  const cancelSeasonEdit = () => {
+    setEditingSeasonId(null);
+    setEditSeasonForm(null);
+  };
+
+  const saveSeasonEdit = async () => {
+    if (!editingSeasonId || !editSeasonForm) return;
+    setSavingSeason(true);
+    try {
+      await pricingService.updateSeason(editingSeasonId, editSeasonForm);
+      setSeasons(prev => prev.map(s => s.id === editingSeasonId ? { ...s, ...editSeasonForm } as Season : s));
+      setEditingSeasonId(null);
+      setEditSeasonForm(null);
+    } catch (err) {
+      console.error('Failed to update season:', err);
+    } finally {
+      setSavingSeason(false);
+    }
+  };
+
+  const startInsuranceEdit = (insurance: InsuranceType) => {
+    setEditingInsuranceId(insurance.id);
+    setEditInsuranceForm({
+      name: insurance.name,
+      name_en: insurance.name_en,
+      daily_rate: insurance.daily_rate,
+    });
+  };
+
+  const cancelInsuranceEdit = () => {
+    setEditingInsuranceId(null);
+    setEditInsuranceForm(null);
+  };
+
+  const saveInsuranceEdit = async () => {
+    if (!editingInsuranceId || !editInsuranceForm) return;
+    const rate = parseFloat(String(editInsuranceForm.daily_rate));
+    if (isNaN(rate) || rate < 0) return;
+    setSavingInsurance(true);
+    try {
+      await insuranceService.updateInsurance(editingInsuranceId, {
+        name: editInsuranceForm.name,
+        name_en: editInsuranceForm.name_en,
+        daily_rate: rate,
+      });
+      setInsurances(prev => prev.map(i => i.id === editingInsuranceId ? { ...i, name: editInsuranceForm.name!, name_en: editInsuranceForm.name_en!, daily_rate: rate } : i));
+      setEditingInsuranceId(null);
+      setEditInsuranceForm(null);
+    } catch (err) {
+      console.error('Failed to update insurance:', err);
+    } finally {
+      setSavingInsurance(false);
+    }
+  };
+
   const formatSeasonRange = (s: Season): string => {
     if (s.start_month && s.end_month) {
       const start = `${s.start_day ?? 1}/${s.start_month}`;
@@ -199,29 +280,110 @@ const PricingManagement: React.FC = () => {
         </div>
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {seasons.map((season) => (
+            {seasons.map((season) => {
+              const isEditingSeason = editingSeasonId === season.id;
+              return (
               <div key={season.id} className="rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)] p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-medium text-white">{season.name}</h3>
-                  <span className="text-xs font-medium text-blue-100/70 bg-slate-500/15 ring-1 ring-inset ring-slate-400/35 px-2 py-0.5 rounded">
-                    #{season.priority ?? 0}
-                  </span>
-                </div>
-                <div className="flex items-center text-sm text-blue-100/65 mb-3">
-                  <CalendarDaysIcon className="h-4 w-4 mr-1" />
-                  {formatSeasonRange(season)}
-                </div>
-                <div className="flex space-x-2">
-                  <button className="flex-1 inline-flex items-center justify-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-2 py-1 text-xs font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white">
-                    <PencilIcon className="h-3 w-3 mr-1" />
-                    Επεξεργασία
-                  </button>
-                  <button className="inline-flex items-center rounded-xl border border-red-400/40 bg-red-500/15 px-2 py-1 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/25">
-                    <TrashIcon className="h-3 w-3" />
-                  </button>
-                </div>
+                {isEditingSeason && editSeasonForm ? (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs text-blue-100/55 mb-1">Όνομα</label>
+                      <input
+                        type="text"
+                        value={editSeasonForm.name || ''}
+                        onChange={e => setEditSeasonForm({ ...editSeasonForm, name: e.target.value })}
+                        className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-blue-100/55 mb-1">Ημ. Έναρξης</label>
+                        <input
+                          type="date"
+                          value={editSeasonForm.start_date ? editSeasonForm.start_date.split('T')[0] : ''}
+                          onChange={e => setEditSeasonForm({ ...editSeasonForm, start_date: e.target.value })}
+                          className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-blue-100/55 mb-1">Ημ. Λήξης</label>
+                        <input
+                          type="date"
+                          value={editSeasonForm.end_date ? editSeasonForm.end_date.split('T')[0] : ''}
+                          onChange={e => setEditSeasonForm({ ...editSeasonForm, end_date: e.target.value })}
+                          className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-blue-100/55 mb-1">Προτεραιότητα</label>
+                        <input
+                          type="number"
+                          value={editSeasonForm.priority ?? 0}
+                          onChange={e => setEditSeasonForm({ ...editSeasonForm, priority: parseInt(e.target.value) })}
+                          className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-blue-100/55 mb-1">Πολλαπλασιαστής</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          value={editSeasonForm.multiplier ?? 1}
+                          onChange={e => setEditSeasonForm({ ...editSeasonForm, multiplier: parseFloat(e.target.value) })}
+                          className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <button
+                        onClick={cancelSeasonEdit}
+                        disabled={savingSeason}
+                        className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-1.5 text-xs font-medium text-blue-100/85 transition-colors hover:bg-[#12375d]"
+                      >
+                        <XMarkIcon className="h-3 w-3 mr-1" />
+                        Άκυρο
+                      </button>
+                      <button
+                        onClick={saveSeasonEdit}
+                        disabled={savingSeason}
+                        className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#2478ff] disabled:opacity-50"
+                      >
+                        <CheckIcon className="h-3 w-3 mr-1" />
+                        {savingSeason ? 'Αποθήκευση...' : 'Αποθήκευση'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                <>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-medium text-white">{season.name}</h3>
+                    <span className="text-xs font-medium text-blue-100/70 bg-slate-500/15 ring-1 ring-inset ring-slate-400/35 px-2 py-0.5 rounded">
+                      #{season.priority ?? 0}
+                    </span>
+                  </div>
+                  <div className="flex items-center text-sm text-blue-100/65 mb-3">
+                    <CalendarDaysIcon className="h-4 w-4 mr-1" />
+                    {formatSeasonRange(season)}
+                  </div>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => startSeasonEdit(season)}
+                      className="flex-1 inline-flex items-center justify-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-2 py-1 text-xs font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
+                    >
+                      <PencilIcon className="h-3 w-3 mr-1" />
+                      Επεξεργασία
+                    </button>
+                    <button className="inline-flex items-center rounded-xl border border-red-400/40 bg-red-500/15 px-2 py-1 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/25">
+                      <TrashIcon className="h-3 w-3" />
+                    </button>
+                  </div>
+                </>
+                )}
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
@@ -341,16 +503,86 @@ const PricingManagement: React.FC = () => {
         </div>
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)] p-4">
-              <h3 className="font-medium text-white mb-2">Βασική Ασφάλεια</h3>
-              <p className="text-sm text-blue-100/65 mb-3">Περιλαμβάνεται στην τιμή</p>
-              <div className="text-2xl font-bold text-emerald-400">€0/ημέρα</div>
-            </div>
-            <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)] p-4">
-              <h3 className="font-medium text-white mb-2">Πλήρης Ασφάλεια</h3>
-              <p className="text-sm text-blue-100/65 mb-3">Χωρίς απαλλαγή</p>
-              <div className="text-2xl font-bold text-[#55a8ff]">€15/ημέρα</div>
-            </div>
+            {insurances.map((insurance) => {
+              const isEditingInsurance = editingInsuranceId === insurance.id;
+              return (
+              <div key={insurance.id} className="rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)] p-4">
+                {isEditingInsurance && editInsuranceForm ? (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs text-blue-100/55 mb-1">Όνομα</label>
+                      <input
+                        type="text"
+                        value={editInsuranceForm.name || ''}
+                        onChange={e => setEditInsuranceForm({ ...editInsuranceForm, name: e.target.value })}
+                        className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-blue-100/55 mb-1">Όνομα (EN)</label>
+                      <input
+                        type="text"
+                        value={editInsuranceForm.name_en || ''}
+                        onChange={e => setEditInsuranceForm({ ...editInsuranceForm, name_en: e.target.value })}
+                        className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-blue-100/55 mb-1">Ημερήσιο Τέλος (€)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={editInsuranceForm.daily_rate ?? 0}
+                        onChange={e => setEditInsuranceForm({ ...editInsuranceForm, daily_rate: parseFloat(e.target.value) })}
+                        className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                      />
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <button
+                        onClick={cancelInsuranceEdit}
+                        disabled={savingInsurance}
+                        className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-1.5 text-xs font-medium text-blue-100/85 transition-colors hover:bg-[#12375d]"
+                      >
+                        <XMarkIcon className="h-3 w-3 mr-1" />
+                        Άκυρο
+                      </button>
+                      <button
+                        onClick={saveInsuranceEdit}
+                        disabled={savingInsurance}
+                        className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#2478ff] disabled:opacity-50"
+                      >
+                        <CheckIcon className="h-3 w-3 mr-1" />
+                        {savingInsurance ? 'Αποθήκευση...' : 'Αποθήκευση'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                <>
+                  <h3 className="font-medium text-white mb-2">{insurance.name}</h3>
+                  <p className="text-sm text-blue-100/65 mb-3">{insurance.name_en}</p>
+                  <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold text-emerald-400">
+                      €{Number(insurance.daily_rate || 0).toFixed(0)}/ημέρα
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => startInsuranceEdit(insurance)}
+                        className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-2 py-1 text-xs font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
+                      >
+                        <PencilIcon className="h-3 w-3 mr-1" />
+                        Επεξεργασία
+                      </button>
+                      <button className="inline-flex items-center rounded-xl border border-red-400/40 bg-red-500/15 px-2 py-1 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/25">
+                        <TrashIcon className="h-3 w-3" />
+                      </button>
+                    </div>
+                  </div>
+                </>
+                )}
+              </div>
+              );
+            })}
           </div>
         </div>
       </div>
