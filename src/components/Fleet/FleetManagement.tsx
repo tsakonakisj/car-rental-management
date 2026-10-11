@@ -361,9 +361,9 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
                           <TruckIcon className="h-7 w-7 text-blue-100/45" />
                         </div>
                       )}
-                      <div>
-                        <h3 className="text-lg font-semibold tracking-[-0.02em] text-white">{vehicle.plate}</h3>
-                        <p className="text-sm text-blue-100/65">{vehicle.brand} {vehicle.model}</p>
+                      <div className="min-w-0">
+                        <h3 className="whitespace-nowrap text-lg font-semibold tracking-[-0.02em] text-white">{vehicle.plate}</h3>
+                        <p className="truncate text-sm text-blue-100/65">{vehicle.brand} {vehicle.model}</p>
                       </div>
                     </div>
                     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${getStatusColor(vehicle.status)}`}>
@@ -395,18 +395,18 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
                   {!isInactive && (
                     <div className="mb-4 space-y-2">
                       {vehicle.insurance_expiry && (
-                        <div className={`flex items-center justify-between rounded-lg p-2 text-xs ${expiryStyles[getExpiryLevel(vehicle.insurance_expiry)]}`}>
-                          <span>Ασφάλεια:</span>
-                          <div className="flex items-center gap-2">
+                        <div className={`flex items-start justify-between gap-2 rounded-lg p-2 text-xs ${expiryStyles[getExpiryLevel(vehicle.insurance_expiry)]}`}>
+                          <span className="flex-shrink-0">Ασφάλεια:</span>
+                          <div className="flex flex-col items-end text-right">
                             <span>{expiryLabel(vehicle.insurance_expiry)}</span>
                             <span className="text-blue-100/40">{new Date(vehicle.insurance_expiry + 'T00:00:00').toLocaleDateString('el-GR')}</span>
                           </div>
                         </div>
                       )}
                       {vehicle.inspection_expiry && (
-                        <div className={`flex items-center justify-between rounded-lg p-2 text-xs ${expiryStyles[getExpiryLevel(vehicle.inspection_expiry)]}`}>
-                          <span>ΚΤΕΟ:</span>
-                          <div className="flex items-center gap-2">
+                        <div className={`flex items-start justify-between gap-2 rounded-lg p-2 text-xs ${expiryStyles[getExpiryLevel(vehicle.inspection_expiry)]}`}>
+                          <span className="flex-shrink-0">ΚΤΕΟ:</span>
+                          <div className="flex flex-col items-end text-right">
                             <span>{expiryLabel(vehicle.inspection_expiry)}</span>
                             <span className="text-blue-100/40">{new Date(vehicle.inspection_expiry + 'T00:00:00').toLocaleDateString('el-GR')}</span>
                           </div>
@@ -416,9 +416,9 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
                         const level = getExpiryLevel(vehicle.next_service_date);
                         if (level === 'ok') return null;
                         return (
-                          <div className={`flex items-center justify-between rounded-lg p-2 text-xs ${expiryStyles[level]}`}>
-                            <span>Επόμενο Service:</span>
-                            <div className="flex items-center gap-2">
+                          <div className={`flex items-start justify-between gap-2 rounded-lg p-2 text-xs ${expiryStyles[level]}`}>
+                            <span className="flex-shrink-0">Επόμενο Service:</span>
+                            <div className="flex flex-col items-end text-right">
                               <span>{expiryLabel(vehicle.next_service_date)}</span>
                               <span className="text-blue-100/40">{new Date(vehicle.next_service_date + 'T00:00:00').toLocaleDateString('el-GR')}</span>
                             </div>
@@ -434,9 +434,9 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
                           kmRemaining <= 300 ? 'warning' :
                           'soon';
                         return (
-                          <div className={`flex items-center justify-between rounded-lg p-2 text-xs ${expiryStyles[kmLevel]}`}>
-                            <span>Service (χλμ):</span>
-                            <div className="flex items-center gap-2">
+                          <div className={`flex items-start justify-between gap-2 rounded-lg p-2 text-xs ${expiryStyles[kmLevel]}`}>
+                            <span className="flex-shrink-0">Service (χλμ):</span>
+                            <div className="flex flex-col items-end text-right">
                               <span>{kmRemaining < 0 ? `Έχει ξεπεραστεί ${Math.abs(kmRemaining)} km` : `${kmRemaining} km απομένουν`}</span>
                               <span className="text-blue-100/40">{vehicle.odometer.toLocaleString('el-GR')} / {vehicle.next_service_odometer.toLocaleString('el-GR')} km</span>
                             </div>
