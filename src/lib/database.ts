@@ -459,6 +459,22 @@ export const pricingService = {
 
     if (error) throw error;
     return data || [];
+  },
+
+  async updateExtra(id: string, updates: Partial<Pick<Extra, 'name' | 'name_en' | 'type' | 'price'>>): Promise<void> {
+    if (isDemo) return Promise.resolve();
+
+    const { error } = await supabase!
+      .from('extras')
+      .update({
+        ...(updates.name !== undefined && { name: updates.name }),
+        ...(updates.name_en !== undefined && { name_en: updates.name_en }),
+        ...(updates.type !== undefined && { type: updates.type }),
+        ...(updates.price !== undefined && { price: updates.price }),
+      })
+      .eq('id', id);
+
+    if (error) throw error;
   }
 };
 

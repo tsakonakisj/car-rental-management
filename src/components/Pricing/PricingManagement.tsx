@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { pricingService, vehicleService } from '../../lib/database';
-import type { Season, Pricing } from '../../types';
+import type { Season, Pricing, Extra as ExtraType } from '../../types';
 import PageHero from '../Layout/PageHero';
 import {
   CurrencyEuroIcon,
@@ -13,14 +13,6 @@ import {
   XMarkIcon,
   ArrowPathIcon,
 } from '@heroicons/react/24/outline';
-
-interface Extra {
-  id: string;
-  name: string;
-  name_en: string;
-  type: 'daily' | 'one-time';
-  price: number;
-}
 
 const PricingManagement: React.FC = () => {
   const { t } = useLanguage();
@@ -35,22 +27,22 @@ const PricingManagement: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<{ category: string; seasonId: string; ok: boolean } | null>(null);
 
-  const [extras] = useState<Extra[]>([
-    { id: '1', name: 'Παιδικό Κάθισμα', name_en: 'Child Seat', type: 'daily', price: 5 },
-    { id: '2', name: 'Δεύτερος Οδηγός', name_en: 'Additional Driver', type: 'one-time', price: 25 },
-    { id: '3', name: 'GPS', name_en: 'GPS Navigation', type: 'daily', price: 8 },
-    { id: '4', name: 'Φορτιστής Κινητού', name_en: 'Phone Charger', type: 'daily', price: 3 }
-  ]);
+  const [extras, setExtras] = useState<ExtraType[]>([]);
+  const [editingExtraId, setEditingExtraId] = useState<string | null>(null);
+  const [editExtraForm, setEditExtraForm] = useState<Partial<ExtraType> | null>(null);
+  const [savingExtra, setSavingExtra] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [seasonData, pricingData, vehicles] = await Promise.all([
+      const [seasonData, pricingData, vehicles, extrasData] = await Promise.all([
         pricingService.getSeasons(),
         pricingService.getPricing(),
         vehicleService.getAll(),
+        pricingService.getExtras(),
       ]);
+      setExtras(extrasData);
 
       const sortedSeasons = [...seasonData].sort(
         (a, b) => (b.priority ?? 0) - (a.priority ?? 0)
@@ -116,6 +108,33 @@ const PricingManagement: React.FC = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const saveExtraEdit = async () => {
+    if (!editingExtraId || !editExtraForm) return;
+    const price = parseFloat(String(editExtraForm.price));
+    if (isNaN(price) || price < 0) return;
+    setSavingExtra(true);
+    try {
+      await pricingService.updateExtra(editingExtraId, {
+        name: editExtraForm.name,
+        name_en: editExtraForm.name_en,
+        type: editExtraForm.type,
+        price,
+      });
+      setExtras(prev => prev.map(e => e.id === editingExtraId ? { ...e, name: editExtraForm.name!, name_en: editExtraForm.name_en!, type: editExtraForm.type as Extra['type'], price } : e));
+      setEditingExtraId(null);
+      setEditExtraForm(null);
+    } catch (err) {
+      console.error('Failed to update extra:', err);
+    } finally {
+      setSavingExtra(false);
+    }
+  };
+
+  const cancelExtraEdit = () => {
+    setEditingExtraId(null);
+    setEditExtraForm(null);
   };
 
   const formatSeasonRange = (s: Season): string => {
@@ -349,33 +368,111 @@ const PricingManagement: React.FC = () => {
         </div>
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {extras.map((extra) => (
+            {extras.map((extra) => {
+              const isEditingExtra = editingExtraId === extra.id;
+              return (
               <div key={extra.id} className="rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)] p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-medium text-white">{extra.name}</h3>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    extra.type === 'daily' ? 'bg-blue-500/15 text-[#8ec7ff] ring-1 ring-inset ring-blue-400/40' : 'bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-400/40'
-                  }`}>
-                    {extra.type === 'daily' ? 'Ημερήσιο' : 'Εφάπαξ'}
-                  </span>
-                </div>
-                <p className="text-sm text-blue-100/65 mb-3">{extra.name_en}</p>
-                <div className="flex items-center justify-between">
-                  <div className="text-lg font-bold text-emerald-400">
-                    €{extra.price}/{extra.type === 'daily' ? 'ημέρα' : 'εφάπαξ'}
+                {isEditingExtra && editExtraForm ? (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 gap-3">
+                      <div>
+                        <label className="block text-xs text-blue-100/55 mb-1">Όνομα</label>
+                        <input
+                          type="text"
+                          value={editExtraForm.name || ''}
+                          onChange={e => setEditExtraForm({ ...editExtraForm, name: e.target.value })}
+                          className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-blue-100/55 mb-1">Όνομα (EN)</label>
+                        <input
+                          type="text"
+                          value={editExtraForm.name_en || ''}
+                          onChange={e => setEditExtraForm({ ...editExtraForm, name_en: e.target.value })}
+                          className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs text-blue-100/55 mb-1">Τύπος</label>
+                          <select
+                            value={editExtraForm.type || 'daily'}
+                            onChange={e => setEditExtraForm({ ...editExtraForm, type: e.target.value as Extra['type'] })}
+                            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                          >
+                            <option value="daily">Ημερήσιο</option>
+                            <option value="one-time">Εφάπαξ</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-blue-100/55 mb-1">Τιμή (€)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={editExtraForm.price ?? 0}
+                            onChange={e => setEditExtraForm({ ...editExtraForm, price: parseFloat(e.target.value) })}
+                            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <button
+                        onClick={cancelExtraEdit}
+                        disabled={savingExtra}
+                        className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-1.5 text-xs font-medium text-blue-100/85 transition-colors hover:bg-[#12375d]"
+                      >
+                        <XMarkIcon className="h-3 w-3 mr-1" />
+                        Άκυρο
+                      </button>
+                      <button
+                        onClick={saveExtraEdit}
+                        disabled={savingExtra}
+                        className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-[#2478ff] disabled:opacity-50"
+                      >
+                        <CheckIcon className="h-3 w-3 mr-1" />
+                        {savingExtra ? 'Αποθήκευση...' : 'Αποθήκευση'}
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex space-x-2">
-                    <button className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-2 py-1 text-xs font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white">
-                      <PencilIcon className="h-3 w-3 mr-1" />
-                      Επεξεργασία
-                    </button>
-                    <button className="inline-flex items-center rounded-xl border border-red-400/40 bg-red-500/15 px-2 py-1 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/25">
-                      <TrashIcon className="h-3 w-3" />
-                    </button>
-                  </div>
-                </div>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-medium text-white">{extra.name}</h3>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        extra.type === 'daily' ? 'bg-blue-500/15 text-[#8ec7ff] ring-1 ring-inset ring-blue-400/40' : 'bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-400/40'
+                      }`}>
+                        {extra.type === 'daily' ? 'Ημερήσιο' : 'Εφάπαξ'}
+                      </span>
+                    </div>
+                    <p className="text-sm text-blue-100/65 mb-3">{extra.name_en}</p>
+                    <div className="flex items-center justify-between">
+                      <div className="text-lg font-bold text-emerald-400">
+                        €{extra.price}/{extra.type === 'daily' ? 'ημέρα' : 'εφάπαξ'}
+                      </div>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => {
+                            setEditingExtraId(extra.id);
+                            setEditExtraForm({ name: extra.name, name_en: extra.name_en, type: extra.type, price: extra.price });
+                          }}
+                          className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-2 py-1 text-xs font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
+                        >
+                          <PencilIcon className="h-3 w-3 mr-1" />
+                          Επεξεργασία
+                        </button>
+                        <button className="inline-flex items-center rounded-xl border border-red-400/40 bg-red-500/15 px-2 py-1 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/25">
+                          <TrashIcon className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
