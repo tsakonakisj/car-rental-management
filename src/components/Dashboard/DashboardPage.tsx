@@ -318,8 +318,48 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
           });
         }
       });
-      alerts.sort((a, b) => a.daysRemaining - b.daysRemaining);
-      setVehicleAlerts(alerts);
+
+      // Group Service alerts by vehicleId — guarantee at most ONE Service alert per vehicle
+      const serviceByVehicle = new Map<string, VehicleAlert[]>();
+      const nonServiceAlerts: VehicleAlert[] = [];
+      for (const a of alerts) {
+        if (a.documentType === 'Service') {
+          const list = serviceByVehicle.get(a.vehicleId) || [];
+          list.push(a);
+          serviceByVehicle.set(a.vehicleId, list);
+        } else {
+          nonServiceAlerts.push(a);
+        }
+      }
+      const groupedServiceAlerts: VehicleAlert[] = [];
+      for (const [, list] of serviceByVehicle) {
+        if (list.length === 1) {
+          groupedServiceAlerts.push(list[0]);
+          continue;
+        }
+        // Merge: collect all serviceReasons, pick highest severity
+        const allReasons = new Set<string>();
+        let best = list[0];
+        for (const a of list) {
+          if (a.serviceReasons) a.serviceReasons.forEach(r => allReasons.add(r));
+          else if (a.alertReason) allReasons.add(a.alertReason);
+          if (SEVERITY_RANK[a.level] < SEVERITY_RANK[best.level]) best = a;
+        }
+        const reasons = Array.from(allReasons);
+        groupedServiceAlerts.push({
+          ...best,
+          serviceReasons: reasons,
+          alertReason: reasons[0],
+        });
+      }
+
+      const groupedAlerts = [...nonServiceAlerts, ...groupedServiceAlerts];
+      groupedAlerts.sort((a, b) => {
+        const sevDiff = SEVERITY_RANK[a.level] - SEVERITY_RANK[b.level];
+        if (sevDiff !== 0) return sevDiff;
+        return a.daysRemaining - b.daysRemaining;
+      });
+      setVehicleAlerts(groupedAlerts);
       // Count active rentals from reservations
       fleet.active = statusMap.get('active') || 0;
       setFleetStats(fleet);
