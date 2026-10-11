@@ -178,12 +178,34 @@ const PricingManagement: React.FC = () => {
     setSavingSeason(true);
     setSeasonEditError(null);
     try {
+      const startDateStr = editSeasonForm.start_date.split('T')[0];
+      const endDateStr = editSeasonForm.end_date.split('T')[0];
+      const startDateParts = startDateStr.split('-');
+      const endDateParts = endDateStr.split('-');
+      const start_month = parseInt(startDateParts[1], 10);
+      const start_day = parseInt(startDateParts[2], 10);
+      const end_month = parseInt(endDateParts[1], 10);
+      const end_day = parseInt(endDateParts[2], 10);
+
       await pricingService.updateSeason(editingSeasonId, {
         name: editSeasonForm.name,
-        start_date: editSeasonForm.start_date,
-        end_date: editSeasonForm.end_date,
+        start_date: startDateStr,
+        end_date: endDateStr,
+        start_month,
+        start_day,
+        end_month,
+        end_day,
       });
-      setSeasons(prev => prev.map(s => s.id === editingSeasonId ? { ...s, name: editSeasonForm.name!, start_date: editSeasonForm.start_date!, end_date: editSeasonForm.end_date! } : s));
+      setSeasons(prev => prev.map(s => s.id === editingSeasonId ? {
+        ...s,
+        name: editSeasonForm.name!,
+        start_date: startDateStr,
+        end_date: endDateStr,
+        start_month,
+        start_day,
+        end_month,
+        end_day,
+      } : s));
       setEditingSeasonId(null);
       setEditSeasonForm(null);
     } catch (err) {
