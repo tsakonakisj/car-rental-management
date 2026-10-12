@@ -585,7 +585,7 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       const decl = 'By signing below I confirm that I have read, understood and accept the above terms. / Με την υπογραφή μου βεβαιώνω ότι έχω διαβάσει, κατανοήσει και αποδέχομαι τους παραπάνω όρους.';
       const declLines = doc.splitTextToSize(decl, CW - 4);
       doc.text(declLines, M + 2, y + 3.5);
-      y += DECL_GAP;
+      y += DECL_H + 2;
 
       // ═══════════════════════════════════════
       // SIGNATURES
