@@ -8,7 +8,8 @@ import {
   CheckIcon,
   XMarkIcon,
   PlusIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 
 interface CheckInData {
@@ -38,7 +39,9 @@ interface CheckInFormProps {
 const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, onComplete, onCancel }) => {
   const { t } = useLanguage();
   const [checkOutOdometer, setCheckOutOdometer] = useState<number | null>(null);
+  const [checkOutFuelLevel, setCheckOutFuelLevel] = useState<number | null>(null);
   const [odometerError, setOdometerError] = useState('');
+  const [fuelWarningDismissed, setFuelWarningDismissed] = useState(false);
   const [checkInData, setCheckInData] = useState<CheckInData>({
     fuel_level: 100,
     odometer: 0,
@@ -64,9 +67,14 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, onComplete, on
       try {
         const checkout = await checkoutService.getByReservationId(reservationId);
         if (cancelled) return;
-        if (checkout && typeof checkout.odometer === 'number') {
-          setCheckOutOdometer(checkout.odometer);
-          setCheckInData(prev => ({ ...prev, odometer: checkout.odometer }));
+        if (checkout) {
+          if (typeof checkout.odometer === 'number') {
+            setCheckOutOdometer(checkout.odometer);
+            setCheckInData(prev => ({ ...prev, odometer: checkout.odometer }));
+          }
+          if (typeof checkout.fuel_level === 'number') {
+            setCheckOutFuelLevel(checkout.fuel_level);
+          }
         }
       } catch (err) {
         console.error('Failed to load checkout odometer:', err);
@@ -175,6 +183,9 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, onComplete, on
       }));
       setNewCharge({ type: '', amount: 0, description: '' });
       setShowChargeForm(false);
+      if (newCharge.type === 'Καύσιμο') {
+        setFuelWarningDismissed(false);
+      }
     }
   };
 
@@ -227,7 +238,10 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, onComplete, on
                 max="100"
                 step="12.5"
                 value={checkInData.fuel_level}
-                onChange={(e) => setCheckInData(prev => ({ ...prev, fuel_level: parseInt(e.target.value) }))}
+                onChange={(e) => {
+                  setCheckInData(prev => ({ ...prev, fuel_level: parseInt(e.target.value) }));
+                  setFuelWarningDismissed(false);
+                }}
                 className="w-full accent-[#1268f3]"
               />
               <div className="flex justify-between text-xs text-blue-100/55 mt-1">
@@ -483,6 +497,33 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, onComplete, on
               </div>
             </div>
           )}
+
+          {/* Fuel charge warning */}
+          {(() => {
+            const hasFuelCharge = checkInData.additional_charges.some(c => c.type === 'Καύσιμο');
+            const fuelSuspicious =
+              checkOutFuelLevel != null &&
+              checkInData.fuel_level >= checkOutFuelLevel;
+            if (!hasFuelCharge || !fuelSuspicious || fuelWarningDismissed) return null;
+            return (
+              <div className="rounded-lg border border-amber-400/50 bg-amber-950/50 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-2">
+                    <ExclamationTriangleIcon className="h-5 w-5 text-amber-300 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-amber-100">
+                      Έχετε προσθέσει χρέωση καυσίμου, αλλά το επίπεδο καυσίμου επιστροφής ({checkInData.fuel_level}%) είναι ίσο ή υψηλότερο από το επίπεδο παράδοσης ({checkOutFuelLevel}%). Ελέγξτε αν η χρέωση είναι σωστή.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setFuelWarningDismissed(true)}
+                    className="text-amber-300 hover:text-amber-100 flex-shrink-0"
+                  >
+                    <XMarkIcon className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
         <div className="px-6 py-4 border-t border-[#1e4e7d]/70 flex justify-end space-x-3">
