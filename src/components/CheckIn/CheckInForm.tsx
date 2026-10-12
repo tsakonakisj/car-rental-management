@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { photoService } from '../../lib/database';
+import { photoService, checkoutService } from '../../lib/database';
 import { compressImage } from '../../lib/imageUtils';
 import {
   CameraIcon,
@@ -37,6 +37,8 @@ interface CheckInFormProps {
 
 const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, onComplete, onCancel }) => {
   const { t } = useLanguage();
+  const [checkOutOdometer, setCheckOutOdometer] = useState<number | null>(null);
+  const [odometerError, setOdometerError] = useState('');
   const [checkInData, setCheckInData] = useState<CheckInData>({
     fuel_level: 100,
     odometer: 0,
@@ -55,6 +57,23 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, onComplete, on
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const checkout = await checkoutService.getByReservationId(reservationId);
+        if (cancelled) return;
+        if (checkout && typeof checkout.odometer === 'number') {
+          setCheckOutOdometer(checkout.odometer);
+          setCheckInData(prev => ({ ...prev, odometer: checkout.odometer }));
+        }
+      } catch (err) {
+        console.error('Failed to load checkout odometer:', err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [reservationId]);
 
   const refreshSignedUrls = useCallback(async (paths: string[]) => {
     if (paths.length === 0) return;
@@ -172,6 +191,11 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, onComplete, on
   };
 
   const handleSubmit = () => {
+    if (checkOutOdometer != null && checkInData.odometer < checkOutOdometer) {
+      setOdometerError(`Τα χιλιόμετρα επιστροφής δεν μπορούν να είναι μικρότερα από τα χιλιόμετρα check-out (${checkOutOdometer}).`);
+      return;
+    }
+    setOdometerError('');
     onComplete(checkInData);
   };
 
@@ -227,10 +251,29 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, onComplete, on
               <input
                 type="number"
                 value={checkInData.odometer}
-                onChange={(e) => setCheckInData(prev => ({ ...prev, odometer: parseInt(e.target.value) || 0 }))}
-                className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || 0;
+                  setCheckInData(prev => ({ ...prev, odometer: val }));
+                  if (checkOutOdometer != null && val < checkOutOdometer) {
+                    setOdometerError(`Τα χιλιόμετρα επιστροφής δεν μπορούν να είναι μικρότερα από τα χιλιόμετρα check-out (${checkOutOdometer}).`);
+                  } else {
+                    setOdometerError('');
+                  }
+                }}
+                min={checkOutOdometer ?? 0}
+                className={`w-full rounded-xl border bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50 ${
+                  odometerError ? 'border-red-400/70' : 'border-[#2b5b85]/80'
+                }`}
                 placeholder="Εισάγετε χιλιόμετρα..."
               />
+              {checkOutOdometer != null && (
+                <p className="text-xs text-blue-100/45 mt-1">
+                  Χιλιόμετρα check-out: {checkOutOdometer}
+                </p>
+              )}
+              {odometerError && (
+                <p className="text-xs text-red-300 mt-1">{odometerError}</p>
+              )}
             </div>
           </div>
 

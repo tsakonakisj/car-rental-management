@@ -824,6 +824,21 @@ export const photoService = {
 
 // Checkouts
 export const checkoutService = {
+  async getByReservationId(reservationId: string): Promise<{ odometer: number } | null> {
+    if (isDemo) return Promise.resolve(null);
+
+    const { data, error } = await supabase!
+      .from('checkouts')
+      .select('odometer')
+      .eq('reservation_id', reservationId)
+      .order('checked_out_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data;
+  },
+
   async create(data: {
     reservation_id: string;
     fuel_level: number;
