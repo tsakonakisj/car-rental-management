@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { reservationService, customerService, insuranceService, pricingService, reservationExtrasService } from '../../lib/database';
+import { reservationService, customerService, insuranceService, pricingService, reservationExtrasService, hasVehicleBookingConflict } from '../../lib/database';
 import type { Customer, Reservation, Insurance, Extra } from '../../types';
 import BookingStep1 from './BookingStep1';
 import BookingStep2 from './BookingStep2';
@@ -233,15 +233,9 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
       // Final overlap check before saving
       if (bookingData.vehicleId) {
         const allReservations: Reservation[] = await reservationService.getAll();
-        const newStart = new Date(bookingData.pickupDate).getTime();
-        const newEnd = new Date(bookingData.returnDate).getTime();
-        const hasConflict = allReservations.some(r => {
-          if (r.vehicle_id !== bookingData.vehicleId) return false;
-          if (r.status !== 'upcoming' && r.status !== 'active') return false;
-          const rStart = new Date(r.pickup_date).getTime();
-          const rEnd = new Date(r.return_date).getTime();
-          return newStart < rEnd && newEnd > rStart;
-        });
+        const startISO = `${bookingData.pickupDate}T${bookingData.pickupTime || '00:00'}:00`;
+        const endISO = `${bookingData.returnDate}T${bookingData.returnTime || '00:00'}:00`;
+        const hasConflict = hasVehicleBookingConflict(bookingData.vehicleId, startISO, endISO, allReservations);
         if (hasConflict) {
           setSaveError('Το όχημα δεν είναι διαθέσιμο για τις επιλεγμένες ημερομηνίες');
           setSaving(false);

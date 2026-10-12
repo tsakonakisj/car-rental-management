@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { reservationService, customerService, stationService, vehicleService, pricingService, resolveDailyRate, insuranceService, reservationExtrasService, photoService, checkoutService, checkinService } from '../../lib/database';
+import { reservationService, customerService, stationService, vehicleService, pricingService, resolveDailyRate, insuranceService, reservationExtrasService, photoService, checkoutService, checkinService, hasVehicleBookingConflict } from '../../lib/database';
 import type { CheckoutDetails, CheckinDetails } from '../../lib/database';
 import {
   EyeIcon,
@@ -392,6 +392,19 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
       });
 
       const totalAmount = (dailyRate * days) + (insuranceRate * days) + extrasTotal;
+
+      // Overlap check: prevent double-booking when editing
+      if (editForm.vehicleId) {
+        const startISO = `${editForm.pickupDate}T${editForm.pickupTime || '00:00'}:00`;
+        const endISO = `${editForm.returnDate}T${editForm.returnTime || '00:00'}:00`;
+        const allReservations = await reservationService.getAll();
+        const conflict = hasVehicleBookingConflict(editForm.vehicleId, startISO, endISO, allReservations, viewReservation.id);
+        if (conflict) {
+          setSaveError('Το όχημα έχει άλλη κράτηση για αυτές τις ημερομηνίες και ώρες.');
+          setSaving(false);
+          return;
+        }
+      }
 
       // Update reservation
       await reservationService.update(viewReservation.id, {

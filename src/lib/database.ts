@@ -223,6 +223,41 @@ export const vehicleService = {
   }
 };
 
+/**
+ * Check if a vehicle has overlapping upcoming/active reservations.
+ * Uses full timestamp comparison (date + time) to catch same-day conflicts.
+ * Consecutive bookings (return time == next pickup time) are allowed.
+ *
+ * @param vehicleId - The vehicle to check
+ * @param startISO  - Full ISO start timestamp (e.g. "2026-10-12T09:00:00")
+ * @param endISO    - Full ISO end timestamp
+ * @param reservations - All reservations to check against
+ * @param excludeReservationId - Reservation ID to skip (for edits)
+ * @returns true if an overlap exists
+ */
+export function hasVehicleBookingConflict(
+  vehicleId: string,
+  startISO: string,
+  endISO: string,
+  reservations: Reservation[],
+  excludeReservationId?: string
+): boolean {
+  if (!vehicleId || !startISO || !endISO) return false;
+  const newStart = new Date(startISO).getTime();
+  const newEnd = new Date(endISO).getTime();
+  if (isNaN(newStart) || isNaN(newEnd) || newStart >= newEnd) return false;
+
+  return reservations.some(r => {
+    if (r.vehicle_id !== vehicleId) return false;
+    if (r.status !== 'upcoming' && r.status !== 'active') return false;
+    if (excludeReservationId && r.id === excludeReservationId) return false;
+    const rStart = new Date(r.pickup_date).getTime();
+    const rEnd = new Date(r.return_date).getTime();
+    if (isNaN(rStart) || isNaN(rEnd)) return false;
+    return newStart < rEnd && newEnd > rStart;
+  });
+}
+
 // Reservations
 export const reservationService = {
   async getAll(): Promise<Reservation[]> {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { vehicleService, pricingService, reservationService, resolveDailyRate } from '../../lib/database';
+import { vehicleService, pricingService, reservationService, resolveDailyRate, hasVehicleBookingConflict } from '../../lib/database';
 import type { Vehicle, Pricing, Season, Reservation } from '../../types';
 import { TruckIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
@@ -45,15 +45,9 @@ const BookingStep2: React.FC<BookingStep2Props> = ({ data, updateData }) => {
 
   const isVehicleOverlapping = (vehicleId: string): boolean => {
     if (!data.pickupDate || !data.returnDate) return false;
-    const newStart = new Date(data.pickupDate).getTime();
-    const newEnd = new Date(data.returnDate).getTime();
-    return reservations.some(r => {
-      if (r.vehicle_id !== vehicleId) return false;
-      if (r.status !== 'upcoming' && r.status !== 'active') return false;
-      const rStart = new Date(r.pickup_date).getTime();
-      const rEnd = new Date(r.return_date).getTime();
-      return newStart < rEnd && newEnd > rStart;
-    });
+    const startISO = `${data.pickupDate}T${data.pickupTime || '00:00'}:00`;
+    const endISO = `${data.returnDate}T${data.returnTime || '00:00'}:00`;
+    return hasVehicleBookingConflict(vehicleId, startISO, endISO, reservations);
   };
 
   const getDailyRate = (category: string): { rate: number; seasonName: string | null } => {
