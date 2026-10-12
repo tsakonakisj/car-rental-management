@@ -708,6 +708,24 @@ export const reservationExtrasService = {
     }));
   },
 
+  async getDetailedByReservationId(reservationId: string): Promise<Array<{ extra_id: string; name: string; quantity: number; daily_rate: number; type: string }>> {
+    if (isDemo) return Promise.resolve([]);
+
+    const { data, error } = await supabase!
+      .from('reservation_extras')
+      .select('extra_id, quantity, daily_rate, extras!inner(name, type)')
+      .eq('reservation_id', reservationId);
+
+    if (error) throw error;
+    return (data || []).map((row: any) => ({
+      extra_id: row.extra_id,
+      name: row.extras?.name || 'Unknown',
+      quantity: row.quantity,
+      daily_rate: Number(row.daily_rate) || 0,
+      type: row.extras?.type || 'daily'
+    }));
+  },
+
   async deleteByReservationId(reservationId: string): Promise<void> {
     if (isDemo) return Promise.resolve();
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import jsPDF from 'jspdf';
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
 import { company } from '../../lib/company';
+import { reservationExtrasService } from '../../lib/database';
 
 interface ContractData {
   reservation: {
@@ -139,6 +140,21 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       const r = data.reservation;
       const days = calcDays(r.pickup_date, r.return_date);
       const insuranceName = r.insurance_type || 'Basic';
+
+      // Fetch saved extras from reservation_extras (with names from extras table)
+      let savedExtras: Array<{ name: string; quantity: number; price: number }> = r.extras || [];
+      try {
+        const detailed = await reservationExtrasService.getDetailedByReservationId(r.id);
+        if (detailed.length > 0) {
+          savedExtras = detailed.map(ex => ({
+            name: ex.name,
+            quantity: ex.quantity,
+            price: ex.daily_rate
+          }));
+        }
+      } catch {
+        // fall back to whatever was passed in r.extras
+      }
 
       // Load fonts with Greek support
       const fonts = await loadFonts();
@@ -396,8 +412,8 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       yPay = row('Daily Rate / Ημερήσιο Τέλος', `EUR ${Number(r.daily_rate).toFixed(2)}`, col2, yPay, half);
       yPay = row('Days / Αριθμός Ημερών', String(days), col2, yPay, half);
 
-      if (r.extras && r.extras.length > 0) {
-        r.extras.forEach(ex => {
+      if (savedExtras.length > 0) {
+        savedExtras.forEach(ex => {
           yPay = row(`${ex.name} (x${ex.quantity})`, `EUR ${(ex.price * ex.quantity).toFixed(2)}`, col2, yPay, half);
         });
       }
