@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import jsPDF from 'jspdf';
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
-import { company } from '../../lib/company';
+import { loadCompanyConfig, company as defaultCompany } from '../../lib/company';
 import { reservationExtrasService } from '../../lib/database';
 
 interface ContractData {
@@ -131,6 +131,7 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
   const generateContract = async () => {
     setGenerating(true);
     try {
+      const company = await loadCompanyConfig() || defaultCompany;
       const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
       const PW = 210;
       const M = 14;
