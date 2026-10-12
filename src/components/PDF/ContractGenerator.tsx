@@ -156,6 +156,15 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
         // fall back to whatever was passed in r.extras
       }
 
+      // Adaptive spacing: compress when extras or condition data push content down
+      const hasCondData = r.fuel_level !== undefined || r.odometer !== undefined ||
+        (r.accessories_given && r.accessories_given.length > 0) ||
+        (r.damages && r.damages.length > 0);
+      const tight = savedExtras.length > 0 || hasCondData;
+      const sectionGap = tight ? 1 : 2;
+      const termLH = tight ? 2.9 : 3.3;
+      const headerGap = tight ? 8 : 10;
+
       // Load fonts with Greek support
       const fonts = await loadFonts();
       let fontName = 'helvetica';
@@ -204,7 +213,7 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
         }
         rgb(0, 0, 0);
         normal();
-        return yy + 10;
+        return yy + headerGap;
       };
 
       const row = (label: string, value: string, x: number, yy: number, colW: number): number => {
@@ -313,12 +322,12 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       if (r.odometer !== undefined)
         yv = row('Odometer / Χιλιόμετρα Παραλαβής', `${r.odometer.toLocaleString()} km`, col2, yv, half);
 
-      y = Math.max(customerEndY, yv) + 2;
+      y = Math.max(customerEndY, yv) + sectionGap;
 
       draw(200, 200, 200);
       lw(0.3);
       doc.line(M, y, PW - M, y);
-      y += 2;
+      y += sectionGap;
 
       // ═══════════════════════════════════════
       // RENTAL PERIOD
@@ -383,7 +392,7 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       draw(200, 200, 200);
       lw(0.3);
       doc.line(M, y, PW - M, y);
-      y += 2;
+      y += sectionGap;
 
       // ═══════════════════════════════════════
       // INSURANCE & PAYMENT (two columns)
@@ -434,7 +443,7 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       draw(200, 200, 200);
       lw(0.3);
       doc.line(M, y, PW - M, y);
-      y += 2;
+      y += sectionGap;
 
       // ═══════════════════════════════════════
       // VEHICLE CONDITION
@@ -520,14 +529,12 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
         draw(200, 200, 200);
         lw(0.3);
         doc.line(M, y, PW - M, y);
-        y += 2;
+        y += sectionGap;
       }
 
       // ═══════════════════════════════════════
       // TERMS & CONDITIONS
       // ═══════════════════════════════════════
-      y = sectionHeader('TERMS & CONDITIONS  /  ΟΡΟΙ & ΠΡΟΫΠΟΘΕΣΕΙΣ', M, y, CW);
-
       const terms = [
         '1. The vehicle is delivered to the renter in the condition stated above. / Το όχημα παραδίδεται στον ενοικιαστή στην κατάσταση που αναγράφεται παραπάνω.',
         '2. Vehicle must be returned with the same fuel level. Shortfall will be charged. / Το όχημα πρέπει να επιστραφεί με το ίδιο επίπεδο καυσίμου. Τυχόν έλλειψη χρεώνεται.',
@@ -538,14 +545,29 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
         '7. Driving under the influence of alcohol or drugs is strictly forbidden. / Απαγορεύεται η οδήγηση υπό την επήρεια αλκοόλ ή ναρκωτικών.',
       ];
 
+      // Pre-calculate remaining content height to decide if a page break is needed
+      const termsWrapped = terms.map(t => doc.splitTextToSize(t, CW - 2));
+      const totalTermLines = termsWrapped.reduce((sum, lines) => sum + lines.length, 0);
+      const termsBlockHeight = headerGap + totalTermLines * termLH + 1;
+      const declBlockHeight = 11;
+      const sigBlockHeight = headerGap + 25 + 5;
+      const remainingHeight = termsBlockHeight + declBlockHeight + sigBlockHeight;
+
+      // If terms + declaration + signatures don't fit, break before terms (keep them together)
+      if (y + remainingHeight > 282) {
+        doc.addPage();
+        y = 20;
+      }
+
+      y = sectionHeader('TERMS & CONDITIONS  /  ΟΡΟΙ & ΠΡΟΫΠΟΘΕΣΕΙΣ', M, y, CW);
+
       doc.setFontSize(6.2);
       normal();
       rgb(40, 40, 40);
-      terms.forEach(term => {
-        const lines = doc.splitTextToSize(term, CW - 2);
+      termsWrapped.forEach(lines => {
         lines.forEach((line: string) => {
           txt(line, M + 1, y);
-          y += 3.3;
+          y += termLH;
         });
       });
 
@@ -565,12 +587,6 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       const declLines = doc.splitTextToSize(decl, CW - 4);
       doc.text(declLines, M + 2, y + 3.5);
       y += 11;
-
-      // Check if signatures fit on this page
-      if (y > 245) {
-        doc.addPage();
-        y = 20;
-      }
 
       // ═══════════════════════════════════════
       // SIGNATURES
