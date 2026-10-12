@@ -543,6 +543,8 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       ];
 
       // Pre-wrap terms to calculate actual height for page-break decision
+      // Must set the same font size used for rendering (6.2pt) so line counts match
+      doc.setFontSize(6.2);
       const termsWrapped = terms.map(t => doc.splitTextToSize(t, CW - 2));
       const totalTermLines = termsWrapped.reduce((sum, lines) => sum + lines.length, 0);
       const termsBlockHeight = HDR_GAP + totalTermLines * TERM_LH + 1;
