@@ -138,7 +138,7 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
 
       const r = data.reservation;
       const days = calcDays(r.pickup_date, r.return_date);
-      const insuranceFull = r.insurance_type === 'full';
+      const insuranceName = r.insurance_type || 'Basic';
 
       // Load fonts with Greek support
       const fonts = await loadFonts();
@@ -375,11 +375,10 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       const insStartY = y;
       y = sectionHeader('INSURANCE  /  ΑΣΦΑΛΙΣΗ', M, y, half);
 
-      const insLabel = insuranceFull ? 'Full Coverage / Πλήρης Κάλυψη' : 'Basic / Βασική';
       rgb(0, 0, 0);
       doc.setFontSize(9);
       bold();
-      txt(insLabel, M + 2, y);
+      txt(insuranceName, M + 2, y);
       y += 5;
       y = row('Insurance Fee / Τέλος Ασφάλισης', `EUR ${Number(r.insurance_rate).toFixed(2)} / day (ημέρα)`, M, y, half);
 
