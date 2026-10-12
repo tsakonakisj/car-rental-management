@@ -156,15 +156,22 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
         // fall back to whatever was passed in r.extras
       }
 
-      // Adaptive spacing: compress when extras or condition data push content down
       const hasCondData = r.fuel_level !== undefined || r.odometer !== undefined ||
         (r.accessories_given && r.accessories_given.length > 0) ||
         (r.damages && r.damages.length > 0);
-      const tight = savedExtras.length > 0 || hasCondData;
-      const sectionGap = tight ? 0.5 : 2;
-      const termLH = tight ? 2.7 : 3.3;
-      const headerGap = tight ? 7 : 10;
-      const rowStep = tight ? 7.5 : 8.5;
+
+      // Layout constants — single moderate spacing that fits one page with extras
+      const HDR_H = 6;        // section header bar height
+      const HDR_GAP = 7;      // gap below header bar to first row label
+      const ROW_VAL_OFF = 3.5; // value baseline below label baseline
+      const ROW_LH = 4;       // line height for wrapped value text
+      const ROW_PAD = 1;      // padding after value to next row
+      const SEC_GAP = 1.5;    // gap between sections (after separator line)
+      const TERM_LH = 3.0;    // terms line height
+      const DECL_H = 8;       // declaration box height
+      const DECL_GAP = 10;    // gap after declaration
+      const SIG_H = 22;       // signature box height
+      const SIG_GAP = 4;      // gap after signature boxes
 
       // Load fonts with Greek support
       const fonts = await loadFonts();
@@ -175,7 +182,7 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
         doc.setFont('DejaVu', 'normal');
       }
 
-      // Font helpers — use DejaVu when available so Greek renders correctly
+      // Font helpers
       const gr = (_text: string) => doc.setFont(fontName, 'normal');
       const bold = () => doc.setFont(fontName, 'bold');
       const normal = () => doc.setFont(fontName, 'normal');
@@ -190,9 +197,9 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
         normal();
       };
 
-      const sectionHeader = (title: string, x: number, yy: number, w: number) => {
+      const sectionHeader = (title: string, x: number, yy: number, w: number): number => {
         fill(13, 71, 161);
-        doc.rect(x, yy, w, 6, 'F');
+        doc.rect(x, yy, w, HDR_H, 'F');
         const sep = title.indexOf('  /  ');
         if (sep > 0) {
           const eng = title.substring(0, sep);
@@ -214,9 +221,10 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
         }
         rgb(0, 0, 0);
         normal();
-        return yy + headerGap;
+        return yy + HDR_GAP;
       };
 
+      // Row draws a label at yy, value below it, returns next y based on actual wrapped lines
       const row = (label: string, value: string, x: number, yy: number, colW: number): number => {
         const sep = label.indexOf(' / ');
         if (sep > 0) {
@@ -240,9 +248,17 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
         doc.setFontSize(8.5);
         gr(value);
         const lines = doc.splitTextToSize(value || '-', colW - 6);
-        doc.text(lines, x + 2, yy + 3.5);
+        doc.text(lines, x + 2, yy + ROW_VAL_OFF);
         normal();
-        return yy + rowStep;
+        return yy + ROW_VAL_OFF + lines.length * ROW_LH + ROW_PAD;
+      };
+
+      // Separator line + gap
+      const separator = () => {
+        draw(200, 200, 200);
+        lw(0.3);
+        doc.line(M, y, PW - M, y);
+        y += SEC_GAP;
       };
 
       // ═══════════════════════════════════════
@@ -251,7 +267,6 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       fill(13, 71, 161);
       doc.rect(0, 0, PW, 30, 'F');
 
-      // Company details (left)
       rgb(255, 255, 255);
       doc.setFontSize(17);
       bold();
@@ -263,7 +278,6 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       doc.text(`Tel: ${company.phone}  |  ${company.email}  |  ${company.website}`, M, 22);
       doc.text(`ΑΦΜ: ${company.taxNumber}  |  Αρ.Μητρώου: ${company.registrationNumber}`, M, 27);
 
-      // Contract title box (right)
       fill(255, 255, 255);
       doc.rect(PW - 70, 4, 57, 22, 'F');
       rgb(13, 71, 161);
@@ -279,7 +293,7 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       rgb(80, 80, 80);
       doc.text(`No: ${r.id.substring(0, 8).toUpperCase()}`, PW - 41.5, 22, { align: 'center' });
 
-      y = 34;
+      y = 33;
 
       // ═══════════════════════════════════════
       // META ROW
@@ -295,7 +309,7 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       lw(0.5);
       y += 1.5;
       doc.line(M, y, PW - M, y);
-      y += tight ? 2.5 : 4;
+      y += 3;
 
       // ═══════════════════════════════════════
       // TWO COLUMNS: CUSTOMER | VEHICLE
@@ -303,6 +317,7 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       const half = CW / 2 - 2;
       const col2 = M + half + 4;
 
+      const colTopY = y;
       y = sectionHeader('CUSTOMER INFORMATION  /  ΣΤΟΙΧΕΙΑ ΠΕΛΑΤΗ', M, y, half);
       const customerStartY = y;
       y = row('Name / Ονοματεπώνυμο', r.customer.name, M, y, half);
@@ -313,7 +328,8 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       y = row('Date of Birth / Ημ. Γέννησης', r.customer.birth_date ? fmtDate(r.customer.birth_date) : '-', M, y, half);
       const customerEndY = y;
 
-      let yv = sectionHeader('VEHICLE INFORMATION  /  ΣΤΟΙΧΕΙΑ ΟΧΗΜΑΤΟΣ', col2, customerStartY - 10, half);
+      // Vehicle column starts at same y as customer column header
+      let yv = sectionHeader('VEHICLE INFORMATION  /  ΣΤΟΙΧΕΙΑ ΟΧΗΜΑΤΟΣ', col2, colTopY, half);
       yv = row('License Plate / Πινακίδα', r.vehicle.plate, col2, yv, half);
       yv = row('Vehicle / Όχημα', `${r.vehicle.brand} ${r.vehicle.model}`, col2, yv, half);
       yv = row('Category / Κατηγορία', r.vehicle.category, col2, yv, half);
@@ -323,12 +339,8 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       if (r.odometer !== undefined)
         yv = row('Odometer / Χιλιόμετρα Παραλαβής', `${r.odometer.toLocaleString()} km`, col2, yv, half);
 
-      y = Math.max(customerEndY, yv) + sectionGap;
-
-      draw(200, 200, 200);
-      lw(0.3);
-      doc.line(M, y, PW - M, y);
-      y += sectionGap;
+      y = Math.max(customerEndY, yv) + SEC_GAP;
+      separator();
 
       // ═══════════════════════════════════════
       // RENTAL PERIOD
@@ -348,13 +360,13 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       doc.setFontSize(9);
       bold();
       txt(fmtDateTime(r.pickup_date), colPickup + 2, y);
-      y += tight ? 4.5 : 5;
+      y += 4.5;
       doc.setFontSize(8);
       normal();
       txt(r.pickup_station || '-', colPickup + 2, y);
 
       // Return column (drawn at same y positions as pickup)
-      const rentStartY = y - (tight ? 8.5 : 9.5);
+      const rentStartY = y - 8.5;
       let yRet = rentStartY;
       rgb(100, 100, 100);
       doc.setFontSize(7);
@@ -365,7 +377,7 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       doc.setFontSize(9);
       bold();
       txt(fmtDateTime(r.return_date), colReturn, yRet);
-      yRet += tight ? 4.5 : 5;
+      yRet += 4.5;
       doc.setFontSize(8);
       normal();
       txt(r.return_station || '-', colReturn, yRet);
@@ -373,27 +385,24 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       // Vertical divider between columns
       draw(200, 200, 200);
       lw(0.3);
-      doc.line(M + CW / 2, rentStartY - 2, M + CW / 2, rentStartY + (tight ? 12 : 14));
+      doc.line(M + CW / 2, rentStartY - 2, M + CW / 2, rentStartY + 12);
 
-      y += tight ? 4 : 5;
+      y += 4;
 
       // Duration row spanning full width
       fill(240, 244, 255);
       draw(190, 200, 240);
       lw(0.3);
-      doc.rect(M, y, CW, tight ? 6 : 7, 'FD');
+      doc.rect(M, y, CW, 6, 'FD');
       rgb(13, 71, 161);
       doc.setFontSize(8);
       bold();
-      doc.text(`Duration / Διάρκεια: ${days} day${days !== 1 ? 's' : ''} / ημέρ.`, M + CW / 2, y + (tight ? 4.2 : 4.8), { align: 'center' });
+      doc.text(`Duration / Διάρκεια: ${days} day${days !== 1 ? 's' : ''} / ημέρ.`, M + CW / 2, y + 4.2, { align: 'center' });
       normal();
       rgb(0, 0, 0);
-      y += tight ? 8 : 9;
+      y += 8;
 
-      draw(200, 200, 200);
-      lw(0.3);
-      doc.line(M, y, PW - M, y);
-      y += sectionGap;
+      separator();
 
       // ═══════════════════════════════════════
       // INSURANCE & PAYMENT (two columns)
@@ -405,11 +414,10 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       doc.setFontSize(9);
       bold();
       txt(insuranceName, M + 2, y);
-      y += tight ? 4 : 5;
+      y += 4.5;
       y = row('Insurance Fee / Τέλος Ασφάλισης', `EUR ${Number(r.insurance_rate).toFixed(2)} / day (ημέρα)`, M, y, half);
 
-      let yPay = insStartY;
-      yPay = sectionHeader('PAYMENT  /  ΠΛΗΡΩΜΗ', col2, yPay, half);
+      let yPay = sectionHeader('PAYMENT  /  ΠΛΗΡΩΜΗ', col2, insStartY, half);
 
       const payMethod = r.payment_method
         ? (r.payment_method === 'cash' ? 'Cash / Μετρητά' : 'Card / Κάρτα')
@@ -430,33 +438,24 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
 
       // Total box
       fill(13, 71, 161);
-      doc.rect(col2, yPay, half, 10, 'F');
+      doc.rect(col2, yPay, half, 9, 'F');
       rgb(255, 255, 255);
       doc.setFontSize(8);
       bold();
-      doc.text('TOTAL / ΣΥΝΟΛΟ:', col2 + 2, yPay + 4.5);
+      doc.text('TOTAL / ΣΥΝΟΛΟ:', col2 + 2, yPay + 4);
       doc.setFontSize(11);
-      doc.text(`EUR ${Number(r.total_amount).toFixed(2)}`, col2 + half - 3, yPay + 7, { align: 'right' });
-      yPay += tight ? 10 : 12;
+      doc.text(`EUR ${Number(r.total_amount).toFixed(2)}`, col2 + half - 3, yPay + 6.5, { align: 'right' });
+      yPay += 11;
 
-      y = Math.max(y, yPay) + (tight ? 0.5 : 1);
-
-      draw(200, 200, 200);
-      lw(0.3);
-      doc.line(M, y, PW - M, y);
-      y += sectionGap;
+      y = Math.max(y, yPay) + 0.5;
+      separator();
 
       // ═══════════════════════════════════════
       // VEHICLE CONDITION
       // ═══════════════════════════════════════
-      const hasConditionData = r.fuel_level !== undefined || r.odometer !== undefined ||
-        (r.accessories_given && r.accessories_given.length > 0) ||
-        (r.damages && r.damages.length > 0);
-
-      if (hasConditionData) {
+      if (hasCondData) {
         y = sectionHeader('VEHICLE CONDITION AT PICK-UP  /  ΚΑΤΑΣΤΑΣΗ ΟΧΗΜΑΤΟΣ ΠΑΡΑΛΑΒΗΣ', M, y, CW);
 
-        // Fuel gauge visual
         if (r.fuel_level !== undefined) {
           doc.setFontSize(7.5);
           rgb(80, 80, 80);
@@ -527,10 +526,7 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
         }
 
         rgb(0, 0, 0);
-        draw(200, 200, 200);
-        lw(0.3);
-        doc.line(M, y, PW - M, y);
-        y += sectionGap;
+        separator();
       }
 
       // ═══════════════════════════════════════
@@ -546,15 +542,15 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
         '7. Driving under the influence of alcohol or drugs is strictly forbidden. / Απαγορεύεται η οδήγηση υπό την επήρεια αλκοόλ ή ναρκωτικών.',
       ];
 
-      // Pre-calculate remaining content height to decide if a page break is needed
+      // Pre-wrap terms to calculate actual height for page-break decision
       const termsWrapped = terms.map(t => doc.splitTextToSize(t, CW - 2));
       const totalTermLines = termsWrapped.reduce((sum, lines) => sum + lines.length, 0);
-      const termsBlockHeight = headerGap + totalTermLines * termLH + 1;
-      const declBlockHeight = 11;
-      const sigBlockHeight = headerGap + (tight ? 22 : 25) + 5;
-      const remainingHeight = termsBlockHeight + declBlockHeight + sigBlockHeight;
+      const termsBlockHeight = HDR_GAP + totalTermLines * TERM_LH + 1;
+      const declBlockHeight = DECL_H + DECL_GAP - DECL_H + DECL_GAP; // box + gap
+      const sigBlockHeight = HDR_GAP + SIG_H + SIG_GAP;
+      const remainingHeight = termsBlockHeight + DECL_GAP + SIG_H + SIG_GAP + HDR_GAP;
 
-      // If terms + declaration + signatures don't fit, break before terms (keep them together)
+      // If terms + declaration + signatures don't fit before footer (282mm), break cleanly
       if (y + remainingHeight > 282) {
         doc.addPage();
         y = 20;
@@ -568,7 +564,7 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       termsWrapped.forEach(lines => {
         lines.forEach((line: string) => {
           txt(line, M + 1, y);
-          y += termLH;
+          y += TERM_LH;
         });
       });
 
@@ -580,14 +576,14 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       fill(255, 248, 225);
       draw(230, 180, 0);
       lw(0.4);
-      doc.rect(M, y, CW, tight ? 8 : 9, 'FD');
+      doc.rect(M, y, CW, DECL_H, 'FD');
       rgb(80, 60, 0);
       doc.setFontSize(7);
       normal();
       const decl = 'By signing below I confirm that I have read, understood and accept the above terms. / Με την υπογραφή μου βεβαιώνω ότι έχω διαβάσει, κατανοήσει και αποδέχομαι τους παραπάνω όρους.';
       const declLines = doc.splitTextToSize(decl, CW - 4);
       doc.text(declLines, M + 2, y + 3.5);
-      y += tight ? 10 : 11;
+      y += DECL_GAP;
 
       // ═══════════════════════════════════════
       // SIGNATURES
@@ -595,7 +591,6 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       y = sectionHeader('SIGNATURES  /  ΥΠΟΓΡΑΦΕΣ', M, y, CW);
 
       const sigW = CW / 3 - 3;
-      const sigH = tight ? 22 : 25;
       const sig1x = M;
       const sig2x = M + sigW + 4;
       const sig3x = M + (sigW + 4) * 2;
@@ -604,7 +599,7 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       draw(180, 180, 180);
       lw(0.3);
       fill(252, 252, 252);
-      doc.rect(sig1x, y, sigW, sigH, 'FD');
+      doc.rect(sig1x, y, sigW, SIG_H, 'FD');
       rgb(80, 80, 80);
       doc.setFontSize(7);
       normal();
@@ -614,26 +609,26 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       doc.setFontSize(7.5);
       gr(r.customer.name);
       const nameLines = doc.splitTextToSize(r.customer.name, sigW - 4);
-      doc.text(nameLines, sig1x + sigW / 2, y + (tight ? 17 : 20), { align: 'center' });
+      doc.text(nameLines, sig1x + sigW / 2, y + 18, { align: 'center' });
       draw(100, 100, 100);
-      doc.line(sig1x + 4, y + sigH - 2, sig1x + sigW - 4, y + sigH - 2);
+      doc.line(sig1x + 4, y + SIG_H - 2, sig1x + sigW - 4, y + SIG_H - 2);
 
       // Box 2: Company Agent
       fill(252, 252, 252);
       draw(180, 180, 180);
-      doc.rect(sig2x, y, sigW, sigH, 'FD');
+      doc.rect(sig2x, y, sigW, SIG_H, 'FD');
       rgb(80, 80, 80);
       doc.setFontSize(7);
       normal();
       doc.text('Company Agent', sig2x + sigW / 2, y + 3.5, { align: 'center' });
       doc.text('Εκπρόσωπος Εταιρείας', sig2x + sigW / 2, y + 6.5, { align: 'center' });
       draw(100, 100, 100);
-      doc.line(sig2x + 4, y + sigH - 2, sig2x + sigW - 4, y + sigH - 2);
+      doc.line(sig2x + 4, y + SIG_H - 2, sig2x + sigW - 4, y + SIG_H - 2);
 
       // Box 3: Date / Ημερομηνία
       fill(252, 252, 252);
       draw(180, 180, 180);
-      doc.rect(sig3x, y, sigW, sigH, 'FD');
+      doc.rect(sig3x, y, sigW, SIG_H, 'FD');
       rgb(80, 80, 80);
       doc.setFontSize(7);
       normal();
@@ -641,15 +636,15 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       rgb(20, 20, 20);
       doc.setFontSize(8.5);
       bold();
-      doc.text(metaDate, sig3x + sigW / 2, y + (tight ? 13 : 15), { align: 'center' });
+      doc.text(metaDate, sig3x + sigW / 2, y + 13, { align: 'center' });
       normal();
       doc.setFontSize(7);
       rgb(80, 80, 80);
-      doc.text('Place / Τόπος:', sig3x + sigW / 2, y + (tight ? 17 : 20), { align: 'center' });
+      doc.text('Place / Τόπος:', sig3x + sigW / 2, y + 18, { align: 'center' });
       draw(100, 100, 100);
-      doc.line(sig3x + 4, y + sigH - 2, sig3x + sigW - 4, y + sigH - 2);
+      doc.line(sig3x + 4, y + SIG_H - 2, sig3x + sigW - 4, y + SIG_H - 2);
 
-      y += (tight ? 22 : 25) + 5;
+      y += SIG_H + SIG_GAP;
 
       // ═══════════════════════════════════════
       // FOOTER
