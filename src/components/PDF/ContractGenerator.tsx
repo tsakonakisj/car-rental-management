@@ -161,9 +161,10 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
         (r.accessories_given && r.accessories_given.length > 0) ||
         (r.damages && r.damages.length > 0);
       const tight = savedExtras.length > 0 || hasCondData;
-      const sectionGap = tight ? 1 : 2;
-      const termLH = tight ? 2.9 : 3.3;
-      const headerGap = tight ? 8 : 10;
+      const sectionGap = tight ? 0.5 : 2;
+      const termLH = tight ? 2.7 : 3.3;
+      const headerGap = tight ? 7 : 10;
+      const rowStep = tight ? 7.5 : 8.5;
 
       // Load fonts with Greek support
       const fonts = await loadFonts();
@@ -239,9 +240,9 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
         doc.setFontSize(8.5);
         gr(value);
         const lines = doc.splitTextToSize(value || '-', colW - 6);
-        doc.text(lines, x + 2, yy + 4);
+        doc.text(lines, x + 2, yy + 3.5);
         normal();
-        return yy + 4 + lines.length * 4.5;
+        return yy + rowStep;
       };
 
       // ═══════════════════════════════════════
@@ -292,9 +293,9 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
 
       draw(13, 71, 161);
       lw(0.5);
-      y += 2;
+      y += 1.5;
       doc.line(M, y, PW - M, y);
-      y += 4;
+      y += tight ? 2.5 : 4;
 
       // ═══════════════════════════════════════
       // TWO COLUMNS: CUSTOMER | VEHICLE
@@ -342,29 +343,29 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       doc.setFontSize(7);
       bold();
       doc.text('PICK-UP / Παραλαβή', colPickup + 2, y);
-      y += 4.5;
+      y += 4;
       rgb(0, 0, 0);
       doc.setFontSize(9);
       bold();
       txt(fmtDateTime(r.pickup_date), colPickup + 2, y);
-      y += 5;
+      y += tight ? 4.5 : 5;
       doc.setFontSize(8);
       normal();
       txt(r.pickup_station || '-', colPickup + 2, y);
 
       // Return column (drawn at same y positions as pickup)
-      const rentStartY = y - 9.5;
+      const rentStartY = y - (tight ? 8.5 : 9.5);
       let yRet = rentStartY;
       rgb(100, 100, 100);
       doc.setFontSize(7);
       bold();
       doc.text('RETURN / Επιστροφή', colReturn, yRet);
-      yRet += 4.5;
+      yRet += 4;
       rgb(0, 0, 0);
       doc.setFontSize(9);
       bold();
       txt(fmtDateTime(r.return_date), colReturn, yRet);
-      yRet += 5;
+      yRet += tight ? 4.5 : 5;
       doc.setFontSize(8);
       normal();
       txt(r.return_station || '-', colReturn, yRet);
@@ -372,22 +373,22 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       // Vertical divider between columns
       draw(200, 200, 200);
       lw(0.3);
-      doc.line(M + CW / 2, rentStartY - 2, M + CW / 2, rentStartY + 14);
+      doc.line(M + CW / 2, rentStartY - 2, M + CW / 2, rentStartY + (tight ? 12 : 14));
 
-      y += 5;
+      y += tight ? 4 : 5;
 
       // Duration row spanning full width
       fill(240, 244, 255);
       draw(190, 200, 240);
       lw(0.3);
-      doc.rect(M, y, CW, 7, 'FD');
+      doc.rect(M, y, CW, tight ? 6 : 7, 'FD');
       rgb(13, 71, 161);
       doc.setFontSize(8);
       bold();
-      doc.text(`Duration / Διάρκεια: ${days} day${days !== 1 ? 's' : ''} / ημέρ.`, M + CW / 2, y + 4.8, { align: 'center' });
+      doc.text(`Duration / Διάρκεια: ${days} day${days !== 1 ? 's' : ''} / ημέρ.`, M + CW / 2, y + (tight ? 4.2 : 4.8), { align: 'center' });
       normal();
       rgb(0, 0, 0);
-      y += 9;
+      y += tight ? 8 : 9;
 
       draw(200, 200, 200);
       lw(0.3);
@@ -404,7 +405,7 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       doc.setFontSize(9);
       bold();
       txt(insuranceName, M + 2, y);
-      y += 5;
+      y += tight ? 4 : 5;
       y = row('Insurance Fee / Τέλος Ασφάλισης', `EUR ${Number(r.insurance_rate).toFixed(2)} / day (ημέρα)`, M, y, half);
 
       let yPay = insStartY;
@@ -436,9 +437,9 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       doc.text('TOTAL / ΣΥΝΟΛΟ:', col2 + 2, yPay + 4.5);
       doc.setFontSize(11);
       doc.text(`EUR ${Number(r.total_amount).toFixed(2)}`, col2 + half - 3, yPay + 7, { align: 'right' });
-      yPay += 12;
+      yPay += tight ? 10 : 12;
 
-      y = Math.max(y, yPay) + 1;
+      y = Math.max(y, yPay) + (tight ? 0.5 : 1);
 
       draw(200, 200, 200);
       lw(0.3);
@@ -550,7 +551,7 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       const totalTermLines = termsWrapped.reduce((sum, lines) => sum + lines.length, 0);
       const termsBlockHeight = headerGap + totalTermLines * termLH + 1;
       const declBlockHeight = 11;
-      const sigBlockHeight = headerGap + 25 + 5;
+      const sigBlockHeight = headerGap + (tight ? 22 : 25) + 5;
       const remainingHeight = termsBlockHeight + declBlockHeight + sigBlockHeight;
 
       // If terms + declaration + signatures don't fit, break before terms (keep them together)
@@ -579,14 +580,14 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       fill(255, 248, 225);
       draw(230, 180, 0);
       lw(0.4);
-      doc.rect(M, y, CW, 9, 'FD');
+      doc.rect(M, y, CW, tight ? 8 : 9, 'FD');
       rgb(80, 60, 0);
       doc.setFontSize(7);
       normal();
       const decl = 'By signing below I confirm that I have read, understood and accept the above terms. / Με την υπογραφή μου βεβαιώνω ότι έχω διαβάσει, κατανοήσει και αποδέχομαι τους παραπάνω όρους.';
       const declLines = doc.splitTextToSize(decl, CW - 4);
       doc.text(declLines, M + 2, y + 3.5);
-      y += 11;
+      y += tight ? 10 : 11;
 
       // ═══════════════════════════════════════
       // SIGNATURES
@@ -594,7 +595,7 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       y = sectionHeader('SIGNATURES  /  ΥΠΟΓΡΑΦΕΣ', M, y, CW);
 
       const sigW = CW / 3 - 3;
-      const sigH = 25;
+      const sigH = tight ? 22 : 25;
       const sig1x = M;
       const sig2x = M + sigW + 4;
       const sig3x = M + (sigW + 4) * 2;
@@ -607,13 +608,13 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       rgb(80, 80, 80);
       doc.setFontSize(7);
       normal();
-      doc.text('Customer Signature', sig1x + sigW / 2, y + 4, { align: 'center' });
-      doc.text('Υπογραφή Πελάτη', sig1x + sigW / 2, y + 7.5, { align: 'center' });
+      doc.text('Customer Signature', sig1x + sigW / 2, y + 3.5, { align: 'center' });
+      doc.text('Υπογραφή Πελάτη', sig1x + sigW / 2, y + 6.5, { align: 'center' });
       rgb(20, 20, 20);
       doc.setFontSize(7.5);
       gr(r.customer.name);
       const nameLines = doc.splitTextToSize(r.customer.name, sigW - 4);
-      doc.text(nameLines, sig1x + sigW / 2, y + 20, { align: 'center' });
+      doc.text(nameLines, sig1x + sigW / 2, y + (tight ? 17 : 20), { align: 'center' });
       draw(100, 100, 100);
       doc.line(sig1x + 4, y + sigH - 2, sig1x + sigW - 4, y + sigH - 2);
 
@@ -624,8 +625,8 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       rgb(80, 80, 80);
       doc.setFontSize(7);
       normal();
-      doc.text('Company Agent', sig2x + sigW / 2, y + 4, { align: 'center' });
-      doc.text('Εκπρόσωπος Εταιρείας', sig2x + sigW / 2, y + 7.5, { align: 'center' });
+      doc.text('Company Agent', sig2x + sigW / 2, y + 3.5, { align: 'center' });
+      doc.text('Εκπρόσωπος Εταιρείας', sig2x + sigW / 2, y + 6.5, { align: 'center' });
       draw(100, 100, 100);
       doc.line(sig2x + 4, y + sigH - 2, sig2x + sigW - 4, y + sigH - 2);
 
@@ -636,19 +637,19 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       rgb(80, 80, 80);
       doc.setFontSize(7);
       normal();
-      doc.text('Date / Ημερομηνία', sig3x + sigW / 2, y + 4, { align: 'center' });
+      doc.text('Date / Ημερομηνία', sig3x + sigW / 2, y + 3.5, { align: 'center' });
       rgb(20, 20, 20);
       doc.setFontSize(8.5);
       bold();
-      doc.text(metaDate, sig3x + sigW / 2, y + 15, { align: 'center' });
+      doc.text(metaDate, sig3x + sigW / 2, y + (tight ? 13 : 15), { align: 'center' });
       normal();
       doc.setFontSize(7);
       rgb(80, 80, 80);
-      doc.text('Place / Τόπος:', sig3x + sigW / 2, y + 20, { align: 'center' });
+      doc.text('Place / Τόπος:', sig3x + sigW / 2, y + (tight ? 17 : 20), { align: 'center' });
       draw(100, 100, 100);
       doc.line(sig3x + 4, y + sigH - 2, sig3x + sigW - 4, y + sigH - 2);
 
-      y += sigH + 5;
+      y += (tight ? 22 : 25) + 5;
 
       // ═══════════════════════════════════════
       // FOOTER
