@@ -271,7 +271,7 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       rgb(255, 255, 255);
       doc.setFontSize(17);
       bold();
-      doc.text(company.contractHeader, M, 11);
+      doc.text(company.contractHeader || company.name, M, 11);
 
       doc.setFontSize(8);
       normal();

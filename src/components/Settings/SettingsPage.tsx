@@ -262,6 +262,26 @@ const SettingsPage: React.FC = () => {
             className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
           />
         </div>
+        <div>
+          <label className="block text-sm font-medium text-blue-100/65 mb-2">Επικεφαλίδα Συμβολαίου</label>
+          <input
+            type="text"
+            value={companySettings.contractHeader}
+            onChange={(e) => setCompanySettings((prev) => ({ ...prev, contractHeader: e.target.value }))}
+            placeholder="π.χ. DEMO RENT A CAR"
+            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-blue-100/65 mb-2">Υπότιτλος Συμβολαίου</label>
+          <input
+            type="text"
+            value={companySettings.contractSubheader}
+            onChange={(e) => setCompanySettings((prev) => ({ ...prev, contractSubheader: e.target.value }))}
+            placeholder="π.χ. Chania, Crete"
+            className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+          />
+        </div>
       </div>
     </div>
   );
