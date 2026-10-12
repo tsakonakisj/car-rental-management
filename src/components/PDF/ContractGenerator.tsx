@@ -162,16 +162,16 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
 
       // Layout constants — single moderate spacing that fits one page with extras
       const HDR_H = 6;        // section header bar height
-      const HDR_GAP = 10;     // gap below header bar to first row label (bar=6mm + 4mm clearance for text ascent)
+      const HDR_GAP = 9;      // gap below header bar to first row label (bar=6mm + 3mm clearance for text ascent)
       const ROW_VAL_OFF = 3.5; // value baseline below label baseline
       const ROW_LH = 4;       // line height for wrapped value text
-      const ROW_PAD = 1;      // padding after value to next row
+      const ROW_PAD = 0.5;    // padding after value to next row
       const SEC_GAP = 1.5;    // gap between sections (after separator line)
       const TERM_LH = 3.0;    // terms line height
       const DECL_H = 8;       // declaration box height
-      const DECL_GAP = 10;    // gap after declaration
+      const DECL_GAP = 5;     // gap after declaration box
       const SIG_H = 22;       // signature box height
-      const SIG_GAP = 4;      // gap after signature boxes
+      const SIG_GAP = 2;      // gap after signature boxes
 
       // Load fonts with Greek support
       const fonts = await loadFonts();
@@ -553,7 +553,7 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       const remainingHeight = termsBlockHeight + DECL_GAP + SIG_H + SIG_GAP + HDR_GAP;
 
       // If terms + declaration + signatures don't fit before footer (282mm), break cleanly
-      if (y + remainingHeight > 284) {
+      if (y + remainingHeight > 282) {
         doc.addPage();
         y = 20;
       }
