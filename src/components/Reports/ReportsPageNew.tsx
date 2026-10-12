@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../../lib/supabase';
+import { checkinService } from '../../lib/database';
 import PageHero from '../Layout/PageHero';
 import {
   CurrencyEuroIcon,
@@ -126,7 +127,11 @@ const ReportsPageNew: React.FC = () => {
       const returns = returnResult.data || [];
       const vehicles = vehiclesResult.data || [];
 
-      const totalRevenue = reservations.reduce((s, r) => s + (Number(r.total_amount) || 0), 0);
+      const reservationIds = reservations.map((r: any) => r.id).filter(Boolean);
+      const chargesMap = await checkinService.getAdditionalChargesByReservationIds(reservationIds);
+      const revenueFor = (r: any) => (Number(r.total_amount) || 0) + (chargesMap.get(r.id) || 0);
+
+      const totalRevenue = reservations.reduce((s, r) => s + revenueFor(r), 0);
       setSummary({
         totalRevenue,
         totalRentals: reservations.length,
@@ -138,7 +143,7 @@ const ReportsPageNew: React.FC = () => {
       for (const r of reservations) {
         const d = (r.pickup_date as string).substring(0, 10);
         const prev = byDate.get(d) ?? { count: 0, revenue: 0 };
-        byDate.set(d, { count: prev.count + 1, revenue: prev.revenue + (Number(r.total_amount) || 0) });
+        byDate.set(d, { count: prev.count + 1, revenue: prev.revenue + revenueFor(r) });
       }
       setDailySales(
         Array.from(byDate.entries())
@@ -155,7 +160,7 @@ const ReportsPageNew: React.FC = () => {
       for (const r of reservations) {
         const source = (r.customer as any)?.source || 'walk-in';
         const prev = byChannel.get(source) ?? { count: 0, revenue: 0 };
-        byChannel.set(source, { count: prev.count + 1, revenue: prev.revenue + (Number(r.total_amount) || 0) });
+        byChannel.set(source, { count: prev.count + 1, revenue: prev.revenue + revenueFor(r) });
       }
       const total = reservations.length || 1;
       setChannelData(
@@ -205,7 +210,7 @@ const ReportsPageNew: React.FC = () => {
       for (const r of reservations) {
         const cat = (r.vehicle as any)?.category || r.category || '—';
         const prev = byCat.get(cat) ?? { count: 0, revenue: 0 };
-        byCat.set(cat, { count: prev.count + 1, revenue: prev.revenue + (Number(r.total_amount) || 0) });
+        byCat.set(cat, { count: prev.count + 1, revenue: prev.revenue + revenueFor(r) });
       }
       setCategoryData(
         Array.from(byCat.entries())

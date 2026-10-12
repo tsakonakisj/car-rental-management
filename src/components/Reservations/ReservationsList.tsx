@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { reservationService, customerService, stationService, vehicleService, pricingService, resolveDailyRate, insuranceService, reservationExtrasService, photoService } from '../../lib/database';
+import { reservationService, customerService, stationService, vehicleService, pricingService, resolveDailyRate, insuranceService, reservationExtrasService, photoService, checkoutService, checkinService } from '../../lib/database';
+import type { CheckoutDetails, CheckinDetails } from '../../lib/database';
 import {
   EyeIcon,
   TruckIcon,
@@ -135,6 +136,9 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
   const [photoSignedUrls, setPhotoSignedUrls] = useState<Map<string, string>>(new Map());
   const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
   const [photosLoading, setPhotosLoading] = useState(false);
+  const [checkoutDetails, setCheckoutDetails] = useState<CheckoutDetails | null>(null);
+  const [checkinDetails, setCheckinDetails] = useState<CheckinDetails | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
 
   // Edit mode
   const [editing, setEditing] = useState(false);
@@ -183,15 +187,23 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
       setCheckoutPhotoPaths([]);
       setCheckinPhotoPaths([]);
       setPhotoSignedUrls(new Map());
+      setCheckoutDetails(null);
+      setCheckinDetails(null);
       return;
     }
     setPhotosLoading(true);
+    setDetailsLoading(true);
+
     Promise.all([
       photoService.getPhotos('checkout', viewReservation.id),
       photoService.getPhotos('checkin', viewReservation.id),
-    ]).then(async ([coPaths, ciPaths]) => {
+      checkoutService.getByReservationId(viewReservation.id),
+      checkinService.getByReservationId(viewReservation.id),
+    ]).then(async ([coPaths, ciPaths, coDetails, ciDetails]) => {
       setCheckoutPhotoPaths(coPaths);
       setCheckinPhotoPaths(ciPaths);
+      setCheckoutDetails(coDetails);
+      setCheckinDetails(ciDetails);
       const allPaths = [...coPaths, ...ciPaths];
       if (allPaths.length > 0) {
         try {
@@ -202,8 +214,11 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
         }
       }
     }).catch((err) => {
-      console.error('Failed to load photos:', err);
-    }).finally(() => setPhotosLoading(false));
+      console.error('Failed to load photos/details:', err);
+    }).finally(() => {
+      setPhotosLoading(false);
+      setDetailsLoading(false);
+    });
   }, [viewReservation]);
 
   const handleStatusChange = async (id: string, newStatus: string) => {
@@ -842,12 +857,115 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                           <span className="text-blue-100/65">Ασφάλεια ({viewReservation.insurance_type})</span>
                           <span className="text-white">{'\u20AC'}{Number(viewReservation.insurance_rate || 0).toFixed(2)}/ημέρα</span>
                         </div>
-                        <div className="flex justify-between text-sm font-bold border-t pt-2">
-                          <span>Σύνολο</span>
-                          <span className="text-emerald-300">{'\u20AC'}{Number(viewReservation.total_amount || 0).toFixed(2)}</span>
+                        <div className="flex justify-between text-sm font-medium border-t border-[#1e4e7d]/60 pt-2">
+                          <span className="text-blue-100/65">Τιμή κράτησης</span>
+                          <span className="text-white">{'\u20AC'}{Number(viewReservation.total_amount || 0).toFixed(2)}</span>
                         </div>
+                        {(() => {
+                          const charges = checkinDetails?.additional_charges || [];
+                          const chargesTotal = charges.reduce((s, c) => s + (Number(c.amount) || 0), 0);
+                          if (charges.length === 0) return null;
+                          return (
+                            <>
+                              {charges.map((c, i) => (
+                                <div key={i} className="flex justify-between text-sm">
+                                  <span className="text-blue-100/65">{c.type}{c.description ? ` — ${c.description}` : ''}</span>
+                                  <span className="text-red-300">{'\u20AC'}{Number(c.amount).toFixed(2)}</span>
+                                </div>
+                              ))}
+                              <div className="flex justify-between text-sm font-medium border-t border-[#1e4e7d]/60 pt-2">
+                                <span className="text-blue-100/65">Επιπλέον χρεώσεις</span>
+                                <span className="text-red-300">{'\u20AC'}{chargesTotal.toFixed(2)}</span>
+                              </div>
+                              <div className="flex justify-between text-sm font-bold border-t border-[#1e4e7d]/60 pt-2">
+                                <span>Τελικό Σύνολο</span>
+                                <span className="text-emerald-300">{'\u20AC'}{(Number(viewReservation.total_amount || 0) + chargesTotal).toFixed(2)}</span>
+                              </div>
+                            </>
+                          );
+                        })()}
+                        {(!checkinDetails || (checkinDetails.additional_charges || []).length === 0) && (
+                          <div className="flex justify-between text-sm font-bold border-t border-[#1e4e7d]/60 pt-2">
+                            <span>Σύνολο</span>
+                            <span className="text-emerald-300">{'\u20AC'}{Number(viewReservation.total_amount || 0).toFixed(2)}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
+
+                    {/* Checkout & Checkin Details */}
+                    {(checkoutDetails || checkinDetails) && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-blue-100/55 mb-2">Στοιχεία Παράδοσης / Επιστροφής</h3>
+                        <div className="bg-[#0b2949]/70 rounded-lg p-4 space-y-4">
+                          {detailsLoading && (
+                            <p className="text-sm text-blue-100/45">Φόρτωση...</p>
+                          )}
+                          {checkoutDetails && (
+                            <div className="space-y-2">
+                              <p className="text-xs font-semibold text-blue-100/55 uppercase tracking-wide">Check-out</p>
+                              <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                  <span className="text-blue-100/65">Χιλιόμετρα:</span>{' '}
+                                  <span className="text-white">{checkoutDetails.odometer.toLocaleString()} km</span>
+                                </div>
+                                <div>
+                                  <span className="text-blue-100/65">Καύσιμο:</span>{' '}
+                                  <span className="text-white">{checkoutDetails.fuel_level}%</span>
+                                </div>
+                              </div>
+                              {checkoutDetails.accessories_given.length > 0 && (
+                                <div className="text-sm">
+                                  <span className="text-blue-100/65">Αξεσουάρ:</span>{' '}
+                                  <span className="text-white">{checkoutDetails.accessories_given.join(', ')}</span>
+                                </div>
+                              )}
+                              {checkoutDetails.damages.length > 0 && (
+                                <div className="text-sm space-y-1">
+                                  <span className="text-blue-100/65">Υπάρχουσες ζημιές:</span>
+                                  {checkoutDetails.damages.map((d) => (
+                                    <div key={d.id} className="pl-3 text-blue-50">
+                                      — {d.description}
+                                      {d.estimated_cost != null && (
+                                        <span className="text-red-300 ml-2">{'\u20AC'}{Number(d.estimated_cost).toFixed(2)}</span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {checkinDetails && (
+                            <div className="space-y-2 border-t border-[#1e4e7d]/60 pt-3">
+                              <p className="text-xs font-semibold text-blue-100/55 uppercase tracking-wide">Check-in</p>
+                              <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                  <span className="text-blue-100/65">Χιλιόμετρα:</span>{' '}
+                                  <span className="text-white">{checkinDetails.odometer.toLocaleString()} km</span>
+                                </div>
+                                <div>
+                                  <span className="text-blue-100/65">Καύσιμο:</span>{' '}
+                                  <span className="text-white">{checkinDetails.fuel_level}%</span>
+                                </div>
+                              </div>
+                              {checkinDetails.new_damages.length > 0 && (
+                                <div className="text-sm space-y-1">
+                                  <span className="text-blue-100/65">Νέες ζημιές:</span>
+                                  {checkinDetails.new_damages.map((d) => (
+                                    <div key={d.id} className="pl-3 text-blue-50">
+                                      — {d.description}
+                                      {d.estimated_cost != null && (
+                                        <span className="text-red-300 ml-2">{'\u20AC'}{Number(d.estimated_cost).toFixed(2)}</span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     {viewReservation.notes && (
                       <div>

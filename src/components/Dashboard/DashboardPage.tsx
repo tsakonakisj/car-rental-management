@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase, isDemoMode } from '../../lib/supabase';
+import { checkinService } from '../../lib/database';
 import PageHero from '../Layout/PageHero';
 import {
   CalendarDaysIcon,
@@ -219,13 +220,17 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
         if (typeof v.warning_km === 'number' && v.warning_km > 0) serviceWarningKm = v.warning_km;
       }
 
+      // Fetch additional charges from checkins
+      const reservationIds = (reservations || []).map((r: any) => r.id).filter(Boolean);
+      const chargesMap = await checkinService.getAdditionalChargesByReservationIds(reservationIds);
+
       // Process source stats
       const sourceMap = new Map<string, { count: number; revenue: number }>();
       (reservations || []).forEach((r: any) => {
         const source = r.customer?.source || 'other';
         const existing = sourceMap.get(source) || { count: 0, revenue: 0 };
         existing.count += 1;
-        existing.revenue += Number(r.total_amount) || 0;
+        existing.revenue += (Number(r.total_amount) || 0) + (chargesMap.get(r.id) || 0);
         sourceMap.set(source, existing);
       });
       const sourceData: SourceStat[] = Array.from(sourceMap.entries()).map(([source, data]) => ({

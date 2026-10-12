@@ -823,20 +823,51 @@ export const photoService = {
 };
 
 // Checkouts
+export interface CheckoutDetails {
+  fuel_level: number;
+  odometer: number;
+  accessories_given: string[];
+  damages: Array<{ id: string; description: string; estimated_cost: number | null }>;
+  checked_out_at: string;
+}
+
 export const checkoutService = {
-  async getByReservationId(reservationId: string): Promise<{ odometer: number } | null> {
+  async getByReservationId(reservationId: string): Promise<CheckoutDetails | null> {
     if (isDemo) return Promise.resolve(null);
 
     const { data, error } = await supabase!
       .from('checkouts')
-      .select('odometer')
+      .select('fuel_level, odometer, accessories_given, damage_ids, checked_out_at')
       .eq('reservation_id', reservationId)
       .order('checked_out_at', { ascending: false })
       .limit(1)
       .maybeSingle();
 
     if (error) throw error;
-    return data;
+    if (!data) return null;
+
+    let damages: CheckoutDetails['damages'] = [];
+    const damageIds: string[] = data.damage_ids || [];
+    if (damageIds.length > 0) {
+      const { data: dmgData, error: dmgErr } = await supabase!
+        .from('damages')
+        .select('id, description, estimated_cost')
+        .in('id', damageIds);
+      if (dmgErr) throw dmgErr;
+      damages = (dmgData || []).map((d: any) => ({
+        id: d.id,
+        description: d.description,
+        estimated_cost: d.estimated_cost != null ? Number(d.estimated_cost) : null,
+      }));
+    }
+
+    return {
+      fuel_level: data.fuel_level,
+      odometer: data.odometer,
+      accessories_given: data.accessories_given || [],
+      damages,
+      checked_out_at: data.checked_out_at,
+    };
   },
 
   async create(data: {
@@ -878,8 +909,79 @@ export const checkoutService = {
   }
 };
 
+export interface CheckinDetails {
+  fuel_level: number;
+  odometer: number;
+  additional_charges: Array<{ type: string; amount: number; description: string }>;
+  new_damages: Array<{ id: string; description: string; estimated_cost: number | null }>;
+  checked_in_at: string;
+}
+
 // Checkins
 export const checkinService = {
+  async getByReservationId(reservationId: string): Promise<CheckinDetails | null> {
+    if (isDemo) return Promise.resolve(null);
+
+    const { data, error } = await supabase!
+      .from('checkins')
+      .select('fuel_level, odometer, additional_charges, new_damage_ids, checked_in_at')
+      .eq('reservation_id', reservationId)
+      .order('checked_in_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return null;
+
+    let new_damages: CheckinDetails['new_damages'] = [];
+    const damageIds: string[] = data.new_damage_ids || [];
+    if (damageIds.length > 0) {
+      const { data: dmgData, error: dmgErr } = await supabase!
+        .from('damages')
+        .select('id, description, estimated_cost')
+        .in('id', damageIds);
+      if (dmgErr) throw dmgErr;
+      new_damages = (dmgData || []).map((d: any) => ({
+        id: d.id,
+        description: d.description,
+        estimated_cost: d.estimated_cost != null ? Number(d.estimated_cost) : null,
+      }));
+    }
+
+    return {
+      fuel_level: data.fuel_level,
+      odometer: data.odometer,
+      additional_charges: (data.additional_charges || []).map((c: any) => ({
+        type: c.type,
+        amount: Number(c.amount) || 0,
+        description: c.description || '',
+      })),
+      new_damages,
+      checked_in_at: data.checked_in_at,
+    };
+  },
+
+  async getAdditionalChargesByReservationIds(reservationIds: string[]): Promise<Map<string, number>> {
+    if (isDemo || reservationIds.length === 0) return Promise.resolve(new Map());
+
+    const { data, error } = await supabase!
+      .from('checkins')
+      .select('reservation_id, additional_charges')
+      .in('reservation_id', reservationIds);
+
+    if (error) throw error;
+
+    const map = new Map<string, number>();
+    for (const row of data || []) {
+      const charges = row.additional_charges || [];
+      const total = charges.reduce((sum: number, c: any) => sum + (Number(c.amount) || 0), 0);
+      if (total > 0) {
+        map.set(row.reservation_id, (map.get(row.reservation_id) || 0) + total);
+      }
+    }
+    return map;
+  },
+
   async create(data: {
     reservation_id: string;
     fuel_level: number;
@@ -933,9 +1035,19 @@ export const dashboardService = {
 
     const { data: reservations } = await supabase!
       .from('reservations')
-      .select('total_amount, status')
+      .select('id, total_amount, status')
       .gte('pickup_date', `${today}T00:00:00`)
       .lt('pickup_date', `${today}T23:59:59`);
+
+    const reservationIds = (reservations || []).map((r: any) => r.id).filter(Boolean);
+    let chargesMap = new Map<string, number>();
+    if (reservationIds.length > 0) {
+      try {
+        chargesMap = await checkinService.getAdditionalChargesByReservationIds(reservationIds);
+      } catch {
+        // Non-critical — continue with base revenue only
+      }
+    }
 
     const { data: checkouts } = await supabase!
       .from('checkouts')
@@ -951,7 +1063,7 @@ export const dashboardService = {
 
     return {
       reservations: reservations?.length || 0,
-      revenue: reservations?.reduce((sum, r) => sum + (Number(r.total_amount) || 0), 0) || 0,
+      revenue: reservations?.reduce((sum, r) => sum + (Number(r.total_amount) || 0) + (chargesMap.get(r.id) || 0), 0) || 0,
       pickups: checkouts?.length || 0,
       returns: checkins?.length || 0
     };
