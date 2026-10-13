@@ -245,10 +245,11 @@ interface DashboardMetricCardProps {
   icon: React.ComponentType<{ className?: string }>;
   theme: DashboardCardTheme;
   badge?: string;
+  showTitle?: boolean;
   onClick?: () => void;
 }
 
-const DashboardMetricCard: React.FC<DashboardMetricCardProps> = ({ title, value, icon: Icon, theme, badge, onClick }) => {
+const DashboardMetricCard: React.FC<DashboardMetricCardProps> = ({ title, value, icon: Icon, theme, badge, showTitle = true, onClick }) => {
   const content = (
     <>
       <div className={`absolute -bottom-12 -right-10 h-28 w-56 rounded-[55%] bg-gradient-to-br ${theme.decoration} rotate-[-18deg]`} />
@@ -259,9 +260,9 @@ const DashboardMetricCard: React.FC<DashboardMetricCardProps> = ({ title, value,
         </div>
         {badge && <span className={`rounded-full px-3 py-1 text-xs font-semibold ${theme.badge}`}>{badge}</span>}
       </div>
-      <div className="relative mt-2">
-        <p className="text-base font-medium text-blue-50/90">{title}</p>
-        <p className={`mt-2 text-5xl font-bold leading-none tabular-nums ${theme.accent}`}>{value}</p>
+      <div className={`relative ${showTitle ? 'mt-2' : 'mt-5'}`}>
+        {showTitle && <p className="text-base font-medium text-blue-50/90">{title}</p>}
+        <p className={`${showTitle ? 'mt-2' : ''} text-[2.1rem] font-bold leading-none tabular-nums ${theme.accent}`}>{value}</p>
       </div>
     </>
   );
@@ -576,6 +577,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
                 icon={statusIcon}
                 theme={STATUS_CARD_THEMES[st.status] || STATUS_CARD_THEMES.completed}
                 badge={STATUS_LABELS[st.status] || st.status}
+                showTitle={false}
                 onClick={() => onNavigateReservations?.(st.status)}
               />
             );
@@ -586,7 +588,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
       {/* Fleet Availability */}
       <div>
         <h2 className="mb-4 text-lg font-semibold tracking-[-0.02em] text-white">Στόλος</h2>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           <DashboardMetricCard title="Σύνολο" value={fleetStats.total} icon={TruckIcon} theme={FLEET_CARD_THEMES.total} onClick={() => onNavigateFleet?.()} />
           <DashboardMetricCard title="Διαθέσιμα" value={fleetStats.available} icon={TruckIcon} theme={FLEET_CARD_THEMES.available} onClick={() => onNavigateFleet?.()} />
           <DashboardMetricCard title="Κρατημένα" value={fleetStats.reserved} icon={ClockIcon} theme={FLEET_CARD_THEMES.reserved} onClick={() => onNavigateFleet?.()} />
