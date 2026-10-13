@@ -81,5 +81,52 @@ export function clearCompanyCache(): void {
   cachedConfig = null;
 }
 
+export interface ContractTerm {
+  en: string;
+  el: string;
+}
+
+export const DEFAULT_CONTRACT_TERMS: ContractTerm[] = [
+  { en: 'The vehicle is delivered to the renter in the condition stated above.', el: 'Το όχημα παραδίδεται στον ενοικιαστή στην κατάσταση που αναγράφεται παραπάνω.' },
+  { en: 'Vehicle must be returned with the same fuel level. Shortfall will be charged.', el: 'Το όχημα πρέπει να επιστραφεί με το ίδιο επίπεδο καυσίμου. Τυχόν έλλειψη χρεώνεται.' },
+  { en: 'Renter is liable for all damage during rental up to the self risk amount.', el: 'Ο ενοικιαστής ευθύνεται πλήρως για κάθε ζημιά κατά την ενοικίαση πέραν του self risk.' },
+  { en: 'Late returns are charged per hour according to company rates.', el: 'Κθυστερημένη επιστροφή χρεώνεται ανά ώρα σύμφωνα με τα τιμολόγια της εταιρείας.' },
+  { en: 'Smoking and pets are strictly prohibited.', el: 'Απαγορεύεται το κάπνισμα και η μεταφορά ζώων.' },
+  { en: 'In case of accident, notify the company and authorities immediately.', el: 'Σε περίπτωση ατυχήματος ειδοποιήστε άμεσα την εταιρεία και τις αρχές.' },
+  { en: 'Driving under the influence of alcohol or drugs is strictly forbidden.', el: 'Απαγορεύεται η οδήγηση υπό την επήρεια αλκοόλ ή ναρκωτικών.' },
+];
+
+let cachedTerms: ContractTerm[] | null = null;
+
+export async function loadContractTerms(): Promise<ContractTerm[]> {
+  if (cachedTerms) return cachedTerms;
+
+  try {
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'contract_terms')
+        .maybeSingle();
+
+      if (!error && data) {
+        const v = (data as { value: unknown }).value;
+        if (Array.isArray(v) && v.length > 0) {
+          cachedTerms = v as ContractTerm[];
+          return cachedTerms;
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load contract terms:', err);
+  }
+
+  return DEFAULT_CONTRACT_TERMS;
+}
+
+export function clearTermsCache(): void {
+  cachedTerms = null;
+}
+
 // Default export for backward compatibility
 export const company = DEFAULT_CONFIG;

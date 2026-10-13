@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { supabase } from '../../lib/supabase';
-import { clearCompanyCache } from '../../lib/company';
+import { clearCompanyCache, clearTermsCache, DEFAULT_CONTRACT_TERMS } from '../../lib/company';
+import type { ContractTerm } from '../../lib/company';
 import PageHero from '../Layout/PageHero';
 import {
   CogIcon,
@@ -13,6 +14,10 @@ import {
   LockClosedIcon,
   CheckIcon,
   ArrowPathIcon,
+  PlusIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+  TrashIcon,
 } from '@heroicons/react/24/outline';
 
 interface CompanySettings {
@@ -80,6 +85,8 @@ const SettingsPage: React.FC = () => {
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState(false);
 
+  const [contractTerms, setContractTerms] = useState<ContractTerm[]>(DEFAULT_CONTRACT_TERMS);
+
   const loadSettings = useCallback(async () => {
     if (!supabase) return;
     setLoading(true);
@@ -88,7 +95,7 @@ const SettingsPage: React.FC = () => {
       const { data: settingsData, error: settingsError } = await supabase
         .from('settings')
         .select('key, value')
-        .in('key', ['company', 'financial']);
+        .in('key', ['company', 'financial', 'contract_terms']);
 
       if (settingsError) throw settingsError;
 
@@ -119,6 +126,11 @@ const SettingsPage: React.FC = () => {
             cleaning_fee: (v.cleaning_fee as number) || 25,
             fuel_charge_per_liter: (v.fuel_charge_per_liter as number) || 1.5,
           });
+        }
+
+        const termsRow = settingsData.find((r) => r.key === 'contract_terms');
+        if (termsRow?.value && Array.isArray(termsRow.value) && termsRow.value.length > 0) {
+          setContractTerms(termsRow.value as ContractTerm[]);
         }
       }
 
@@ -175,8 +187,16 @@ const SettingsPage: React.FC = () => {
 
       if (financialError) throw financialError;
 
+      // Save contract terms
+      const { error: termsError } = await supabase
+        .from('settings')
+        .upsert({ key: 'contract_terms', value: contractTerms, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+
+      if (termsError) throw termsError;
+
       setSaved(true);
       clearCompanyCache();
+      clearTermsCache();
       window.dispatchEvent(new Event('company-settings-updated'));
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
@@ -527,6 +547,105 @@ const SettingsPage: React.FC = () => {
     </div>
   );
 
+  const renderDocumentsSettings = () => (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-medium text-white">Όροι Συμβολαίου Ενοικίασης</h3>
+          <p className="text-sm text-blue-100/55 mt-1">Αγγλικό και Ελληνικό κείμενο για κάθε όρο. Οι όροι εμφανίζονται στο PDF σύμβολαιο με τη σειρά που ορίζετε.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setContractTerms(prev => [...prev, { en: '', el: '' }])}
+          className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-3 py-1.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
+        >
+          <PlusIcon className="h-4 w-4 mr-1" />
+          Προσθήκη Όρου
+        </button>
+      </div>
+
+      {contractTerms.length === 0 && (
+        <p className="text-sm text-blue-100/55 text-center py-4">Δεν έχουν οριστεί όροι. Κάντε κλικ στο «Προσθήκη Όρου» για να ξεκινήσετε.</p>
+      )}
+
+      <div className="space-y-3">
+        {contractTerms.map((term, index) => (
+          <div key={index} className="rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-semibold text-[#55a8ff]">Όρος {index + 1}</span>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  disabled={index === 0}
+                  onClick={() => setContractTerms(prev => {
+                    if (index === 0) return prev;
+                    const next = [...prev];
+                    [next[index - 1], next[index]] = [next[index], next[index - 1]];
+                    return next;
+                  })}
+                  className="p-1.5 rounded-lg text-blue-100/65 hover:text-white hover:bg-[#12375d] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  title="Μετακίνηση πάνω"
+                >
+                  <ChevronUpIcon className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  disabled={index === contractTerms.length - 1}
+                  onClick={() => setContractTerms(prev => {
+                    if (index === prev.length - 1) return prev;
+                    const next = [...prev];
+                    [next[index + 1], next[index]] = [next[index], next[index + 1]];
+                    return next;
+                  })}
+                  className="p-1.5 rounded-lg text-blue-100/65 hover:text-white hover:bg-[#12375d] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  title="Μετακίνηση κάτω"
+                >
+                  <ChevronDownIcon className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setContractTerms(prev => prev.filter((_, i) => i !== index))}
+                  className="p-1.5 rounded-lg text-red-300/70 hover:text-red-300 hover:bg-red-950/40 transition-colors"
+                  title="Διαγραφή"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div>
+                <label className="block text-xs font-medium text-blue-100/55 mb-1">English</label>
+                <textarea
+                  value={term.en}
+                  onChange={(e) => setContractTerms(prev => prev.map((t, i) => i === index ? { ...t, en: e.target.value } : t))}
+                  rows={2}
+                  className="w-full rounded-lg border border-[#2b5b85]/80 bg-[#071d38]/90 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50 resize-y"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-blue-100/55 mb-1">Ελληνικά</label>
+                <textarea
+                  value={term.el}
+                  onChange={(e) => setContractTerms(prev => prev.map((t, i) => i === index ? { ...t, el: e.target.value } : t))}
+                  rows={2}
+                  className="w-full rounded-lg border border-[#2b5b85]/80 bg-[#071d38]/90 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50 resize-y"
+                />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        onClick={() => setContractTerms(DEFAULT_CONTRACT_TERMS)}
+        className="text-sm text-blue-100/55 hover:text-[#55a8ff] transition-colors"
+      >
+        Επαναφορά προεπιλεγμένων όρων
+      </button>
+    </div>
+  );
+
   const renderContent = () => {
     switch (activeTab) {
       case 'company':
@@ -536,12 +655,7 @@ const SettingsPage: React.FC = () => {
       case 'financial':
         return renderFinancialSettings();
       case 'documents':
-        return (
-          <div className="text-center py-12">
-            <DocumentTextIcon className="h-12 w-12 text-blue-100/45 mx-auto mb-4" />
-            <p className="text-blue-100/55">Ρυθμίσεις εγγράφων θα υλοποιηθούν σύντομα</p>
-          </div>
-        );
+        return renderDocumentsSettings();
       case 'notifications':
         return (
           <div className="text-center py-12">

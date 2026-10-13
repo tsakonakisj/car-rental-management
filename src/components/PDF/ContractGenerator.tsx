@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import jsPDF from 'jspdf';
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
-import { loadCompanyConfig, company as defaultCompany } from '../../lib/company';
+import { loadCompanyConfig, loadContractTerms, company as defaultCompany } from '../../lib/company';
 import { reservationExtrasService } from '../../lib/database';
 
 interface ContractData {
@@ -132,6 +132,7 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
     setGenerating(true);
     try {
       const company = await loadCompanyConfig() || defaultCompany;
+      const savedTerms = await loadContractTerms();
       const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
       const PW = 210;
       const M = 14;
@@ -533,15 +534,7 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       // ═══════════════════════════════════════
       // TERMS & CONDITIONS
       // ═══════════════════════════════════════
-      const terms = [
-        '1. The vehicle is delivered to the renter in the condition stated above. / Το όχημα παραδίδεται στον ενοικιαστή στην κατάσταση που αναγράφεται παραπάνω.',
-        '2. Vehicle must be returned with the same fuel level. Shortfall will be charged. / Το όχημα πρέπει να επιστραφεί με το ίδιο επίπεδο καυσίμου. Τυχόν έλλειψη χρεώνεται.',
-        '3. Renter is liable for all damage during rental up to the self risk amount. / Ο ενοικιαστής ευθύνεται πλήρως για κάθε ζημιά κατά την ενοικίαση πέραν του self risk.',
-        '4. Late returns are charged EUR 10.00 per hour. / Καθυστερημένη επιστροφή χρεώνεται EUR 10/ώρα.',
-        '5. Smoking and pets are strictly prohibited. / Απαγορεύεται το κάπνισμα και η μεταφορά ζώων.',
-        '6. In case of accident, notify the company and authorities immediately. / Σε περίπτωση ατυχήματος ειδοποιήστε άμεσα την εταιρεία και τις αρχές.',
-        '7. Driving under the influence of alcohol or drugs is strictly forbidden. / Απαγορεύεται η οδήγηση υπό την επήρεια αλκοόλ ή ναρκωτικών.',
-      ];
+      const terms = savedTerms.map((term, i) => `${i + 1}. ${term.en} / ${term.el}`);
 
       // Pre-wrap terms to calculate actual height for page-break decision
       // Must set the same font size used for rendering (6.2pt) so line counts match
