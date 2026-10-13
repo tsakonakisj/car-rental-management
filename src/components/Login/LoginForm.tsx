@@ -178,18 +178,21 @@ const LoginForm: React.FC = () => {
         <section className="mx-auto w-full max-w-[330px] lg:ml-auto lg:mr-0 lg:max-w-[330px]">
           <div className="rounded-[26px] border border-blue-200/35 bg-[#061a35]/75 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-xl sm:p-8 lg:p-9">
             <div className="text-center">
-              {logoUrl ? (
-                <img
-                  src={logoUrl}
-                  alt={companyName}
-                  className="mx-auto mb-4 block max-h-16 max-w-[220px] object-contain"
-                  onError={() => setLogoUrl(null)}
-                />
-              ) : (
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0d315e]/70 ring-1 ring-blue-300/25 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
-                  <TruckIcon className="h-8 w-8 text-[#1680ff]" strokeWidth={1.7} />
-                </div>
-              )}
+              <div className="relative mb-4 flex min-h-[4rem] items-center justify-center">
+                {logoUrl ? (
+                  <img
+                    src={logoUrl}
+                    alt={companyName}
+                    className="absolute left-0 max-h-16 max-w-[220px] object-contain"
+                    onError={() => setLogoUrl(null)}
+                  />
+                ) : (
+                  <div className="absolute left-0 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0d315e]/70 ring-1 ring-blue-300/25 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
+                    <TruckIcon className="h-8 w-8 text-[#1680ff]" strokeWidth={1.7} />
+                  </div>
+                )}
+                <h2 className="text-3xl font-semibold tracking-[-0.03em] text-white sm:text-4xl">{companyName}</h2>
+              </div>
               <p className="mt-2 text-center text-base text-blue-100/75">{showForgot ? copy.recoveryTitle : copy.subtitle}</p>
             </div>
 
