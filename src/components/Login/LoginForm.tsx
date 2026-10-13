@@ -190,7 +190,6 @@ const LoginForm: React.FC = () => {
                   <TruckIcon className="h-8 w-8 text-[#1680ff]" strokeWidth={1.7} />
                 </div>
               )}
-              <h2 className="text-3xl font-semibold tracking-[-0.03em] text-white sm:text-4xl">{companyName}</h2>
               <p className="mt-2 text-base text-blue-100/75">{showForgot ? copy.recoveryTitle : copy.subtitle}</p>
             </div>
 
