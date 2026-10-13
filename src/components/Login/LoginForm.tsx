@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { getCompanyConfig, loadCompanyConfig, loadAppLogoLight } from '../../lib/company';
@@ -33,6 +33,8 @@ const LoginForm: React.FC = () => {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotMsg, setForgotMsg] = useState('');
   const [forgotError, setForgotError] = useState('');
+  const logoImgRef = useRef<HTMLImageElement>(null);
+  const [logoVisualOffset, setLogoVisualOffset] = useState(0);
 
   const isEnglish = language === 'en';
   const copy = isEnglish
@@ -85,16 +87,70 @@ const LoginForm: React.FC = () => {
 
   useEffect(() => {
     let mounted = true;
+    let objUrl: string | null = null;
     loadCompanyConfig().then((config) => {
       if (mounted) setCompanyName(config.name);
     });
     loadAppLogoLight().then((url) => {
-      if (mounted) setLogoUrl(url);
+      if (!mounted || !url) return;
+      fetch(url)
+        .then((res) => res.blob())
+        .then((blob) => {
+          if (!mounted) return;
+          objUrl = URL.createObjectURL(blob);
+          setLogoUrl(objUrl);
+        })
+        .catch(() => {
+          if (mounted) setLogoUrl(url);
+        });
     });
     return () => {
       mounted = false;
+      if (objUrl) URL.revokeObjectURL(objUrl);
     };
   }, []);
+
+  const handleLogoLoad = () => {
+    const img = logoImgRef.current;
+    if (!img || !img.naturalWidth) {
+      setLogoVisualOffset(0);
+      return;
+    }
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        setLogoVisualOffset(0);
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const pixels = imageData.data;
+      let minLeft = canvas.width;
+      let maxRight = -1;
+      for (let y = 0; y < canvas.height; y++) {
+        for (let x = 0; x < canvas.width; x++) {
+          if (pixels[(y * canvas.width + x) * 4 + 3] > 10) {
+            if (x < minLeft) minLeft = x;
+            if (x > maxRight) maxRight = x;
+          }
+        }
+      }
+      if (maxRight < minLeft) {
+        setLogoVisualOffset(0);
+        return;
+      }
+      const visualCenter = (minLeft + maxRight) / 2;
+      const imageCenter = canvas.width / 2;
+      const offsetRatio = (imageCenter - visualCenter) / canvas.width;
+      const renderedWidth = img.offsetWidth || 0;
+      setLogoVisualOffset(offsetRatio * renderedWidth);
+    } catch {
+      setLogoVisualOffset(0);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -181,9 +237,12 @@ const LoginForm: React.FC = () => {
               <div className="mb-4 flex min-h-[4rem] items-center justify-center">
                 {logoUrl ? (
                   <img
+                    ref={logoImgRef}
                     src={logoUrl}
                     alt="Rentovio"
+                    onLoad={handleLogoLoad}
                     className="mx-auto block max-h-16 max-w-[220px] object-contain"
+                    style={{ transform: `translateX(${logoVisualOffset}px)` }}
                     onError={() => setLogoUrl(null)}
                   />
                 ) : (
