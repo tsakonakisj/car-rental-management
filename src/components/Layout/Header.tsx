@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { loadCompanyConfig } from '../../lib/company';
+import { loadCompanyConfig, loadAppLogo } from '../../lib/company';
 import { Bars3Icon, ChevronDownIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
 
 interface HeaderProps {
@@ -12,12 +12,15 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
   const { language, setLanguage, t } = useLanguage();
   const { user, logout } = useAuth();
   const [companyName, setCompanyName] = useState('');
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     loadCompanyConfig().then((cfg) => setCompanyName(cfg.name));
+    loadAppLogo().then((url) => setLogoUrl(url));
 
     const onStorage = () => {
       loadCompanyConfig().then((cfg) => setCompanyName(cfg.name));
+      loadAppLogo().then((url) => setLogoUrl(url));
     };
     window.addEventListener('company-settings-updated', onStorage);
     return () => window.removeEventListener('company-settings-updated', onStorage);
@@ -38,10 +41,19 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
                 <Bars3Icon className="h-6 w-6" />
               </button>
             )}
-            <div className="min-w-0 flex-shrink">
-              <h1 className="truncate text-lg font-semibold tracking-[-0.02em] text-white sm:text-xl">
-                {companyName}
-              </h1>
+            <div className="min-w-0 flex-shrink flex items-center gap-3">
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt={companyName}
+                  className="h-9 max-w-[180px] flex-shrink-0 object-contain sm:h-10"
+                  onError={() => setLogoUrl(null)}
+                />
+              ) : (
+                <h1 className="truncate text-lg font-semibold tracking-[-0.02em] text-white sm:text-xl">
+                  {companyName}
+                </h1>
+              )}
             </div>
           </div>
 

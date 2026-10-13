@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { supabase } from '../../lib/supabase';
-import { clearCompanyCache, clearTermsCache, DEFAULT_CONTRACT_TERMS } from '../../lib/company';
+import { clearCompanyCache, clearTermsCache, clearLogoCache, loadAppLogo, saveAppLogoPath, clearAppLogo } from '../../lib/company';
 import type { ContractTerm } from '../../lib/company';
+import { useAuth } from '../../contexts/AuthContext';
 import PageHero from '../Layout/PageHero';
 import {
   CogIcon,
@@ -18,6 +19,7 @@ import {
   ChevronUpIcon,
   ChevronDownIcon,
   TrashIcon,
+  PhotoIcon,
 } from '@heroicons/react/24/outline';
 
 interface CompanySettings {
@@ -87,6 +89,17 @@ const SettingsPage: React.FC = () => {
 
   const [contractTerms, setContractTerms] = useState<ContractTerm[]>(DEFAULT_CONTRACT_TERMS);
 
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoStoredPath, setLogoStoredPath] = useState<string | null>(null);
+  const [logoUploading, setLogoUploading] = useState(false);
+  const [logoError, setLogoError] = useState('');
+  const [logoSuccess, setLogoSuccess] = useState(false);
+
+  const ALLOWED_LOGO_TYPES = ['image/png', 'image/jpeg', 'image/svg+xml'];
+  const MAX_LOGO_SIZE = 2 * 1024 * 1024;
+
   const loadSettings = useCallback(async () => {
     if (!supabase) return;
     setLoading(true);
@@ -95,7 +108,7 @@ const SettingsPage: React.FC = () => {
       const { data: settingsData, error: settingsError } = await supabase
         .from('settings')
         .select('key, value')
-        .in('key', ['company', 'financial', 'contract_terms']);
+        .in('key', ['company', 'financial', 'contract_terms', 'app_logo']);
 
       if (settingsError) throw settingsError;
 
@@ -131,6 +144,16 @@ const SettingsPage: React.FC = () => {
         const termsRow = settingsData.find((r) => r.key === 'contract_terms');
         if (termsRow?.value && Array.isArray(termsRow.value) && termsRow.value.length > 0) {
           setContractTerms(termsRow.value as ContractTerm[]);
+        }
+
+        const logoRow = settingsData.find((r) => r.key === 'app_logo');
+        if (logoRow?.value && typeof logoRow.value === 'string') {
+          setLogoStoredPath(logoRow.value as string);
+          const { data: urlData } = supabase.storage.from('app-branding').getPublicUrl(logoRow.value as string);
+          setLogoUrl(urlData?.publicUrl || null);
+        } else {
+          setLogoStoredPath(null);
+          setLogoUrl(null);
         }
       }
 
@@ -197,6 +220,7 @@ const SettingsPage: React.FC = () => {
       setSaved(true);
       clearCompanyCache();
       clearTermsCache();
+      clearLogoCache();
       window.dispatchEvent(new Event('company-settings-updated'));
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
@@ -212,6 +236,7 @@ const SettingsPage: React.FC = () => {
     { id: 'stations', label: 'Σταθμοί', icon: MapPinIcon },
     { id: 'financial', label: 'Οικονομικά', icon: CurrencyEuroIcon },
     { id: 'documents', label: 'Έγγραφα', icon: DocumentTextIcon },
+    { id: 'branding', label: 'Branding', icon: PhotoIcon },
     { id: 'notifications', label: 'Ειδοποιήσεις', icon: BellIcon },
     { id: 'security', label: 'Ασφάλεια', icon: LockClosedIcon },
   ];
@@ -646,6 +671,159 @@ const SettingsPage: React.FC = () => {
     </div>
   );
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLogoError('');
+    setLogoSuccess(false);
+
+    if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
+      setLogoError('Μη αποδεκτός τύπος αρχείου. Επιτρέπονται PNG, JPG και SVG.');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > MAX_LOGO_SIZE) {
+      setLogoError('Το αρχείο ξεπερνά το όριο 2MB.');
+      e.target.value = '';
+      return;
+    }
+
+    setLogoUploading(true);
+    try {
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
+      const path = `logo-${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('app-branding')
+        .upload(path, file, { contentType: file.type, upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      await saveAppLogoPath(path);
+      setLogoStoredPath(path);
+      const { data: urlData } = supabase.storage.from('app-branding').getPublicUrl(path);
+      setLogoUrl(urlData?.publicUrl || null);
+
+      clearLogoCache();
+      window.dispatchEvent(new Event('company-settings-updated'));
+      setLogoSuccess(true);
+      setTimeout(() => setLogoSuccess(false), 3000);
+    } catch (err) {
+      console.error('Logo upload failed:', err);
+      setLogoError('Αποτυχία μεταφόρτωσης λογοτύπου.');
+    } finally {
+      setLogoUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleLogoRemove = async () => {
+    if (!logoStoredPath) return;
+    setLogoUploading(true);
+    setLogoError('');
+    try {
+      await clearAppLogo(logoStoredPath);
+      setLogoStoredPath(null);
+      setLogoUrl(null);
+      clearLogoCache();
+      window.dispatchEvent(new Event('company-settings-updated'));
+    } catch (err) {
+      console.error('Logo removal failed:', err);
+      setLogoError('Αποτυχία διαγραφής λογοτύπου.');
+    } finally {
+      setLogoUploading(false);
+    }
+  };
+
+  const renderBrandingSettings = () => (
+    <div className="space-y-6 max-w-2xl">
+      <div>
+        <h3 className="text-lg font-medium text-white">Λογότυπο Εφαρμογής</h3>
+        <p className="text-sm text-blue-100/55 mt-1">
+          Μεταφορτώστε το λογότυπο της εταιρείας σας. Θα εμφανίζεται στην κορυφή της εφαρμογής (header και sidebar).
+          Υποστηρίζονται PNG, JPG και SVG. Μέγιστο μέγεθος 2MB.
+        </p>
+      </div>
+
+      {logoError && (
+        <div className="rounded-md bg-red-950/45 border border-red-400/30 px-4 py-3 text-sm text-red-100">{logoError}</div>
+      )}
+
+      {logoSuccess && (
+        <div className="rounded-md bg-emerald-500/15 border border-emerald-400/30 px-4 py-3 text-sm text-emerald-300 flex items-center">
+          <CheckIcon className="h-5 w-5 mr-2" />
+          Το λογότυπο ενημερώθηκε επιτυχώς.
+        </div>
+      )}
+
+      {!isAdmin && (
+        <div className="rounded-md bg-amber-500/15 border border-amber-400/30 px-4 py-3 text-sm text-amber-300">
+          Μόνο οι διαχειριστές μπορούν να διαχειριστούν το λογότυπο.
+        </div>
+      )}
+
+      {/* Preview */}
+      <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[#0b2949]/60 p-6">
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex h-28 w-full max-w-xs items-center justify-center rounded-xl border border-[#1e4e7d]/60 bg-[#041a32] p-4">
+            {logoUrl ? (
+              <img
+                src={logoUrl}
+                alt="Application logo"
+                className="max-h-full max-w-full object-contain"
+                style={{ imageRendering: 'auto' }}
+                onError={() => setLogoUrl(null)}
+              />
+            ) : (
+              <div className="flex flex-col items-center gap-2 text-blue-100/40">
+                <PhotoIcon className="h-10 w-10" />
+                <span className="text-xs">Χωρίς λογότυπο</span>
+              </div>
+            )}
+          </div>
+
+          {isAdmin && (
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <label
+                className={`inline-flex cursor-pointer items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff] ${logoUploading ? 'opacity-50 pointer-events-none' : ''}`}
+              >
+                {logoUploading ? (
+                  <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <PhotoIcon className="h-4 w-4 mr-2" />
+                )}
+                {logoUrl ? 'Αντικατάσταση' : 'Μεταφόρτωση Λογοτύπου'}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/svg+xml"
+                  onChange={handleLogoUpload}
+                  disabled={logoUploading}
+                  className="hidden"
+                />
+              </label>
+
+              {logoUrl && (
+                <button
+                  onClick={handleLogoRemove}
+                  disabled={logoUploading}
+                  className="inline-flex items-center rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-2 text-sm font-semibold text-red-300 transition-colors hover:bg-red-500/25 disabled:opacity-50"
+                >
+                  <TrashIcon className="h-4 w-4 mr-2" />
+                  Αφαίρεση
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <p className="text-xs text-blue-100/40">
+        Όταν δεν έχει οριστεί λογότυπο, η εφαρμογή χρησιμοποιεί το προεπιλεγμένο εικονίδιο και το όνομα της εταιρείας.
+      </p>
+    </div>
+  );
+
   const renderContent = () => {
     switch (activeTab) {
       case 'company':
@@ -656,6 +834,8 @@ const SettingsPage: React.FC = () => {
         return renderFinancialSettings();
       case 'documents':
         return renderDocumentsSettings();
+      case 'branding':
+        return renderBrandingSettings();
       case 'notifications':
         return (
           <div className="text-center py-12">
@@ -724,7 +904,7 @@ const SettingsPage: React.FC = () => {
         <div className="p-4 sm:p-6">{renderContent()}</div>
 
         {/* Save Button — hidden on security tab (has its own submit) */}
-        {activeTab !== 'security' && (
+        {activeTab !== 'security' && activeTab !== 'branding' && (
           <div className="px-4 sm:px-6 py-4 border-t border-[#1e4e7d]/70 flex justify-end">
             <button
               onClick={handleSave}

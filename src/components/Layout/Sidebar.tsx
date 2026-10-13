@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { loadCompanyConfig } from '../../lib/company';
+import { loadCompanyConfig, loadAppLogo } from '../../lib/company';
 import {
   HomeIcon,
   CalendarDaysIcon,
@@ -38,10 +38,15 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, mobileOpen =
   const { t } = useLanguage();
   const { user } = useAuth();
   const [companyName, setCompanyName] = React.useState('');
+  const [logoUrl, setLogoUrl] = React.useState<string | null>(null);
 
   useEffect(() => {
     loadCompanyConfig().then((cfg) => setCompanyName(cfg.name));
-    const onStorage = () => loadCompanyConfig().then((cfg) => setCompanyName(cfg.name));
+    loadAppLogo().then((url) => setLogoUrl(url));
+    const onStorage = () => {
+      loadCompanyConfig().then((cfg) => setCompanyName(cfg.name));
+      loadAppLogo().then((url) => setLogoUrl(url));
+    };
     window.addEventListener('company-settings-updated', onStorage);
     return () => window.removeEventListener('company-settings-updated', onStorage);
   }, []);
@@ -77,10 +82,21 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, mobileOpen =
     <>
       <div className="border-b border-[#1e4e7d]/60 px-5 pb-5 pt-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1268f3]/15 ring-1 ring-inset ring-[#3f98ff]/35">
-            <TruckIcon className="h-6 w-6 text-[#4da3ff]" />
-          </div>
-          <span className="truncate text-sm font-semibold tracking-[-0.01em] text-white">{companyName}</span>
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt={companyName}
+              className="max-h-11 max-w-[140px] flex-shrink-0 object-contain"
+              onError={() => setLogoUrl(null)}
+            />
+          ) : (
+            <>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#1268f3]/15 ring-1 ring-inset ring-[#3f98ff]/35">
+                <TruckIcon className="h-6 w-6 text-[#4da3ff]" />
+              </div>
+              <span className="truncate text-sm font-semibold tracking-[-0.01em] text-white">{companyName}</span>
+            </>
+          )}
         </div>
       </div>
       <nav className="mt-6 px-3">

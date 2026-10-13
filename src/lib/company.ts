@@ -130,3 +130,82 @@ export function clearTermsCache(): void {
 
 // Default export for backward compatibility
 export const company = DEFAULT_CONFIG;
+
+// ---- App Logo (branding) ----
+
+let cachedLogoUrl: string | null = null;
+let logoLoaded = false;
+
+/**
+ * Load the application logo URL from the settings table.
+ * Returns a public storage URL if a logo is uploaded, or null if no logo is set.
+ */
+export async function loadAppLogo(): Promise<string | null> {
+  if (logoLoaded) return cachedLogoUrl;
+
+  try {
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'app_logo')
+        .maybeSingle();
+
+      if (!error && data) {
+        const path = (data as { value: unknown }).value as string;
+        if (path && typeof path === 'string') {
+          const { data: urlData } = supabase.storage
+            .from('app-branding')
+            .getPublicUrl(path);
+          cachedLogoUrl = urlData?.publicUrl || null;
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load app logo:', err);
+  }
+
+  logoLoaded = true;
+  return cachedLogoUrl;
+}
+
+/**
+ * Save the logo storage path to the settings table.
+ */
+export async function saveAppLogoPath(path: string): Promise<void> {
+  if (!supabase) throw new Error('Supabase not initialized');
+  const { error } = await supabase
+    .from('settings')
+    .upsert({ key: 'app_logo', value: path, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+  if (error) throw error;
+  cachedLogoUrl = supabase.storage.from('app-branding').getPublicUrl(path).data.publicUrl;
+  logoLoaded = true;
+}
+
+/**
+ * Clear the logo from settings and storage.
+ */
+export async function clearAppLogo(storedPath: string | null): Promise<void> {
+  if (!supabase) throw new Error('Supabase not initialized');
+  if (storedPath) {
+    await supabase.storage.from('app-branding').remove([storedPath]);
+  }
+  await supabase.from('settings').delete().eq('key', 'app_logo');
+  cachedLogoUrl = null;
+  logoLoaded = true;
+}
+
+/**
+ * Clear the in-memory logo cache (call after logo changes).
+ */
+export function clearLogoCache(): void {
+  cachedLogoUrl = null;
+  logoLoaded = false;
+}
+
+/**
+ * Get the cached logo URL synchronously (returns null if not loaded yet).
+ */
+export function getCachedLogoUrl(): string | null {
+  return logoLoaded ? cachedLogoUrl : null;
+}
