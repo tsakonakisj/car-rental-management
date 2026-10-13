@@ -264,7 +264,7 @@ const LoginForm: React.FC = () => {
                   <TruckIcon className="h-8 w-8 text-[#1680ff]" strokeWidth={1.7} />
                 </div>
               )}
-              <p className="mt-2 text-base text-blue-100/75">{showForgot ? copy.recoveryTitle : copy.subtitle}</p>
+              <p className="mt-2 text-lg text-blue-100/75">{showForgot ? copy.recoveryTitle : copy.subtitle}</p>
             </div>
 
             {showForgot ? (
