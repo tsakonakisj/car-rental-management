@@ -280,7 +280,11 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : '';
       let greekMsg = 'Αποτυχία διαγραφής κράτησης.';
-      if (errMsg.includes('DELETION_BLOCKED:checkouts')) {
+      if (errMsg.includes('DELETION_BLOCKED:status')) {
+        greekMsg = 'Δεν είναι δυνατή η διαγραφή: μόνο επερχόμενες ή ακυρωμένες κρατήσεις μπορούν να διαγραφούν.';
+      } else if (errMsg.includes('DELETION_BLOCKED:not_found')) {
+        greekMsg = 'Η κράτηση δεν βρέθηκε.';
+      } else if (errMsg.includes('DELETION_BLOCKED:checkouts')) {
         greekMsg = 'Δεν είναι δυνατή η διαγραφή: υπάρχουν εγγραφές Check-Out για αυτή την κράτηση.';
       } else if (errMsg.includes('DELETION_BLOCKED:checkins')) {
         greekMsg = 'Δεν είναι δυνατή η διαγραφή: υπάρχουν εγγραφές Check-In για αυτή την κράτηση.';
@@ -1403,7 +1407,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                         <PencilSquareIcon className="h-4 w-4 mr-2" />
                         Επεξεργασία
                       </button>
-                      {isAdmin && viewReservation.status !== 'cancelled' && viewReservation.status !== 'completed' && (
+                      {isAdmin && (viewReservation.status === 'upcoming' || viewReservation.status === 'cancelled') && (
                         <button
                           onClick={() => openDeleteConfirm(viewReservation)}
                           disabled={deleting === viewReservation.id}

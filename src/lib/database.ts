@@ -330,6 +330,19 @@ export const reservationService = {
       return Promise.resolve();
     }
 
+    // 0. Status guard: only upcoming or cancelled reservations can be deleted
+    const { data: reservationRow, error: fetchError } = await supabase!
+      .from('reservations')
+      .select('status')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (fetchError) throw fetchError;
+    if (!reservationRow) throw new Error('DELETION_BLOCKED:not_found');
+    if (reservationRow.status === 'active' || reservationRow.status === 'completed') {
+      throw new Error('DELETION_BLOCKED:status');
+    }
+
     // 1. Pre-check: block deletion if historical/financial records exist
     const { data: checkoutRows } = await supabase!
       .from('checkouts')
