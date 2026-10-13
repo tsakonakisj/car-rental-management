@@ -115,23 +115,52 @@ const LoginForm: React.FC = () => {
       }
       ctx.drawImage(img, 0, 0);
       const { data: pixels } = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      let minLeft = canvas.width;
-      let maxRight = -1;
-      for (let i = 0; i < pixels.length; i += 4) {
-        if (pixels[i + 3] > 10) {
-          const x = (i / 4) % canvas.width;
-          if (x < minLeft) minLeft = x;
-          if (x > maxRight) maxRight = x;
+
+      const colHasContent = new Uint8Array(canvas.width);
+      let firstContent = canvas.width;
+      let lastContent = -1;
+      for (let x = 0; x < canvas.width; x++) {
+        for (let y = 0; y < canvas.height; y++) {
+          if (pixels[(y * canvas.width + x) * 4 + 3] > 10) {
+            colHasContent[x] = 1;
+            if (x < firstContent) firstContent = x;
+            if (x > lastContent) lastContent = x;
+            break;
+          }
         }
       }
-      if (maxRight < minLeft) {
+      if (lastContent < firstContent) {
         setLogoShift(0);
         return;
       }
-      const visualCenter = (minLeft + maxRight) / 2;
+
+      let maxGapStart = -1;
+      let maxGapEnd = -1;
+      let maxGapWidth = 0;
+      let gapStart = -1;
+      for (let x = firstContent; x <= lastContent; x++) {
+        if (!colHasContent[x]) {
+          if (gapStart === -1) gapStart = x;
+        } else if (gapStart !== -1) {
+          const w = x - gapStart;
+          if (w > maxGapWidth) {
+            maxGapWidth = w;
+            maxGapStart = gapStart;
+            maxGapEnd = x;
+          }
+          gapStart = -1;
+        }
+      }
+
+      const minSignificantGap = canvas.width * 0.02;
+      const wordmarkCenter =
+        maxGapWidth >= minSignificantGap
+          ? (maxGapEnd + lastContent) / 2
+          : (firstContent + lastContent) / 2;
+
       const imageCenter = canvas.width / 2;
       const renderedWidth = img.offsetWidth || 0;
-      setLogoShift(((imageCenter - visualCenter) / canvas.width) * renderedWidth);
+      setLogoShift(((imageCenter - wordmarkCenter) / canvas.width) * renderedWidth);
     } catch {
       setLogoShift(0);
     }
@@ -367,7 +396,7 @@ const Field: React.FC<FieldProps> = ({ id, label, type, value, onChange, icon: I
         required
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`min-w-0 flex-1 border-0 bg-transparent py-4 text-base text-white outline-none placeholder:text-blue-100/60 ${trailing ? 'pl-4 pr-2' : 'px-4'}`}
+        className={`min-w-0 flex-1 border-0 bg-transparent py-4 text-base text-white outline-none placeholder:text-blue-100/60 ${trailing ? 'pl-4 pr-1 placeholder:text-sm' : 'px-4'}`}
         placeholder={label}
       />
       {trailing}
