@@ -396,7 +396,7 @@ const Field: React.FC<FieldProps> = ({ id, label, type, value, onChange, icon: I
         required
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`min-w-0 flex-1 border-0 bg-transparent py-4 text-base text-white outline-none placeholder:text-blue-100/60 ${trailing ? 'pl-4 pr-1 placeholder:text-sm' : 'px-4'}`}
+        className={`min-w-0 flex-1 border-0 bg-transparent py-4 text-base text-white outline-none placeholder:text-blue-100/60 !bg-transparent ${trailing ? 'pl-4 pr-1 placeholder:text-sm' : 'px-4'}`}
         placeholder={label}
       />
       {trailing}
