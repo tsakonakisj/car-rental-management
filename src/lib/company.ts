@@ -209,3 +209,77 @@ export function clearLogoCache(): void {
 export function getCachedLogoUrl(): string | null {
   return logoLoaded ? cachedLogoUrl : null;
 }
+
+// ---- Light logo variant (for dark backgrounds) ----
+
+let cachedLightLogoUrl: string | null = null;
+let lightLogoLoaded = false;
+
+/**
+ * Load the light logo variant URL from the settings table.
+ * Falls back to the regular logo if no light variant is configured.
+ */
+export async function loadAppLogoLight(): Promise<string | null> {
+  if (lightLogoLoaded) return cachedLightLogoUrl;
+
+  try {
+    if (supabase) {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('key, value')
+        .in('key', ['app_logo_light', 'app_logo']);
+
+      if (!error && data) {
+        const lightRow = data.find((r) => r.key === 'app_logo_light');
+        const fallbackRow = data.find((r) => r.key === 'app_logo');
+
+        const chosenRow = lightRow?.value ? lightRow : fallbackRow;
+        if (chosenRow?.value && typeof chosenRow.value === 'string') {
+          const { data: urlData } = supabase.storage
+            .from('app-branding')
+            .getPublicUrl(chosenRow.value as string);
+          cachedLightLogoUrl = urlData?.publicUrl || null;
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Failed to load light app logo:', err);
+  }
+
+  lightLogoLoaded = true;
+  return cachedLightLogoUrl;
+}
+
+/**
+ * Save the light logo storage path to the settings table.
+ */
+export async function saveAppLogoLightPath(path: string): Promise<void> {
+  if (!supabase) throw new Error('Supabase not initialized');
+  const { error } = await supabase
+    .from('settings')
+    .upsert({ key: 'app_logo_light', value: path, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+  if (error) throw error;
+  cachedLightLogoUrl = supabase.storage.from('app-branding').getPublicUrl(path).data.publicUrl;
+  lightLogoLoaded = true;
+}
+
+/**
+ * Clear the light logo from settings and storage.
+ */
+export async function clearAppLogoLight(storedPath: string | null): Promise<void> {
+  if (!supabase) throw new Error('Supabase not initialized');
+  if (storedPath) {
+    await supabase.storage.from('app-branding').remove([storedPath]);
+  }
+  await supabase.from('settings').delete().eq('key', 'app_logo_light');
+  cachedLightLogoUrl = null;
+  lightLogoLoaded = true;
+}
+
+/**
+ * Clear the in-memory light logo cache.
+ */
+export function clearLightLogoCache(): void {
+  cachedLightLogoUrl = null;
+  lightLogoLoaded = false;
+}

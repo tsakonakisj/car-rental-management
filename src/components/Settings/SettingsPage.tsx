@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { supabase } from '../../lib/supabase';
-import { clearCompanyCache, clearTermsCache, clearLogoCache, loadAppLogo, saveAppLogoPath, clearAppLogo, DEFAULT_CONTRACT_TERMS } from '../../lib/company';
+import { clearCompanyCache, clearTermsCache, clearLogoCache, clearLightLogoCache, loadAppLogo, saveAppLogoPath, clearAppLogo, saveAppLogoLightPath, clearAppLogoLight, DEFAULT_CONTRACT_TERMS } from '../../lib/company';
 import type { ContractTerm } from '../../lib/company';
 import { useAuth } from '../../contexts/AuthContext';
 import PageHero from '../Layout/PageHero';
@@ -93,7 +93,10 @@ const SettingsPage: React.FC = () => {
   const isAdmin = user?.role === 'admin';
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [logoStoredPath, setLogoStoredPath] = useState<string | null>(null);
+  const [lightLogoUrl, setLightLogoUrl] = useState<string | null>(null);
+  const [lightLogoStoredPath, setLightLogoStoredPath] = useState<string | null>(null);
   const [logoUploading, setLogoUploading] = useState(false);
+  const [lightLogoUploading, setLightLogoUploading] = useState(false);
   const [logoError, setLogoError] = useState('');
   const [logoSuccess, setLogoSuccess] = useState(false);
 
@@ -108,7 +111,7 @@ const SettingsPage: React.FC = () => {
       const { data: settingsData, error: settingsError } = await supabase
         .from('settings')
         .select('key, value')
-        .in('key', ['company', 'financial', 'contract_terms', 'app_logo']);
+        .in('key', ['company', 'financial', 'contract_terms', 'app_logo', 'app_logo_light']);
 
       if (settingsError) throw settingsError;
 
@@ -154,6 +157,16 @@ const SettingsPage: React.FC = () => {
         } else {
           setLogoStoredPath(null);
           setLogoUrl(null);
+        }
+
+        const lightRow = settingsData.find((r) => r.key === 'app_logo_light');
+        if (lightRow?.value && typeof lightRow.value === 'string') {
+          setLightLogoStoredPath(lightRow.value as string);
+          const { data: lightUrlData } = supabase.storage.from('app-branding').getPublicUrl(lightRow.value as string);
+          setLightLogoUrl(lightUrlData?.publicUrl || null);
+        } else {
+          setLightLogoStoredPath(null);
+          setLightLogoUrl(null);
         }
       }
 
@@ -221,6 +234,7 @@ const SettingsPage: React.FC = () => {
       clearCompanyCache();
       clearTermsCache();
       clearLogoCache();
+      clearLightLogoCache();
       window.dispatchEvent(new Event('company-settings-updated'));
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
@@ -706,6 +720,7 @@ const SettingsPage: React.FC = () => {
       setLogoUrl(urlData?.publicUrl || null);
 
       clearLogoCache();
+      clearLightLogoCache();
       window.dispatchEvent(new Event('company-settings-updated'));
       setLogoSuccess(true);
       setTimeout(() => setLogoSuccess(false), 3000);
@@ -727,6 +742,7 @@ const SettingsPage: React.FC = () => {
       setLogoStoredPath(null);
       setLogoUrl(null);
       clearLogoCache();
+      clearLightLogoCache();
       window.dispatchEvent(new Event('company-settings-updated'));
     } catch (err) {
       console.error('Logo removal failed:', err);
@@ -736,13 +752,77 @@ const SettingsPage: React.FC = () => {
     }
   };
 
+  const handleLightLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setLogoError('');
+    setLogoSuccess(false);
+
+    if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
+      setLogoError('Μη αποδεκτός τύπος αρχείου. Επιτρέπονται PNG, JPG και SVG.');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > MAX_LOGO_SIZE) {
+      setLogoError('Το αρχείο ξεπερνά το όριο 2MB.');
+      e.target.value = '';
+      return;
+    }
+
+    setLightLogoUploading(true);
+    try {
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'png';
+      const path = `logo-light-${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('app-branding')
+        .upload(path, file, { contentType: file.type, upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      await saveAppLogoLightPath(path);
+      setLightLogoStoredPath(path);
+      const { data: urlData } = supabase.storage.from('app-branding').getPublicUrl(path);
+      setLightLogoUrl(urlData?.publicUrl || null);
+
+      clearLightLogoCache();
+      window.dispatchEvent(new Event('company-settings-updated'));
+      setLogoSuccess(true);
+      setTimeout(() => setLogoSuccess(false), 3000);
+    } catch (err) {
+      console.error('Light logo upload failed:', err);
+      setLogoError('Αποτυχία μεταφόρτωσης λογοτύπου.');
+    } finally {
+      setLightLogoUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleLightLogoRemove = async () => {
+    if (!lightLogoStoredPath) return;
+    setLightLogoUploading(true);
+    setLogoError('');
+    try {
+      await clearAppLogoLight(lightLogoStoredPath);
+      setLightLogoStoredPath(null);
+      setLightLogoUrl(null);
+      clearLightLogoCache();
+      window.dispatchEvent(new Event('company-settings-updated'));
+    } catch (err) {
+      console.error('Light logo removal failed:', err);
+      setLogoError('Αποτυχία διαγραφής λογοτύπου.');
+    } finally {
+      setLightLogoUploading(false);
+    }
+  };
+
   const renderBrandingSettings = () => (
     <div className="space-y-6 max-w-2xl">
       <div>
         <h3 className="text-lg font-medium text-white">Λογότυπο Εφαρμογής</h3>
         <p className="text-sm text-blue-100/55 mt-1">
-          Μεταφορτώστε το λογότυπο της εταιρείας σας. Θα εμφανίζεται στην κορυφή της εφαρμογής (header και sidebar).
-          Υποστηρίζονται PNG, JPG και SVG. Μέγιστο μέγεθος 2MB.
+          Μεταφορτώστε το λογότυπο της εταιρείας σας. Υποστηρίζονται PNG, JPG και SVG. Μέγιστο μέγεθος 2MB.
         </p>
       </div>
 
@@ -763,21 +843,22 @@ const SettingsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Preview */}
+      {/* Standard logo */}
       <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[#0b2949]/60 p-6">
+        <h4 className="text-sm font-semibold text-blue-100/85 mb-3">Βασικό Λογότυπο</h4>
+        <p className="text-xs text-blue-100/50 mb-4">Χρησιμοποιείται σε φωτεινά φόντα (π.χ. έγγραφα, αναφορές).</p>
         <div className="flex flex-col items-center gap-4">
-          <div className="flex h-28 w-full max-w-xs items-center justify-center rounded-xl border border-[#1e4e7d]/60 bg-[#041a32] p-4">
+          <div className="flex h-24 w-full max-w-xs items-center justify-center rounded-xl border border-[#1e4e7d]/60 bg-white p-4">
             {logoUrl ? (
               <img
                 src={logoUrl}
-                alt="Application logo"
+                alt="Standard logo"
                 className="max-h-full max-w-full object-contain"
-                style={{ imageRendering: 'auto' }}
                 onError={() => setLogoUrl(null)}
               />
             ) : (
-              <div className="flex flex-col items-center gap-2 text-blue-100/40">
-                <PhotoIcon className="h-10 w-10" />
+              <div className="flex flex-col items-center gap-2 text-gray-400">
+                <PhotoIcon className="h-8 w-8" />
                 <span className="text-xs">Χωρίς λογότυπο</span>
               </div>
             )}
@@ -793,7 +874,7 @@ const SettingsPage: React.FC = () => {
                 ) : (
                   <PhotoIcon className="h-4 w-4 mr-2" />
                 )}
-                {logoUrl ? 'Αντικατάσταση' : 'Μεταφόρτωση Λογοτύπου'}
+                {logoUrl ? 'Αντικατάσταση' : 'Μεταφόρτωση'}
                 <input
                   type="file"
                   accept="image/png,image/jpeg,image/svg+xml"
@@ -818,8 +899,66 @@ const SettingsPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Light logo variant for dark backgrounds */}
+      <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[#0b2949]/60 p-6">
+        <h4 className="text-sm font-semibold text-blue-100/85 mb-3">Φωτεινό Λογότυπο (για σκοτεινά φόντα)</h4>
+        <p className="text-xs text-blue-100/50 mb-4">
+          Χρησιμοποιείται στο header, sidebar και οθόνη σύνδεσης. Αν δεν οριστεί, χρησιμοποιείται το βασικό λογότυπο.
+        </p>
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex h-24 w-full max-w-xs items-center justify-center rounded-xl border border-[#1e4e7d]/60 bg-[#041a32] p-4">
+            {lightLogoUrl ? (
+              <img
+                src={lightLogoUrl}
+                alt="Light logo variant"
+                className="max-h-full max-w-full object-contain"
+                onError={() => setLightLogoUrl(null)}
+              />
+            ) : (
+              <div className="flex flex-col items-center gap-2 text-blue-100/40">
+                <PhotoIcon className="h-8 w-8" />
+                <span className="text-xs">Χωρίς φωτεινό variant</span>
+              </div>
+            )}
+          </div>
+
+          {isAdmin && (
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <label
+                className={`inline-flex cursor-pointer items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff] ${lightLogoUploading ? 'opacity-50 pointer-events-none' : ''}`}
+              >
+                {lightLogoUploading ? (
+                  <ArrowPathIcon className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <PhotoIcon className="h-4 w-4 mr-2" />
+                )}
+                {lightLogoUrl ? 'Αντικατάσταση' : 'Μεταφόρτωση'}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/svg+xml"
+                  onChange={handleLightLogoUpload}
+                  disabled={lightLogoUploading}
+                  className="hidden"
+                />
+              </label>
+
+              {lightLogoUrl && (
+                <button
+                  onClick={handleLightLogoRemove}
+                  disabled={lightLogoUploading}
+                  className="inline-flex items-center rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-2 text-sm font-semibold text-red-300 transition-colors hover:bg-red-500/25 disabled:opacity-50"
+                >
+                  <TrashIcon className="h-4 w-4 mr-2" />
+                  Αφαίρεση
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
       <p className="text-xs text-blue-100/40">
-        Όταν δεν έχει οριστεί λογότυπο, η εφαρμογή χρησιμοποιεί το προεπιλεγμένο εικονίδιο και το όνομα της εταιρείας.
+        Όταν δεν έχει οριστεί φωτεινό λογότυπο, η εφαρμογή χρησιμοποιεί το βασικό. Αν δεν υπάρχει ούτε βασικό, εμφανίζεται το προεπιλεγμένο εικονίδιο και το όνομα της εταιρείας.
       </p>
     </div>
   );

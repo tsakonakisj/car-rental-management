@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { loadCompanyConfig, loadAppLogo } from '../../lib/company';
+import { loadCompanyConfig, loadAppLogoLight } from '../../lib/company';
 import {
   HomeIcon,
   CalendarDaysIcon,
@@ -42,10 +42,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, mobileOpen =
 
   useEffect(() => {
     loadCompanyConfig().then((cfg) => setCompanyName(cfg.name));
-    loadAppLogo().then((url) => setLogoUrl(url));
+    loadAppLogoLight().then((url) => setLogoUrl(url));
     const onStorage = () => {
       loadCompanyConfig().then((cfg) => setCompanyName(cfg.name));
-      loadAppLogo().then((url) => setLogoUrl(url));
+      loadAppLogoLight().then((url) => setLogoUrl(url));
     };
     window.addEventListener('company-settings-updated', onStorage);
     return () => window.removeEventListener('company-settings-updated', onStorage);

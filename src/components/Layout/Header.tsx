@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { loadCompanyConfig, loadAppLogo } from '../../lib/company';
+import { loadCompanyConfig, loadAppLogoLight } from '../../lib/company';
 import { Bars3Icon, ChevronDownIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
 
 interface HeaderProps {
@@ -16,11 +16,11 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
 
   useEffect(() => {
     loadCompanyConfig().then((cfg) => setCompanyName(cfg.name));
-    loadAppLogo().then((url) => setLogoUrl(url));
+    loadAppLogoLight().then((url) => setLogoUrl(url));
 
     const onStorage = () => {
       loadCompanyConfig().then((cfg) => setCompanyName(cfg.name));
-      loadAppLogo().then((url) => setLogoUrl(url));
+      loadAppLogoLight().then((url) => setLogoUrl(url));
     };
     window.addEventListener('company-settings-updated', onStorage);
     return () => window.removeEventListener('company-settings-updated', onStorage);

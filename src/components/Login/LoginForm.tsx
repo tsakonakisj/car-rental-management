@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { getCompanyConfig, loadCompanyConfig, loadAppLogo } from '../../lib/company';
+import { getCompanyConfig, loadCompanyConfig, loadAppLogoLight } from '../../lib/company';
 import { supabase } from '../../lib/supabase';
 import {
   ArrowPathIcon,
@@ -88,7 +88,7 @@ const LoginForm: React.FC = () => {
     loadCompanyConfig().then((config) => {
       if (mounted) setCompanyName(config.name);
     });
-    loadAppLogo().then((url) => {
+    loadAppLogoLight().then((url) => {
       if (mounted) setLogoUrl(url);
     });
     return () => {
