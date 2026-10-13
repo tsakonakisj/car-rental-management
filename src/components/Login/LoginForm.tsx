@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { getCompanyConfig, loadCompanyConfig, loadAppLogoLight } from '../../lib/company';
@@ -33,6 +33,8 @@ const LoginForm: React.FC = () => {
   const [forgotLoading, setForgotLoading] = useState(false);
   const [forgotMsg, setForgotMsg] = useState('');
   const [forgotError, setForgotError] = useState('');
+  const logoImgRef = useRef<HTMLImageElement>(null);
+  const [logoShift, setLogoShift] = useState(0);
 
   const isEnglish = language === 'en';
   const copy = isEnglish
@@ -95,6 +97,45 @@ const LoginForm: React.FC = () => {
       mounted = false;
     };
   }, []);
+
+  const handleLogoLoad = () => {
+    const img = logoImgRef.current;
+    if (!img || !img.naturalWidth) {
+      setLogoShift(0);
+      return;
+    }
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        setLogoShift(0);
+        return;
+      }
+      ctx.drawImage(img, 0, 0);
+      const { data: pixels } = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      let minLeft = canvas.width;
+      let maxRight = -1;
+      for (let i = 0; i < pixels.length; i += 4) {
+        if (pixels[i + 3] > 10) {
+          const x = (i / 4) % canvas.width;
+          if (x < minLeft) minLeft = x;
+          if (x > maxRight) maxRight = x;
+        }
+      }
+      if (maxRight < minLeft) {
+        setLogoShift(0);
+        return;
+      }
+      const visualCenter = (minLeft + maxRight) / 2;
+      const imageCenter = canvas.width / 2;
+      const renderedWidth = img.offsetWidth || 0;
+      setLogoShift(((imageCenter - visualCenter) / canvas.width) * renderedWidth);
+    } catch {
+      setLogoShift(0);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -180,9 +221,13 @@ const LoginForm: React.FC = () => {
             <div className="text-center">
               {logoUrl ? (
                 <img
+                  ref={logoImgRef}
                   src={logoUrl}
                   alt={companyName}
+                  crossOrigin="anonymous"
+                  onLoad={handleLogoLoad}
                   className="mx-auto mb-4 max-h-16 max-w-[220px] object-contain"
+                  style={{ transform: logoShift ? `translateX(${logoShift}px)` : undefined }}
                   onError={() => setLogoUrl(null)}
                 />
               ) : (
@@ -249,7 +294,7 @@ const LoginForm: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword((visible) => !visible)}
-                      className="rounded-md p-1 text-blue-100/70 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-[#1680ff]"
+                      className="flex-shrink-0 rounded-md p-1 text-blue-100/70 transition-colors hover:text-white focus:outline-none focus:ring-2 focus:ring-[#1680ff]"
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >
                       {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
@@ -322,7 +367,7 @@ const Field: React.FC<FieldProps> = ({ id, label, type, value, onChange, icon: I
         required
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="min-w-0 flex-1 border-0 bg-transparent px-4 py-4 text-base text-white outline-none placeholder:text-blue-100/60"
+        className={`min-w-0 flex-1 border-0 bg-transparent py-4 text-base text-white outline-none placeholder:text-blue-100/60 ${trailing ? 'pl-4 pr-2' : 'px-4'}`}
         placeholder={label}
       />
       {trailing}
