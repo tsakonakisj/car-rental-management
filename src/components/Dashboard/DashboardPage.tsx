@@ -12,7 +12,8 @@ import {
   ExclamationTriangleIcon,
   XMarkIcon,
   PlusIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  WrenchScrewdriverIcon
 } from '@heroicons/react/24/outline';
 
 interface SourceStat {
@@ -151,11 +152,123 @@ const STATUS_LABELS: Record<string, string> = {
   'cancelled': 'Ακυρωμένες'
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  'upcoming': 'bg-blue-500/15 text-[#8ec7ff] ring-1 ring-inset ring-blue-400/40',
-  'active': 'bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-400/40',
-  'completed': 'bg-slate-500/15 text-blue-100/70 ring-1 ring-inset ring-slate-400/35',
-  'cancelled': 'bg-red-500/15 text-red-300 ring-1 ring-inset ring-red-400/40'
+type DashboardCardTheme = {
+  border: string;
+  icon: string;
+  iconBackground: string;
+  accent: string;
+  badge: string;
+  decoration: string;
+};
+
+const STATUS_CARD_THEMES: Record<string, DashboardCardTheme> = {
+  upcoming: {
+    border: 'border-blue-500/60',
+    icon: 'text-[#a8d6ff]',
+    iconBackground: 'bg-[#1678d9]/70',
+    accent: 'text-white',
+    badge: 'bg-[#1678d9]/65 text-[#a8d6ff]',
+    decoration: 'from-[#1268f3]/40 via-[#1268f3]/15 to-transparent text-[#1268f3]/30',
+  },
+  active: {
+    border: 'border-emerald-500/50',
+    icon: 'text-[#a1ffd1]',
+    iconBackground: 'bg-emerald-500/65',
+    accent: 'text-white',
+    badge: 'bg-emerald-500/55 text-[#7dffc1]',
+    decoration: 'from-emerald-500/35 via-emerald-500/15 to-transparent text-emerald-500/25',
+  },
+  completed: {
+    border: 'border-slate-400/40',
+    icon: 'text-blue-100',
+    iconBackground: 'bg-slate-500/70',
+    accent: 'text-white',
+    badge: 'bg-slate-400/45 text-blue-100',
+    decoration: 'from-slate-500/30 via-slate-500/10 to-transparent text-slate-400/25',
+  },
+  cancelled: {
+    border: 'border-rose-400/45',
+    icon: 'text-[#ffb0b8]',
+    iconBackground: 'bg-rose-500/65',
+    accent: 'text-white',
+    badge: 'bg-rose-500/55 text-[#ffadb5]',
+    decoration: 'from-rose-500/35 via-rose-500/15 to-transparent text-rose-500/25',
+  },
+};
+
+const FLEET_CARD_THEMES: Record<string, DashboardCardTheme> = {
+  total: {
+    border: 'border-blue-500/60',
+    icon: 'text-[#b7ddff]',
+    iconBackground: 'bg-[#1678d9]/70',
+    accent: 'text-white',
+    badge: '',
+    decoration: 'from-[#1268f3]/40 via-[#1268f3]/15 to-transparent text-[#1268f3]/30',
+  },
+  available: {
+    border: 'border-emerald-500/50',
+    icon: 'text-[#9bffd0]',
+    iconBackground: 'bg-emerald-500/65',
+    accent: 'text-[#b9ffe0]',
+    badge: '',
+    decoration: 'from-emerald-500/35 via-emerald-500/15 to-transparent text-emerald-500/25',
+  },
+  reserved: {
+    border: 'border-amber-400/45',
+    icon: 'text-[#ffe08b]',
+    iconBackground: 'bg-amber-500/65',
+    accent: 'text-[#fff0a8]',
+    badge: '',
+    decoration: 'from-amber-500/35 via-amber-500/15 to-transparent text-amber-500/25',
+  },
+  active: {
+    border: 'border-blue-500/60',
+    icon: 'text-[#b7ddff]',
+    iconBackground: 'bg-[#1678d9]/70',
+    accent: 'text-[#b9e1ff]',
+    badge: '',
+    decoration: 'from-[#1268f3]/40 via-[#1268f3]/15 to-transparent text-[#1268f3]/30',
+  },
+  service: {
+    border: 'border-rose-400/45',
+    icon: 'text-[#ffadb5]',
+    iconBackground: 'bg-rose-500/65',
+    accent: 'text-[#ffc0c7]',
+    badge: '',
+    decoration: 'from-rose-500/35 via-rose-500/15 to-transparent text-rose-500/25',
+  },
+};
+
+interface DashboardMetricCardProps {
+  title: string;
+  value: number;
+  icon: React.ComponentType<{ className?: string }>;
+  theme: DashboardCardTheme;
+  badge?: string;
+  onClick?: () => void;
+}
+
+const DashboardMetricCard: React.FC<DashboardMetricCardProps> = ({ title, value, icon: Icon, theme, badge, onClick }) => {
+  const content = (
+    <>
+      <div className={`absolute -bottom-12 -right-10 h-28 w-56 rounded-[55%] bg-gradient-to-br ${theme.decoration} rotate-[-18deg]`} />
+      <Icon className={`absolute bottom-2 right-7 h-14 w-14 ${theme.decoration.split(' ').pop()}`} strokeWidth={1.5} />
+      <div className="relative flex items-start justify-between gap-3">
+        <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full ${theme.iconBackground} shadow-[0_6px_18px_rgba(0,0,0,0.2)]`}>
+          <Icon className={`h-6 w-6 ${theme.icon}`} strokeWidth={2} />
+        </div>
+        {badge && <span className={`rounded-full px-3 py-1 text-xs font-semibold ${theme.badge}`}>{badge}</span>}
+      </div>
+      <div className="relative mt-2">
+        <p className="text-base font-medium text-blue-50/90">{title}</p>
+        <p className={`mt-2 text-5xl font-bold leading-none tabular-nums ${theme.accent}`}>{value}</p>
+      </div>
+    </>
+  );
+
+  const className = `relative min-h-[142px] overflow-hidden rounded-2xl border bg-[linear-gradient(145deg,rgba(8,43,78,0.98),rgba(6,29,57,0.98))] p-4 shadow-[0_14px_32px_rgba(0,0,0,0.24)] transition-all ${theme.border} ${onClick ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_20px_42px_rgba(0,0,0,0.34)]' : ''}`;
+
+  return onClick ? <button type="button" onClick={onClick} className={`${className} w-full text-left`}>{content}</button> : <div className={className}>{content}</div>;
 };
 
 interface DashboardPageProps {
@@ -452,100 +565,33 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
       {/* Reservation Status Overview */}
       <div>
         <h2 className="mb-4 text-lg font-semibold tracking-[-0.02em] text-white">Κατάσταση Κρατήσεων</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {statusStats.map((st) => (
-            <div
-              key={st.status}
-              role="button"
-              tabIndex={0}
-              onClick={() => onNavigateReservations?.(st.status)}
-              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigateReservations?.(st.status); } }}
-              className="cursor-pointer rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)]"
-            >
-              <div className="flex items-center justify-between mb-3">
-                {st.status === 'upcoming' && <ClockIcon className="h-5 w-5 text-[#55a8ff]" />}
-                {st.status === 'active' && <CheckCircleIcon className="h-5 w-5 text-emerald-400" />}
-                {st.status === 'completed' && <CalendarDaysIcon className="h-5 w-5 text-blue-100/45" />}
-                {st.status === 'cancelled' && <XMarkIcon className="h-5 w-5 text-red-400" />}
-                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${STATUS_COLORS[st.status] || 'bg-slate-500/15 text-blue-100/70 ring-1 ring-inset ring-slate-400/35'}`}>
-                  {STATUS_LABELS[st.status] || st.status}
-                </span>
-              </div>
-              <p className="text-2xl font-bold tabular-nums text-white">{st.count}</p>
-            </div>
-          ))}
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {statusStats.map((st) => {
+            const statusIcon = st.status === 'upcoming' ? ClockIcon : st.status === 'active' ? CheckCircleIcon : st.status === 'completed' ? CalendarDaysIcon : XMarkIcon;
+            return (
+              <DashboardMetricCard
+                key={st.status}
+                title={STATUS_LABELS[st.status] || st.status}
+                value={st.count}
+                icon={statusIcon}
+                theme={STATUS_CARD_THEMES[st.status] || STATUS_CARD_THEMES.completed}
+                badge={STATUS_LABELS[st.status] || st.status}
+                onClick={() => onNavigateReservations?.(st.status)}
+              />
+            );
+          })}
         </div>
       </div>
 
       {/* Fleet Availability */}
       <div>
         <h2 className="mb-4 text-lg font-semibold tracking-[-0.02em] text-white">Στόλος</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => onNavigateFleet?.()}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigateFleet?.(); } }}
-            className="cursor-pointer rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)]"
-          >
-            <div className="mb-3 flex items-center">
-              <TruckIcon className="mr-2 h-5 w-5 text-blue-100/45" />
-              <span className="text-sm text-blue-100/55">Σύνολο</span>
-            </div>
-            <p className="text-2xl font-bold tabular-nums text-white">{fleetStats.total}</p>
-          </div>
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => onNavigateFleet?.()}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigateFleet?.(); } }}
-            className="cursor-pointer rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)]"
-          >
-            <div className="mb-3 flex items-center">
-              <CheckCircleIcon className="mr-2 h-5 w-5 text-emerald-400" />
-              <span className="text-sm text-blue-100/55">Διαθέσιμα</span>
-            </div>
-            <p className="text-2xl font-bold tabular-nums text-emerald-300">{fleetStats.available}</p>
-          </div>
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => onNavigateFleet?.()}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigateFleet?.(); } }}
-            className="cursor-pointer rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)]"
-          >
-            <div className="mb-3 flex items-center">
-              <ClockIcon className="mr-2 h-5 w-5 text-amber-400" />
-              <span className="text-sm text-blue-100/55">Κρατημένα</span>
-            </div>
-            <p className="text-2xl font-bold tabular-nums text-amber-300">{fleetStats.reserved}</p>
-          </div>
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => onNavigateReservations?.('active')}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigateReservations?.('active'); } }}
-            className="cursor-pointer rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)]"
-          >
-            <div className="mb-3 flex items-center">
-              <TruckIcon className="mr-2 h-5 w-5 text-[#55a8ff]" />
-              <span className="text-sm text-blue-100/55">Ενεργά</span>
-            </div>
-            <p className="text-2xl font-bold tabular-nums text-[#55a8ff]">{fleetStats.active}</p>
-          </div>
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={() => onNavigateFleet?.()}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigateFleet?.(); } }}
-            className="cursor-pointer rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)]"
-          >
-            <div className="mb-3 flex items-center">
-              <ExclamationTriangleIcon className="mr-2 h-5 w-5 text-red-400" />
-              <span className="text-sm text-blue-100/55">Συντήρηση</span>
-            </div>
-            <p className="text-2xl font-bold tabular-nums text-red-300">{fleetStats.service}</p>
-          </div>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+          <DashboardMetricCard title="Σύνολο" value={fleetStats.total} icon={TruckIcon} theme={FLEET_CARD_THEMES.total} onClick={() => onNavigateFleet?.()} />
+          <DashboardMetricCard title="Διαθέσιμα" value={fleetStats.available} icon={TruckIcon} theme={FLEET_CARD_THEMES.available} onClick={() => onNavigateFleet?.()} />
+          <DashboardMetricCard title="Κρατημένα" value={fleetStats.reserved} icon={ClockIcon} theme={FLEET_CARD_THEMES.reserved} onClick={() => onNavigateFleet?.()} />
+          <DashboardMetricCard title="Ενεργά" value={fleetStats.active} icon={TruckIcon} theme={FLEET_CARD_THEMES.active} onClick={() => onNavigateReservations?.('active')} />
+          <DashboardMetricCard title="Συντήρηση" value={fleetStats.service} icon={WrenchScrewdriverIcon} theme={FLEET_CARD_THEMES.service} onClick={() => onNavigateFleet?.()} />
         </div>
       </div>
 
