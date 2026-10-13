@@ -181,6 +181,9 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
   };
 
   const inputClass = 'w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50';
+  const maxDate = new Date();
+  maxDate.setFullYear(maxDate.getFullYear() + 10);
+  const maxDateStr = maxDate.toISOString().split('T')[0];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#020b18]/80 p-4 backdrop-blur-sm" onClick={onClose}>
@@ -353,6 +356,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
               <label className="mb-1 block text-sm font-medium text-blue-100/65">Λήξη Ασφάλειας</label>
               <input
                 type="date"
+                max={maxDateStr}
                 value={form.insurance_expiry}
                 onChange={(e) => setForm((p) => ({ ...p, insurance_expiry: e.target.value }))}
                 className={inputClass}
@@ -362,6 +366,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
               <label className="mb-1 block text-sm font-medium text-blue-100/65">Λήξη ΚΤΕΟ</label>
               <input
                 type="date"
+                max={maxDateStr}
                 value={form.inspection_expiry}
                 onChange={(e) => setForm((p) => ({ ...p, inspection_expiry: e.target.value }))}
                 className={inputClass}
@@ -391,6 +396,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
               <label className="mb-1 block text-sm font-medium text-blue-100/65">Επόμενο Service (Ημερομηνία)</label>
               <input
                 type="date"
+                max={maxDateStr}
                 value={form.next_service_date}
                 onChange={(e) => setForm((p) => ({ ...p, next_service_date: e.target.value }))}
                 className={inputClass}

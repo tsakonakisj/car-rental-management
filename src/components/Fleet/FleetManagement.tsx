@@ -187,10 +187,13 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
 
   type ExpiryLevel = 'expired' | 'critical' | 'warning' | 'soon' | 'ok';
 
+  const MAX_DISPLAY_DAYS = 3650;
+
   const getExpiryLevel = (date: string): ExpiryLevel => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const expiry = new Date(date + 'T00:00:00');
+    if (isNaN(expiry.getTime())) return 'ok';
     const diffMs = expiry.getTime() - today.getTime();
     const days = Math.round(diffMs / (1000 * 60 * 60 * 24));
     if (days < 0) return 'expired';
@@ -212,9 +215,11 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const expiry = new Date(date + 'T00:00:00');
+    if (isNaN(expiry.getTime())) return '—';
     const days = Math.round((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     if (days < 0) return 'Έληξε';
     if (days === 0) return 'Σήμερα';
+    if (days > MAX_DISPLAY_DAYS) return '—';
     return `${days} ημέρες`;
   };
 
