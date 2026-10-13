@@ -182,7 +182,7 @@ const LoginForm: React.FC = () => {
                 <img
                   src={logoUrl}
                   alt={companyName}
-                  className="mx-auto mb-4 max-h-16 max-w-[220px] object-contain"
+                  className="mx-auto mb-4 block max-h-16 max-w-[220px] object-contain"
                   onError={() => setLogoUrl(null)}
                 />
               ) : (
@@ -190,7 +190,7 @@ const LoginForm: React.FC = () => {
                   <TruckIcon className="h-8 w-8 text-[#1680ff]" strokeWidth={1.7} />
                 </div>
               )}
-              <p className="mt-2 text-base text-blue-100/75">{showForgot ? copy.recoveryTitle : copy.subtitle}</p>
+              <p className="mt-2 text-center text-base text-blue-100/75">{showForgot ? copy.recoveryTitle : copy.subtitle}</p>
             </div>
 
             {showForgot ? (
