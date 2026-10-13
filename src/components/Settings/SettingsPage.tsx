@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { supabase } from '../../lib/supabase';
-import { clearCompanyCache, clearTermsCache, clearLogoCache, loadAppLogo, saveAppLogoPath, clearAppLogo } from '../../lib/company';
+import { clearCompanyCache, clearTermsCache, clearLogoCache, loadAppLogo, saveAppLogoPath, clearAppLogo, DEFAULT_CONTRACT_TERMS } from '../../lib/company';
 import type { ContractTerm } from '../../lib/company';
 import { useAuth } from '../../contexts/AuthContext';
 import PageHero from '../Layout/PageHero';
