@@ -330,6 +330,56 @@ export const reservationService = {
       return Promise.resolve();
     }
 
+    // 1. Pre-check: block deletion if historical/financial records exist
+    const { data: checkoutRows } = await supabase!
+      .from('checkouts')
+      .select('id')
+      .eq('reservation_id', id);
+    if (checkoutRows && checkoutRows.length > 0) {
+      throw new Error('DELETION_BLOCKED:checkouts');
+    }
+
+    const { data: checkinRows } = await supabase!
+      .from('checkins')
+      .select('id')
+      .eq('reservation_id', id);
+    if (checkinRows && checkinRows.length > 0) {
+      throw new Error('DELETION_BLOCKED:checkins');
+    }
+
+    const { data: paymentRows } = await supabase!
+      .from('payments')
+      .select('id')
+      .eq('reservation_id', id);
+    if (paymentRows && paymentRows.length > 0) {
+      throw new Error('DELETION_BLOCKED:payments');
+    }
+
+    // 2. Clean up photos from storage + photos table
+    const { data: photoRows } = await supabase!
+      .from('photos')
+      .select('url')
+      .eq('reference_id', id);
+
+    if (photoRows && photoRows.length > 0) {
+      const photoPaths = photoRows.map(p => p.url);
+      const { error: storageError } = await supabase!
+        .storage
+        .from('rental-photos')
+        .remove(photoPaths);
+
+      if (storageError) throw storageError;
+
+      const { error: photoDbError } = await supabase!
+        .from('photos')
+        .delete()
+        .eq('reference_id', id);
+
+      if (photoDbError) throw photoDbError;
+    }
+
+    // 3. Delete the reservation row
+    //    reservation_extras cascade automatically via FK ON DELETE CASCADE
     const { error } = await supabase!
       .from('reservations')
       .delete()

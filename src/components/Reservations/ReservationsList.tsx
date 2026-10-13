@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { reservationService, customerService, stationService, vehicleService, pricingService, resolveDailyRate, insuranceService, reservationExtrasService, photoService, checkoutService, checkinService, hasVehicleBookingConflict } from '../../lib/database';
 import type { CheckoutDetails, CheckinDetails } from '../../lib/database';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   EyeIcon,
   TruckIcon,
@@ -120,6 +121,8 @@ function calcDaysBetween(startDate: string, endDate: string): number {
 
 
 const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheckIn, refreshTrigger, initialFilter, initialViewReservationId }) => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const [reservations, setReservations] = useState<ReservationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -131,6 +134,9 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
   const [actionError, setActionError] = useState('');
   const [changingStatus, setChangingStatus] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<ReservationRow | null>(null);
   const [checkoutPhotoPaths, setCheckoutPhotoPaths] = useState<string[]>([]);
   const [checkinPhotoPaths, setCheckinPhotoPaths] = useState<string[]>([]);
   const [photoSignedUrls, setPhotoSignedUrls] = useState<Map<string, string>>(new Map());
@@ -252,6 +258,13 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
     onCheckIn?.(reservation.id);
   };
 
+  const openDeleteConfirm = (reservation: ReservationRow) => {
+    setDeleteTarget(reservation);
+    setDeleteConfirmText('');
+    setDeleteConfirmOpen(true);
+    setActionError('');
+  };
+
   const handleDelete = async (id: string) => {
     setDeleting(id);
     setActionError('');
@@ -261,9 +274,21 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
       if (viewReservation?.id === id) {
         setViewReservation(null);
       }
+      setDeleteConfirmOpen(false);
+      setDeleteTarget(null);
+      setActionError('');
     } catch (err) {
-      console.error('Delete failed:', err);
-      setActionError('Αποτυχία διαγραφής κράτησης.');
+      const errMsg = err instanceof Error ? err.message : '';
+      let greekMsg = 'Αποτυχία διαγραφής κράτησης.';
+      if (errMsg.includes('DELETION_BLOCKED:checkouts')) {
+        greekMsg = 'Δεν είναι δυνατή η διαγραφή: υπάρχουν εγγραφές Check-Out για αυτή την κράτηση.';
+      } else if (errMsg.includes('DELETION_BLOCKED:checkins')) {
+        greekMsg = 'Δεν είναι δυνατή η διαγραφή: υπάρχουν εγγραφές Check-In για αυτή την κράτηση.';
+      } else if (errMsg.includes('DELETION_BLOCKED:payments')) {
+        greekMsg = 'Δεν είναι δυνατή η διαγραφή: υπάρχουν πληρωμές για αυτή την κράτηση.';
+      }
+      setActionError(greekMsg);
+      setDeleteConfirmOpen(false);
     } finally {
       setDeleting(null);
     }
@@ -1378,13 +1403,9 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                         <PencilSquareIcon className="h-4 w-4 mr-2" />
                         Επεξεργασία
                       </button>
-                      {viewReservation.status !== 'cancelled' && viewReservation.status !== 'completed' && (
+                      {isAdmin && viewReservation.status !== 'cancelled' && viewReservation.status !== 'completed' && (
                         <button
-                          onClick={() => {
-                            if (window.confirm('Θέλετε σίγουρα να ακυρώσετε αυτή την κράτηση;')) {
-                              handleDelete(viewReservation.id);
-                            }
-                          }}
+                          onClick={() => openDeleteConfirm(viewReservation)}
                           disabled={deleting === viewReservation.id}
                           className="inline-flex items-center px-4 py-2 border border-red-400/50 text-sm font-medium rounded-lg text-red-100 bg-[#071d38] hover:bg-red-900/60 transition-colors"
                         >
@@ -1420,6 +1441,61 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmOpen && deleteTarget && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#020b18]/90">
+          <div className="w-full max-w-md mx-4 rounded-2xl border border-red-400/30 bg-[#0b2949] shadow-[0_18px_45px_rgba(0,0,0,0.35)] p-6">
+            <div className="flex items-center mb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-500/15 border border-red-400/30">
+                <TrashIcon className="h-5 w-5 text-red-300" />
+              </div>
+              <h3 className="ml-3 text-lg font-semibold text-white">Οριστική Διαγραφή Κράτησης</h3>
+            </div>
+            <p className="text-sm text-blue-100/80 mb-2">
+              Προσοχή: αυτή η ενέργεια είναι <span className="text-red-300 font-medium">μη αναστρέψιμη</span>.
+              Όλα τα δεδομένα της κράτησης θα διαγραφούν μόνιμα, συμπεριλαμβανομένων τυχόν φωτογραφιών.
+            </p>
+            <p className="text-sm text-blue-100/60 mb-4">
+              Για επιβεβαίωση, πληκτρολογήστε τον κωδικό κράτησης:
+              <span className="ml-1 font-mono text-[#8ec7ff] font-medium">{deleteTarget.id.substring(0, 8).toUpperCase()}</span>
+            </p>
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
+              placeholder="Κωδικός κράτησης"
+              className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#071d38]/90 px-3 py-2 text-sm text-white font-mono focus:outline-none focus:ring-2 focus:ring-red-400/40 mb-4"
+              autoFocus
+            />
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setDeleteConfirmOpen(false);
+                  setDeleteTarget(null);
+                  setDeleteConfirmText('');
+                  setActionError('');
+                }}
+                disabled={deleting === deleteTarget.id}
+                className="px-4 py-2 border border-[#2b5b85]/80 text-sm font-medium rounded-lg text-blue-100/85 bg-[#071d38] hover:bg-[#0b2949]/70 transition-colors"
+              >
+                Άκυρο
+              </button>
+              <button
+                onClick={() => handleDelete(deleteTarget.id)}
+                disabled={deleteConfirmText !== deleteTarget.id.substring(0, 8).toUpperCase() || deleting === deleteTarget.id}
+                className="inline-flex items-center px-4 py-2 border border-red-400/50 text-sm font-medium rounded-lg text-red-100 bg-red-700 hover:bg-red-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              >
+                <TrashIcon className="h-4 w-4 mr-2" />
+                {deleting === deleteTarget.id ? 'Διαγραφή...' : 'Διαγραφή'}
+              </button>
+            </div>
+            {actionError && (
+              <p className="mt-3 text-sm text-red-300">{actionError}</p>
+            )}
           </div>
         </div>
       )}
