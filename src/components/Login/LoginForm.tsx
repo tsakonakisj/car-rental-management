@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { getCompanyConfig, loadCompanyConfig } from '../../lib/company';
+import { getCompanyConfig, loadCompanyConfig, loadAppLogo } from '../../lib/company';
 import { supabase } from '../../lib/supabase';
 import {
   ArrowPathIcon,
@@ -22,6 +22,7 @@ const LoginForm: React.FC = () => {
   const { language } = useLanguage();
   const { login } = useAuth();
   const [companyName, setCompanyName] = useState(getCompanyConfig().name);
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -86,6 +87,9 @@ const LoginForm: React.FC = () => {
     let mounted = true;
     loadCompanyConfig().then((config) => {
       if (mounted) setCompanyName(config.name);
+    });
+    loadAppLogo().then((url) => {
+      if (mounted) setLogoUrl(url);
     });
     return () => {
       mounted = false;
@@ -174,9 +178,18 @@ const LoginForm: React.FC = () => {
         <section className="mx-auto w-full max-w-[330px] lg:ml-auto lg:mr-0 lg:max-w-[330px]">
           <div className="rounded-[26px] border border-blue-200/35 bg-[#061a35]/75 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-xl sm:p-8 lg:p-9">
             <div className="text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0d315e]/70 ring-1 ring-blue-300/25 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
-                <TruckIcon className="h-8 w-8 text-[#1680ff]" strokeWidth={1.7} />
-              </div>
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt={companyName}
+                  className="mx-auto mb-4 max-h-16 max-w-[220px] object-contain"
+                  onError={() => setLogoUrl(null)}
+                />
+              ) : (
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#0d315e]/70 ring-1 ring-blue-300/25 shadow-[0_10px_30px_rgba(0,0,0,0.25)]">
+                  <TruckIcon className="h-8 w-8 text-[#1680ff]" strokeWidth={1.7} />
+                </div>
+              )}
               <h2 className="text-3xl font-semibold tracking-[-0.03em] text-white sm:text-4xl">{companyName}</h2>
               <p className="mt-2 text-base text-blue-100/75">{showForgot ? copy.recoveryTitle : copy.subtitle}</p>
             </div>
