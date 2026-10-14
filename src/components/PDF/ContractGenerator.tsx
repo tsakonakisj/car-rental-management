@@ -113,8 +113,12 @@ export function fmtDateTime(iso: string): string {
 
 function calcDays(start: string, end: string): number {
   if (!start || !end) return 0;
-  const diff = new Date(end).getTime() - new Date(start).getTime();
-  return Math.max(1, Math.round(diff / 86400000));
+  const s = new Date(start);
+  const e = new Date(end);
+  const sUtc = Date.UTC(s.getFullYear(), s.getMonth(), s.getDate());
+  const eUtc = Date.UTC(e.getFullYear(), e.getMonth(), e.getDate());
+  const diffDays = Math.round((eUtc - sUtc) / 86400000) + 1;
+  return Math.max(1, diffDays);
 }
 
 function fuelFraction(pct: number): string {
