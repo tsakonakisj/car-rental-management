@@ -846,13 +846,13 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                 </div>
               </div>
 
-              <div className="mb-4 grid grid-cols-3 divide-x divide-[#1e4e7d]/70 rounded-xl border border-[#1e4e7d]/70 bg-[#061a31]/45">
+              <div className="mb-4 grid grid-cols-1 divide-y divide-[#1e4e7d]/70 rounded-xl border border-[#1e4e7d]/70 bg-[#061a31]/45 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
                 <div className="p-3">
                   <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-blue-100/50">
                     <CalendarDaysIcon className="h-4 w-4 text-[#72b9ff]" />
                     Παραλαβή
                   </div>
-                  <p className="break-words text-xs font-semibold leading-snug text-white">{formatDateStr(reservation.pickup_date)}</p>
+                  <p className="whitespace-nowrap text-sm font-semibold text-white">{formatDateStr(reservation.pickup_date)}</p>
                   <p className="mt-0.5 truncate text-xs text-blue-100/60">{reservation.pickup_station?.name || '-'}</p>
                 </div>
                 <div className="p-3">
@@ -860,7 +860,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                     <CalendarDaysIcon className="h-4 w-4 text-[#72b9ff]" />
                     Επιστροφή
                   </div>
-                  <p className="break-words text-xs font-semibold leading-snug text-white">{formatDateStr(reservation.return_date)}</p>
+                  <p className="whitespace-nowrap text-sm font-semibold text-white">{formatDateStr(reservation.return_date)}</p>
                   <p className="mt-0.5 truncate text-xs text-blue-100/60">{reservation.return_station?.name || '-'}</p>
                 </div>
                 <div className="p-3">
@@ -868,12 +868,12 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                     <CurrencyEuroIcon className="h-4 w-4 text-[#72b9ff]" />
                     Σύνολο
                   </div>
-                  <p className="break-words text-base font-bold text-emerald-300">{'\u20AC'}{Number(reservation.total_amount || 0).toFixed(2)}</p>
+                  <p className="text-xl font-bold text-emerald-300">{'\u20AC'}{Number(reservation.total_amount || 0).toFixed(2)}</p>
                 </div>
               </div>
 
               {(reservation.status === 'upcoming' || reservation.status === 'active') && (
-                <div className="flex flex-wrap items-stretch gap-2 border-t border-[#1e4e7d]/70 pt-4" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-stretch gap-2 border-t border-[#1e4e7d]/70 pt-4" onClick={(e) => e.stopPropagation()}>
                   {reservation.status === 'upcoming' && (
                     <>
                       <BookingConfirmation
@@ -899,14 +899,14 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                         setContractMode(true);
                         startEditing(reservation);
                       }}
-                        className="inline-flex min-w-[135px] flex-1 items-center justify-center gap-1.5 rounded-xl border border-emerald-400/50 bg-emerald-600/20 px-2 py-2.5 text-xs font-semibold text-emerald-200 transition-colors hover:bg-emerald-600/30 sm:text-sm"
+                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-emerald-400/50 bg-emerald-600/20 px-2 py-2.5 text-xs font-semibold text-emerald-200 transition-colors hover:bg-emerald-600/30 sm:text-sm"
                       >
                         <DocumentTextIcon className="h-4 w-4 shrink-0" />
                         <span className="truncate">Έκδοση Συμβολαίου</span>
                       </button>
                       <button
                         onClick={() => onCheckOut?.(reservation.id)}
-                        className="inline-flex min-w-[115px] flex-1 items-center justify-center gap-1.5 rounded-xl border border-transparent bg-[#1268f3] px-2 py-2.5 text-xs font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff] sm:text-sm"
+                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-transparent bg-[#1268f3] px-2 py-2.5 text-xs font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff] sm:text-sm"
                       >
                         <TruckIcon className="h-4 w-4 shrink-0" />
                         <span className="truncate">Check-Out</span>
