@@ -50,7 +50,7 @@ interface FontCache {
 let cachedFonts: FontCache | null = null;
 let fontCacheFailed = false;
 
-async function fetchBase64(url: string): Promise<string> {
+export async function fetchBase64(url: string): Promise<string> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Font fetch failed: ${url}`);
   const buf = await res.arrayBuffer();
@@ -63,7 +63,7 @@ async function fetchBase64(url: string): Promise<string> {
   return btoa(binary);
 }
 
-async function loadFonts(): Promise<FontCache | null> {
+export async function loadFonts(): Promise<FontCache | null> {
   if (fontCacheFailed) return null;
   if (cachedFonts) return cachedFonts;
   try {
@@ -79,14 +79,14 @@ async function loadFonts(): Promise<FontCache | null> {
   }
 }
 
-function registerFonts(doc: jsPDF, fonts: FontCache) {
+export function registerFonts(doc: jsPDF, fonts: FontCache) {
   doc.addFileToVFS('DejaVuSans.ttf', fonts.regular);
   doc.addFont('DejaVuSans.ttf', 'DejaVu', 'normal');
   doc.addFileToVFS('DejaVuSans-Bold.ttf', fonts.bold);
   doc.addFont('DejaVuSans-Bold.ttf', 'DejaVu', 'bold');
 }
 
-function fmtDate(iso: string, locale = 'el-GR'): string {
+export function fmtDate(iso: string, locale = 'el-GR'): string {
   if (!iso) return '-';
   try {
     return new Date(iso).toLocaleDateString(locale, { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -95,7 +95,7 @@ function fmtDate(iso: string, locale = 'el-GR'): string {
   }
 }
 
-function fmtDateTime(iso: string): string {
+export function fmtDateTime(iso: string): string {
   if (!iso) return '-';
   try {
     return new Date(iso).toLocaleString('el-GR', {

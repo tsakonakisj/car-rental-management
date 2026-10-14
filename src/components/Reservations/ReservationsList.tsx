@@ -14,6 +14,7 @@ import {
   PencilSquareIcon
 } from '@heroicons/react/24/outline';
 import ContractGenerator from '../PDF/ContractGenerator';
+import BookingConfirmation from '../PDF/BookingConfirmation';
 import PaymentPanel from '../Payments/PaymentPanel';
 import PageHero from '../Layout/PageHero';
 import type { Station, Vehicle, Pricing, Season, Reservation, Insurance, Extra } from '../../types';
@@ -751,6 +752,22 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                     Προβολή
                   </button>
                   <ContractGenerator data={getContractData(reservation)} />
+                  {reservation.status === 'upcoming' && (
+                    <BookingConfirmation data={{
+                      reservationId: reservation.id,
+                      customerName: reservation.customer?.name || '-',
+                      customerPhone: reservation.customer?.phone || '-',
+                      vehicleLabel: reservation.vehicle
+                        ? `${reservation.vehicle.brand} ${reservation.vehicle.model} (${reservation.vehicle.plate})`
+                        : `Κατηγορία ${reservation.category}`,
+                      vehicleCategory: reservation.vehicle?.category || reservation.category,
+                      pickupDate: reservation.pickup_date,
+                      returnDate: reservation.return_date,
+                      pickupStation: reservation.pickup_station?.name || '-',
+                      returnStation: reservation.return_station?.name || '-',
+                      totalAmount: Number(reservation.total_amount) || 0,
+                    }} />
+                  )}
                   {reservation.status !== 'cancelled' && reservation.status !== 'completed' && (
                     <button
                       className="inline-flex min-h-10 items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-1.5 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
@@ -1428,6 +1445,22 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                   <>
                     <div className="flex flex-wrap space-x-2 gap-y-2">
                       <ContractGenerator data={getContractData(viewReservation)} />
+                      {viewReservation.status === 'upcoming' && (
+                        <BookingConfirmation data={{
+                          reservationId: viewReservation.id,
+                          customerName: viewReservation.customer?.name || '-',
+                          customerPhone: viewReservation.customer?.phone || '-',
+                          vehicleLabel: viewReservation.vehicle
+                            ? `${viewReservation.vehicle.brand} ${viewReservation.vehicle.model} (${viewReservation.vehicle.plate})`
+                            : `Κατηγορία ${viewReservation.category}`,
+                          vehicleCategory: viewReservation.vehicle?.category || viewReservation.category,
+                          pickupDate: viewReservation.pickup_date,
+                          returnDate: viewReservation.return_date,
+                          pickupStation: viewReservation.pickup_station?.name || '-',
+                          returnStation: viewReservation.return_station?.name || '-',
+                          totalAmount: Number(viewReservation.total_amount) || 0,
+                        }} />
+                      )}
                       <button
                         onClick={() => startEditing(viewReservation)}
                         className="inline-flex items-center px-4 py-2 border border-[#3475aa] text-sm font-medium rounded-lg text-[#8ec7ff] bg-[#071d38] hover:bg-blue-500/15 transition-colors"
