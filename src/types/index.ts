@@ -109,6 +109,7 @@ export interface Reservation {
   notes?: string;
   created_at: string;
   created_by?: string;
+  contract_issued_at?: string | null;
 }
 
 export interface ReservationExtra {
