@@ -749,6 +749,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                   <h3 className="text-lg font-semibold tracking-[-0.02em] text-white">
                     {reservation.customer?.name || 'Άγνωστος πελάτης'}
                   </h3>
+                  <p className="text-xs text-blue-100/45 font-mono">Κράτηση #{reservation.id.substring(0, 8).toUpperCase()}</p>
                   <p className="text-sm text-blue-100/65">{reservation.customer?.phone || '-'}</p>
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
