@@ -12,7 +12,8 @@ import {
   MagnifyingGlassIcon,
   CalendarDaysIcon,
   PencilSquareIcon,
-  DocumentTextIcon
+  DocumentTextIcon,
+  EllipsisHorizontalIcon
 } from '@heroicons/react/24/outline';
 import ContractGenerator from '../PDF/ContractGenerator';
 import BookingConfirmation from '../PDF/BookingConfirmation';
@@ -163,6 +164,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
   const [editInsurances, setEditInsurances] = useState<Insurance[]>([]);
   const [editExtras, setEditExtras] = useState<Extra[]>([]);
   const [contractIssueReservation, setContractIssueReservation] = useState<ReservationRow | null>(null);
+  const [actionsMenuId, setActionsMenuId] = useState<string | null>(null);
 
   const fetchReservations = useCallback(async () => {
     setLoading(true);
@@ -746,15 +748,15 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
               </div>
 
               <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#1e4e7d]/70 pt-4">
-                <div className="flex flex-wrap space-x-2 gap-y-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <button
                     onClick={() => setViewReservation(reservation)}
-                    className="inline-flex min-h-10 items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-1.5 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
+                    className="inline-flex items-center rounded-lg border border-[#2b5b85]/80 bg-[#0b2949]/75 px-2.5 py-1.5 text-xs font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
                   >
                     <EyeIcon className="h-4 w-4 mr-1" />
                     Προβολή
                   </button>
-                  <ContractGenerator data={getContractData(reservation)} />
+
                   {reservation.status === 'upcoming' && (
                     <BookingConfirmation data={{
                       reservationId: reservation.id,
@@ -771,32 +773,50 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                       totalAmount: Number(reservation.total_amount) || 0,
                     }} />
                   )}
+
                   {reservation.status === 'upcoming' && (
                     <button
                       onClick={() => setContractIssueReservation(reservation)}
-                      className="inline-flex min-h-10 items-center rounded-xl border border-green-500/40 bg-green-600/15 px-3 py-1.5 text-sm font-medium text-green-300 transition-colors hover:bg-green-600/25 hover:text-green-200"
+                      className="inline-flex items-center rounded-lg border border-green-500/40 bg-green-600/15 px-2.5 py-1.5 text-xs font-medium text-green-300 transition-colors hover:bg-green-600/25 hover:text-green-200"
                     >
                       <DocumentTextIcon className="h-4 w-4 mr-1" />
-                      Έκδοση Συμβολαίου
+                      Συμβόλαιο
                     </button>
                   )}
-                  {reservation.status !== 'cancelled' && reservation.status !== 'completed' && (
+
+                  {/* Actions menu */}
+                  <div className="relative">
                     <button
-                      className="inline-flex min-h-10 items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-1.5 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
-                      onClick={() => handleStatusChange(reservation.id, 'cancelled')}
-                      disabled={changingStatus === reservation.id}
+                      onClick={() => setActionsMenuId(actionsMenuId === reservation.id ? null : reservation.id)}
+                      className="inline-flex items-center rounded-lg border border-[#2b5b85]/80 bg-[#0b2949]/75 px-2 py-1.5 text-xs font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
                     >
-                      <TrashIcon className="h-4 w-4 mr-1" />
-                      {changingStatus === reservation.id ? '...' : 'Ακύρωση'}
+                      <EllipsisHorizontalIcon className="h-4 w-4" />
                     </button>
-                  )}
+                    {actionsMenuId === reservation.id && (
+                      <>
+                        <div className="fixed inset-0 z-30" onClick={() => setActionsMenuId(null)} />
+                        <div className="absolute left-0 top-full mt-1 z-40 w-44 rounded-lg border border-[#1e4e7d]/70 bg-[#0b2949] shadow-lg overflow-hidden">
+                          {reservation.status !== 'cancelled' && reservation.status !== 'completed' && (
+                            <button
+                              className="flex w-full items-center px-3 py-2 text-xs font-medium text-red-300 hover:bg-red-900/40 transition-colors"
+                              onClick={() => { setActionsMenuId(null); handleStatusChange(reservation.id, 'cancelled'); }}
+                              disabled={changingStatus === reservation.id}
+                            >
+                              <TrashIcon className="h-4 w-4 mr-2" />
+                              {changingStatus === reservation.id ? '...' : 'Ακύρωση Κράτησης'}
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap space-x-2 gap-y-2 justify-end">
+                <div className="flex flex-wrap gap-2 justify-end">
                   {reservation.status === 'upcoming' && (
                     <button
                       onClick={() => onCheckOut?.(reservation.id)}
-                      className="inline-flex min-h-10 items-center rounded-xl border border-transparent bg-[#1268f3] px-3 py-1.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
+                      className="inline-flex items-center rounded-lg border border-transparent bg-[#1268f3] px-2.5 py-1.5 text-xs font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
                     >
                       <TruckIcon className="h-4 w-4 mr-1" />
                       Check-out
@@ -805,7 +825,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                   {reservation.status === 'active' && (
                     <button
                       onClick={() => handleCheckInClick(reservation)}
-                      className="inline-flex min-h-10 items-center rounded-xl border border-transparent bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(16,185,129,0.22)] transition-colors hover:bg-emerald-500"
+                      className="inline-flex items-center rounded-lg border border-transparent bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-[0_8px_20px_rgba(16,185,129,0.22)] transition-colors hover:bg-emerald-500"
                     >
                       <CheckIcon className="h-4 w-4 mr-1" />
                       Check-in
