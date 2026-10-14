@@ -744,7 +744,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
       )}
 
       {/* Reservations Grid */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 2xl:grid-cols-2">
         {filteredReservations.map((reservation) => (
           <div
             key={reservation.id}
@@ -833,7 +833,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="mb-0.5 text-xs font-semibold uppercase tracking-[0.12em] text-blue-100/50">Όχημα</p>
-                  <p className="truncate text-lg font-semibold tracking-[-0.02em] text-white">
+                  <p className="break-words text-lg font-semibold tracking-[-0.02em] text-white">
                     {reservation.vehicle ? `${reservation.vehicle.brand} ${reservation.vehicle.model}` : 'Όχημα μη διαθέσιμο'}
                   </p>
                   <p className="mt-0.5 text-sm font-medium text-blue-100/65">{reservation.vehicle?.plate || '-'}</p>
@@ -846,13 +846,13 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                 </div>
               </div>
 
-              <div className="mb-4 grid grid-cols-1 divide-y divide-[#1e4e7d]/70 rounded-xl border border-[#1e4e7d]/70 bg-[#061a31]/45 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+              <div className="mb-4 grid grid-cols-1 divide-y divide-[#1e4e7d]/70 rounded-xl border border-[#1e4e7d]/70 bg-[#061a31]/45 xl:grid-cols-3 xl:divide-x xl:divide-y-0">
                 <div className="p-3">
                   <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-blue-100/50">
                     <CalendarDaysIcon className="h-4 w-4 text-[#72b9ff]" />
                     Παραλαβή
                   </div>
-                  <p className="whitespace-nowrap text-sm font-semibold text-white">{formatDateStr(reservation.pickup_date)}</p>
+                  <p className="break-words text-sm font-semibold text-white">{formatDateStr(reservation.pickup_date)}</p>
                   <p className="mt-0.5 truncate text-xs text-blue-100/60">{reservation.pickup_station?.name || '-'}</p>
                 </div>
                 <div className="p-3">
@@ -860,7 +860,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                     <CalendarDaysIcon className="h-4 w-4 text-[#72b9ff]" />
                     Επιστροφή
                   </div>
-                  <p className="whitespace-nowrap text-sm font-semibold text-white">{formatDateStr(reservation.return_date)}</p>
+                  <p className="break-words text-sm font-semibold text-white">{formatDateStr(reservation.return_date)}</p>
                   <p className="mt-0.5 truncate text-xs text-blue-100/60">{reservation.return_station?.name || '-'}</p>
                 </div>
                 <div className="p-3">
@@ -873,7 +873,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
               </div>
 
               {(reservation.status === 'upcoming' || reservation.status === 'active') && (
-                <div className="flex items-stretch gap-2 border-t border-[#1e4e7d]/70 pt-4" onClick={(e) => e.stopPropagation()}>
+                <div className="flex flex-wrap items-stretch gap-2 border-t border-[#1e4e7d]/70 pt-4" onClick={(e) => e.stopPropagation()}>
                   {reservation.status === 'upcoming' && (
                     <>
                       <BookingConfirmation
@@ -899,14 +899,14 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                         setContractMode(true);
                         startEditing(reservation);
                       }}
-                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-emerald-400/50 bg-emerald-600/20 px-2 py-2.5 text-xs font-semibold text-emerald-200 transition-colors hover:bg-emerald-600/30 sm:text-sm"
+                        className="inline-flex min-w-[160px] flex-1 items-center justify-center gap-1.5 rounded-xl border border-emerald-400/50 bg-emerald-600/20 px-2 py-2.5 text-xs font-semibold text-emerald-200 transition-colors hover:bg-emerald-600/30 sm:text-sm"
                       >
                         <DocumentTextIcon className="h-4 w-4 shrink-0" />
                         <span className="truncate">Έκδοση Συμβολαίου</span>
                       </button>
                       <button
                         onClick={() => onCheckOut?.(reservation.id)}
-                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-transparent bg-[#1268f3] px-2 py-2.5 text-xs font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff] sm:text-sm"
+                        className="inline-flex min-w-[130px] flex-1 items-center justify-center gap-1.5 rounded-xl border border-transparent bg-[#1268f3] px-2 py-2.5 text-xs font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff] sm:text-sm"
                       >
                         <TruckIcon className="h-4 w-4 shrink-0" />
                         <span className="truncate">Check-Out</span>
