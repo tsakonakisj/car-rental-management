@@ -833,7 +833,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="mb-0.5 text-xs font-semibold uppercase tracking-[0.12em] text-blue-100/50">Όχημα</p>
-                  <p className="truncate text-lg font-semibold tracking-[-0.02em] text-white">
+                  <p className="break-words text-lg font-semibold tracking-[-0.02em] text-white">
                     {reservation.vehicle ? `${reservation.vehicle.brand} ${reservation.vehicle.model}` : 'Όχημα μη διαθέσιμο'}
                   </p>
                   <p className="mt-0.5 text-sm font-medium text-blue-100/65">{reservation.vehicle?.plate || '-'}</p>
