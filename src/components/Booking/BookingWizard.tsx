@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { reservationService, customerService, insuranceService, pricingService, reservationExtrasService, hasVehicleBookingConflict } from '../../lib/database';
+import { reservationService, customerService, insuranceService, pricingService, reservationExtrasService, paymentService, hasVehicleBookingConflict } from '../../lib/database';
 import type { Customer, Reservation, Insurance, Extra } from '../../types';
 import BookingStep1 from './BookingStep1';
 import BookingStep2 from './BookingStep2';
@@ -49,6 +49,11 @@ interface BookingData {
     source: string;
   };
   notes: string;
+  advancePayment: {
+    enabled: boolean;
+    amount: number;
+    method: string;
+  };
 }
 
 interface BookingWizardProps {
@@ -116,7 +121,8 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
         birthDate: '',
         source: 'store'
       },
-      notes: ''
+      notes: '',
+      advancePayment: { enabled: false, amount: 0, method: 'cash' }
     };
   });
 
@@ -298,6 +304,15 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
 
       if (extrasToSave.length > 0) {
         await reservationExtrasService.createMany(reservation.id, extrasToSave);
+      }
+
+      // 4) Save advance payment if provided
+      if (bookingData.advancePayment?.enabled && bookingData.advancePayment.amount > 0) {
+        await paymentService.create({
+          reservation_id: reservation.id,
+          amount: bookingData.advancePayment.amount,
+          method: bookingData.advancePayment.method,
+        });
       }
 
       onComplete?.();

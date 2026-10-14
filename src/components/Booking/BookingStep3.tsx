@@ -236,6 +236,107 @@ const BookingStep3: React.FC<BookingStep3Props> = ({ data, pricing, updateData }
         </div>
       </div>
 
+      {/* Advance Payment */}
+      <div>
+        <label className="flex items-center gap-3 cursor-pointer mb-3">
+          <input
+            type="checkbox"
+            checked={data.advancePayment?.enabled || false}
+            onChange={(e) => updateData({
+              advancePayment: {
+                enabled: e.target.checked,
+                amount: data.advancePayment?.amount || 0,
+                method: data.advancePayment?.method || 'cash',
+              }
+            })}
+            className="rounded-md border-[#2b5b85]/80 bg-[#0b2949] text-[#55a8ff] focus:ring-[#2f8cff]/50"
+          />
+          <h3 className="text-lg font-medium text-white tracking-[-0.02em]">Προκαταβολή / Πληρωμή</h3>
+        </label>
+
+        {data.advancePayment?.enabled && (
+          <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 p-4 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-blue-100/65 mb-2">Ποσό (€)</label>
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={data.advancePayment?.amount || ''}
+                  onChange={(e) => updateData({
+                    advancePayment: {
+                      enabled: true,
+                      amount: parseFloat(e.target.value) || 0,
+                      method: data.advancePayment?.method || 'cash',
+                    }
+                  })}
+                  placeholder="0.00"
+                  className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-blue-100/65 mb-2">Τρόπος Πληρωμής</label>
+                <select
+                  value={data.advancePayment?.method || 'cash'}
+                  onChange={(e) => updateData({
+                    advancePayment: {
+                      enabled: true,
+                      amount: data.advancePayment?.amount || 0,
+                      method: e.target.value,
+                    }
+                  })}
+                  className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                >
+                  <option value="cash">Μετρητά</option>
+                  <option value="card">Κάρτα</option>
+                  <option value="transfer">Μεταφορά</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => updateData({
+                  advancePayment: { enabled: true, amount: pricing.grandTotal, method: data.advancePayment?.method || 'cash' }
+                })}
+                className="rounded-lg border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-1 text-xs font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d]"
+              >
+                Πλήρης Πληρωμή
+              </button>
+              <button
+                type="button"
+                onClick={() => updateData({
+                  advancePayment: { enabled: true, amount: Math.round(pricing.grandTotal * 0.5 * 100) / 100, method: data.advancePayment?.method || 'cash' }
+                })}
+                className="rounded-lg border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-1 text-xs font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d]"
+              >
+                50% Προκαταβολή
+              </button>
+              <button
+                type="button"
+                onClick={() => updateData({
+                  advancePayment: { enabled: true, amount: Math.round(pricing.grandTotal * 0.3 * 100) / 100, method: data.advancePayment?.method || 'cash' }
+                })}
+                className="rounded-lg border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-1 text-xs font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d]"
+              >
+                30% Προκαταβολή
+              </button>
+            </div>
+
+            {data.advancePayment?.amount > 0 && (
+              <div className="flex justify-between text-sm border-t border-[#1e4e7d]/70 pt-3">
+                <span className="text-blue-100/65">Υπόλοιπο μετά προκαταβολή</span>
+                <span className="font-semibold text-amber-300">
+                  €{Math.max(0, pricing.grandTotal - (data.advancePayment.amount || 0)).toFixed(2)}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Notes */}
       <div>
         <label className="block text-sm font-medium text-blue-100/65 mb-2">

@@ -14,6 +14,7 @@ import {
   PencilSquareIcon
 } from '@heroicons/react/24/outline';
 import ContractGenerator from '../PDF/ContractGenerator';
+import PaymentPanel from '../Payments/PaymentPanel';
 import PageHero from '../Layout/PageHero';
 import type { Station, Vehicle, Pricing, Season, Reservation, Insurance, Extra } from '../../types';
 
@@ -934,6 +935,11 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                         )}
                       </div>
                     </div>
+
+                    <PaymentPanel
+                      reservationId={viewReservation.id}
+                      totalAmount={Number(viewReservation.total_amount) || 0}
+                    />
 
                     {/* Checkout & Checkin Details */}
                     {(checkoutDetails || checkinDetails) && (

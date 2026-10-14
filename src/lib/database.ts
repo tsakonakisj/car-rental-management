@@ -8,7 +8,8 @@ import type {
   Extra,
   Insurance,
   Station,
-  ReservationExtra
+  ReservationExtra,
+  Payment
 } from '../types';
 
 // Demo mode fallback when Supabase is not configured
@@ -852,6 +853,67 @@ export const reservationExtrasService = {
     if (extras.length > 0) {
       await this.createMany(reservationId, extras);
     }
+  }
+};
+
+// Payments
+export const paymentService = {
+  async getByReservationId(reservationId: string): Promise<Payment[]> {
+    if (isDemo) return Promise.resolve([]);
+
+    const { data, error } = await supabase!
+      .from('payments')
+      .select('*')
+      .eq('reservation_id', reservationId)
+      .order('created_at', { ascending: true });
+
+    if (error) throw error;
+    return (data || []).map(row => ({
+      ...row,
+      amount: Number(row.amount) || 0,
+    }));
+  },
+
+  async create(payment: { reservation_id: string; amount: number; method: string; notes?: string }): Promise<Payment> {
+    if (isDemo) {
+      return Promise.resolve({
+        id: Date.now().toString(),
+        reservation_id: payment.reservation_id,
+        amount: payment.amount,
+        method: payment.method as Payment['method'],
+        notes: payment.notes || null,
+        created_at: new Date().toISOString(),
+        created_by: '',
+      });
+    }
+
+    const { data, error } = await supabase!
+      .from('payments')
+      .insert({
+        reservation_id: payment.reservation_id,
+        amount: payment.amount,
+        method: payment.method,
+        notes: payment.notes || null,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return {
+      ...data,
+      amount: Number(data.amount) || 0,
+    };
+  },
+
+  async delete(id: string): Promise<void> {
+    if (isDemo) return Promise.resolve();
+
+    const { error } = await supabase!
+      .from('payments')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
   }
 };
 
