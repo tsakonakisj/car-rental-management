@@ -27,9 +27,10 @@ interface CheckOutFormProps {
   vehicleOdometer?: number;
   onComplete: (data: CheckOutData) => void;
   onCancel: () => void;
+  submitting?: boolean;
 }
 
-const CheckOutForm: React.FC<CheckOutFormProps> = ({ reservationId, vehicleOdometer, onComplete, onCancel }) => {
+const CheckOutForm: React.FC<CheckOutFormProps> = ({ reservationId, vehicleOdometer, onComplete, onCancel, submitting = false }) => {
   const { t } = useLanguage();
   const [checkOutData, setCheckOutData] = useState<CheckOutData>({
     fuel_level: 100,
@@ -365,10 +366,10 @@ const CheckOutForm: React.FC<CheckOutFormProps> = ({ reservationId, vehicleOdome
           </button>
           <button
             onClick={handleSubmit}
-            disabled={false}
+            disabled={submitting}
             className="rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff] disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Ολοκλήρωση Check-out
+            {submitting ? 'Επεξεργασία...' : 'Ολοκλήρωση Check-out'}
           </button>
         </div>
       </div>

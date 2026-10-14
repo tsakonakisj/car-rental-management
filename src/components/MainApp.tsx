@@ -29,6 +29,8 @@ const MainApp: React.FC = () => {
   const [reservationRefresh, setReservationRefresh] = useState(0);
   const [checkOutError, setCheckOutError] = useState('');
   const [checkInError, setCheckInError] = useState('');
+  const [checkOutSubmitting, setCheckOutSubmitting] = useState(false);
+  const [checkInSubmitting, setCheckInSubmitting] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [reservationsInitialFilter, setReservationsInitialFilter] = useState<string>('all');
   const [fleetInitialFilter, setFleetInitialFilter] = useState<'active' | 'inactive' | 'all'>('active');
@@ -80,6 +82,11 @@ const MainApp: React.FC = () => {
   const handleCheckOut = async (reservationId: string) => {
     setCheckOutError('');
     try {
+      const existingCheckout = await checkoutService.getByReservationId(reservationId);
+      if (existingCheckout) {
+        setCheckOutError('Έχει ήδη γίνει check-out για αυτή την κράτηση.');
+        return;
+      }
       const allReservations = await reservationService.getAll();
       const reservation = allReservations.find((r: any) => r.id === reservationId);
       if (!reservation) return;
@@ -94,18 +101,39 @@ const MainApp: React.FC = () => {
     }
   };
 
-  const handleCheckIn = (reservationId: string) => {
-    setCheckInReservation(reservationId);
+  const handleCheckIn = async (reservationId: string) => {
+    setCheckInError('');
+    try {
+      const existingCheckin = await checkinService.getByReservationId(reservationId);
+      if (existingCheckin) {
+        setCheckInError('Έχει ήδη γίνει check-in για αυτή την κράτηση.');
+        return;
+      }
+      const existingCheckout = await checkoutService.getByReservationId(reservationId);
+      if (!existingCheckout) {
+        setCheckInError('Πρέπει να γίνει πρώτα check-out πριν το check-in.');
+        return;
+      }
+      setCheckInReservation(reservationId);
+    } catch {
+      setCheckInError('Αποτυχία φόρτωσης κράτησης.');
+    }
   };
 
   const handleCheckOutComplete = async (data: any) => {
-    if (!checkOutReservation) return;
+    if (!checkOutReservation || checkOutSubmitting) return;
+    setCheckOutSubmitting(true);
     try {
+      const existingCheckout = await checkoutService.getByReservationId(checkOutReservation);
+      if (existingCheckout) {
+        setCheckOutError('Έχει ήδη γίνει check-out για αυτή την κράτηση.');
+        setCheckOutReservation(null);
+        return;
+      }
       const allReservations = await reservationService.getAll();
       const reservation = allReservations.find((r: any) => r.id === checkOutReservation);
       if (!reservation) throw new Error('Reservation not found');
 
-      // Αποθήκευση checkout δεδομένων στη βάση
       await checkoutService.create({
         reservation_id: checkOutReservation,
         fuel_level: data.fuel_level,
@@ -115,7 +143,8 @@ const MainApp: React.FC = () => {
         checked_out_by: user?.id,
       });
 
-      await reservationService.update(checkOutReservation, { status: 'active' });
+      const updated = await reservationService.update(checkOutReservation, { status: 'active' });
+      if (!updated) throw new Error('Failed to update reservation status');
 
       if ((reservation as any).vehicle_id) {
         await vehicleService.update((reservation as any).vehicle_id, { status: 'rented' });
@@ -125,18 +154,26 @@ const MainApp: React.FC = () => {
       setReservationRefresh(prev => prev + 1);
     } catch (err) {
       console.error('Check-out save failed:', err);
-      setCheckOutError('Αποτυχία ολοκλήρωσης check-out.');
+      setCheckOutError('Αποτυχία ολοκλήρωσης check-out. Ελέγξτε αν η κράτηση ενημερώθηκε σωστά.');
+    } finally {
+      setCheckOutSubmitting(false);
     }
   };
 
   const handleCheckInComplete = async (data: any) => {
-    if (!checkInReservation) return;
+    if (!checkInReservation || checkInSubmitting) return;
+    setCheckInSubmitting(true);
     try {
+      const existingCheckin = await checkinService.getByReservationId(checkInReservation);
+      if (existingCheckin) {
+        setCheckInError('Έχει ήδη γίνει check-in για αυτή την κράτηση.');
+        setCheckInReservation(null);
+        return;
+      }
       const allReservations = await reservationService.getAll();
       const reservation = allReservations.find((r: any) => r.id === checkInReservation);
       if (!reservation) throw new Error('Reservation not found');
 
-      // Αποθήκευση checkin δεδομένων στη βάση
       await checkinService.create({
         reservation_id: checkInReservation,
         fuel_level: data.fuel_level,
@@ -146,7 +183,8 @@ const MainApp: React.FC = () => {
         checked_in_by: user?.id,
       });
 
-      await reservationService.update(checkInReservation, { status: 'completed' });
+      const updated = await reservationService.update(checkInReservation, { status: 'completed' });
+      if (!updated) throw new Error('Failed to update reservation status');
 
       if ((reservation as any).vehicle_id) {
         await vehicleService.update((reservation as any).vehicle_id, { status: 'available' });
@@ -156,7 +194,9 @@ const MainApp: React.FC = () => {
       setReservationRefresh(prev => prev + 1);
     } catch (err) {
       console.error('Check-in save failed:', err);
-      setCheckInError('Αποτυχία ολοκλήρωσης check-in.');
+      setCheckInError('Αποτυχία ολοκλήρωσης check-in. Ελέγξτε αν η κράτηση ενημερώθηκε σωστά.');
+    } finally {
+      setCheckInSubmitting(false);
     }
   };
 
@@ -176,6 +216,7 @@ const MainApp: React.FC = () => {
             vehicleOdometer={checkOutVehicleOdometer}
             onComplete={handleCheckOutComplete}
             onCancel={() => setCheckOutReservation(null)}
+            submitting={checkOutSubmitting}
           />
         </div>
       </div>
@@ -197,6 +238,7 @@ const MainApp: React.FC = () => {
             reservationId={checkInReservation}
             onComplete={handleCheckInComplete}
             onCancel={() => setCheckInReservation(null)}
+            submitting={checkInSubmitting}
           />
         </div>
       </div>

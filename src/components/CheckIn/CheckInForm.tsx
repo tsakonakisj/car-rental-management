@@ -34,9 +34,10 @@ interface CheckInFormProps {
   reservationId: string;
   onComplete: (data: CheckInData) => void;
   onCancel: () => void;
+  submitting?: boolean;
 }
 
-const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, onComplete, onCancel }) => {
+const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, onComplete, onCancel, submitting = false }) => {
   const { t } = useLanguage();
   const [checkOutOdometer, setCheckOutOdometer] = useState<number | null>(null);
   const [checkOutFuelLevel, setCheckOutFuelLevel] = useState<number | null>(null);
@@ -535,9 +536,10 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, onComplete, on
           </button>
           <button
             onClick={handleSubmit}
-            className="rounded-xl border border-transparent bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(16,185,129,0.22)] transition-colors hover:bg-emerald-500"
+            disabled={submitting}
+            className="rounded-xl border border-transparent bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(16,185,129,0.22)] transition-colors hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Ολοκλήρωση Check-in
+            {submitting ? 'Επεξεργασία...' : 'Ολοκλήρωση Check-in'}
           </button>
         </div>
       </div>
