@@ -852,7 +852,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                     <CalendarDaysIcon className="h-4 w-4 text-[#72b9ff]" />
                     Παραλαβή
                   </div>
-                  <p className="whitespace-nowrap text-sm font-semibold text-white">{formatDateStr(reservation.pickup_date)}</p>
+                  <p className="whitespace-nowrap text-[11px] font-semibold text-white">{formatDateStr(reservation.pickup_date)}</p>
                   <p className="mt-0.5 truncate text-xs text-blue-100/60">{reservation.pickup_station?.name || '-'}</p>
                 </div>
                 <div className="p-3">
@@ -860,7 +860,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                     <CalendarDaysIcon className="h-4 w-4 text-[#72b9ff]" />
                     Επιστροφή
                   </div>
-                  <p className="whitespace-nowrap text-sm font-semibold text-white">{formatDateStr(reservation.return_date)}</p>
+                  <p className="whitespace-nowrap text-[11px] font-semibold text-white">{formatDateStr(reservation.return_date)}</p>
                   <p className="mt-0.5 truncate text-xs text-blue-100/60">{reservation.return_station?.name || '-'}</p>
                 </div>
                 <div className="p-3">
