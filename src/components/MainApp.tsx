@@ -187,7 +187,17 @@ const MainApp: React.FC = () => {
       if (!updated) throw new Error('Failed to update reservation status');
 
       if ((reservation as any).vehicle_id) {
-        await vehicleService.update((reservation as any).vehicle_id, { status: 'available' });
+        const vehicleId = (reservation as any).vehicle_id;
+        const currentOdometer = (reservation as any).vehicle?.odometer ?? 0;
+        const returnOdometer = Number(data.odometer);
+        const vehicleUpdates: Partial<{ status: string; odometer: number }> = { status: 'available' };
+        if (!isNaN(returnOdometer) && returnOdometer >= currentOdometer) {
+          vehicleUpdates.odometer = returnOdometer;
+        }
+        const vehicleUpdated = await vehicleService.update(vehicleId, vehicleUpdates);
+        if (!vehicleUpdated) {
+          setCheckInError('Η κράτηση ολοκληρώθηκε αλλά η ενημέρωση του οχήματος απέτυχε. Ελέγξτε το χιλιομετρητή.');
+        }
       }
 
       setCheckInReservation(null);
