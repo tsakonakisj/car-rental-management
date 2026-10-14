@@ -737,6 +737,13 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                   <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(reservation.status)}`}>
                     {getStatusLabel(reservation.status)}
                   </span>
+                  <button
+                    onClick={() => setViewReservation(reservation)}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
+                    aria-label="Προβολή"
+                  >
+                    <EyeIcon className="h-5 w-5" />
+                  </button>
                   <div className="relative">
                     <button
                       onClick={() => setActionsMenuId(actionsMenuId === reservation.id ? null : reservation.id)}
@@ -819,63 +826,54 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 border-t border-[#1e4e7d]/70 pt-4">
-                <button
-                  onClick={() => setViewReservation(reservation)}
-                  className={`inline-flex min-h-10 items-center justify-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm font-semibold text-blue-50 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white ${
-                    reservation.status === 'completed' || reservation.status === 'cancelled' ? 'flex-none' : 'flex-1 sm:flex-none'
-                  }`}
-                >
-                  <EyeIcon className="mr-1.5 h-4 w-4" />
-                  Προβολή
-                </button>
-                {reservation.status === 'upcoming' && (
-                  <BookingConfirmation
-                    compact
-                    data={{
-                      reservationId: reservation.id,
-                      customerName: reservation.customer?.name || '-',
-                      customerPhone: reservation.customer?.phone || '-',
-                      vehicleLabel: reservation.vehicle
-                        ? `${reservation.vehicle.brand} ${reservation.vehicle.model} (${reservation.vehicle.plate})`
-                        : `Κατηγορία ${reservation.category}`,
-                      vehicleCategory: reservation.vehicle?.category || reservation.category,
-                      pickupDate: reservation.pickup_date,
-                      returnDate: reservation.return_date,
-                      pickupStation: reservation.pickup_station?.name || '-',
-                      returnStation: reservation.return_station?.name || '-',
-                      totalAmount: Number(reservation.total_amount) || 0,
-                    }}
-                  />
-                )}
-                {reservation.status === 'upcoming' && (
-                  <button
-                    onClick={() => setContractIssueReservation(reservation)}
-                    className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-emerald-400/50 bg-emerald-600/20 px-3 py-2 text-sm font-semibold text-emerald-200 transition-colors hover:bg-emerald-600/30 sm:flex-none"
-                  >
-                    <DocumentTextIcon className="mr-1.5 h-4 w-4" />
-                    Έκδοση Συμβολαίου
-                  </button>
-                )}
-                {reservation.status === 'upcoming' && (
-                  <button
-                    onClick={() => onCheckOut?.(reservation.id)}
-                    className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff] sm:flex-none"
-                  >
-                    <TruckIcon className="mr-1.5 h-4 w-4" />
-                    Check-Out
-                  </button>
-                )}
-                {reservation.status === 'active' && (
-                  <button
-                    onClick={() => handleCheckInClick(reservation)}
-                    className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-transparent bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(16,185,129,0.22)] transition-colors hover:bg-emerald-500 sm:flex-none"
-                  >
-                    <CheckIcon className="mr-1.5 h-4 w-4" />
-                    Check-In
-                  </button>
-                )}
-              </div>
+              {(reservation.status === 'upcoming' || reservation.status === 'active') && (
+                <div className="flex items-stretch gap-2 border-t border-[#1e4e7d]/70 pt-4">
+                  {reservation.status === 'upcoming' && (
+                    <>
+                      <BookingConfirmation
+                        compact
+                        data={{
+                          reservationId: reservation.id,
+                          customerName: reservation.customer?.name || '-',
+                          customerPhone: reservation.customer?.phone || '-',
+                          vehicleLabel: reservation.vehicle
+                            ? `${reservation.vehicle.brand} ${reservation.vehicle.model} (${reservation.vehicle.plate})`
+                            : `Κατηγορία ${reservation.category}`,
+                          vehicleCategory: reservation.vehicle?.category || reservation.category,
+                          pickupDate: reservation.pickup_date,
+                          returnDate: reservation.return_date,
+                          pickupStation: reservation.pickup_station?.name || '-',
+                          returnStation: reservation.return_station?.name || '-',
+                          totalAmount: Number(reservation.total_amount) || 0,
+                        }}
+                      />
+                      <button
+                        onClick={() => setContractIssueReservation(reservation)}
+                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-emerald-400/50 bg-emerald-600/20 px-2 py-2.5 text-xs font-semibold text-emerald-200 transition-colors hover:bg-emerald-600/30 sm:text-sm"
+                      >
+                        <DocumentTextIcon className="h-4 w-4 shrink-0" />
+                        <span className="truncate">Έκδοση Συμβολαίου</span>
+                      </button>
+                      <button
+                        onClick={() => onCheckOut?.(reservation.id)}
+                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-transparent bg-[#1268f3] px-2 py-2.5 text-xs font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff] sm:text-sm"
+                      >
+                        <TruckIcon className="h-4 w-4 shrink-0" />
+                        <span className="truncate">Check-Out</span>
+                      </button>
+                    </>
+                  )}
+                  {reservation.status === 'active' && (
+                    <button
+                      onClick={() => handleCheckInClick(reservation)}
+                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-transparent bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(16,185,129,0.22)] transition-colors hover:bg-emerald-500"
+                    >
+                      <CheckIcon className="h-4 w-4 shrink-0" />
+                      <span>Check-In</span>
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         ))}
