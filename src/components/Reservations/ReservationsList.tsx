@@ -713,7 +713,19 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
       {/* Reservations Grid */}
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {filteredReservations.map((reservation) => (
-          <div key={reservation.id} className="overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)]">
+          <div
+            key={reservation.id}
+            role="button"
+            tabIndex={0}
+            onClick={() => setViewReservation(reservation)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setViewReservation(reservation);
+              }
+            }}
+            className="cursor-pointer overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#55a8ff]/60"
+          >
             <div className="p-4 sm:p-5">
               <div className="flex items-start justify-between mb-4 gap-2">
                 <div>
@@ -722,7 +734,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                   </h3>
                   <p className="text-sm text-blue-100/65">{reservation.customer?.phone || '-'}</p>
                 </div>
-                <div className="flex flex-wrap items-center justify-end gap-2">
+                <div className="flex flex-wrap items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                   <span
                     className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
                       reservation.excel_updated
@@ -827,7 +839,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
               </div>
 
               {(reservation.status === 'upcoming' || reservation.status === 'active') && (
-                <div className="flex items-stretch gap-2 border-t border-[#1e4e7d]/70 pt-4">
+                <div className="flex items-stretch gap-2 border-t border-[#1e4e7d]/70 pt-4" onClick={(e) => e.stopPropagation()}>
                   {reservation.status === 'upcoming' && (
                     <>
                       <BookingConfirmation
