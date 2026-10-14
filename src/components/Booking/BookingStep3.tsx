@@ -233,6 +233,36 @@ const BookingStep3: React.FC<BookingStep3Props> = ({ data, pricing, updateData }
               <span>€{pricing.grandTotal.toFixed(2)}</span>
             </div>
           </div>
+
+          {/* Editable final price */}
+          <div className="rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/60 p-3 space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex-1">
+                <label className="block text-sm font-medium text-blue-100/65 mb-1">
+                  Τελική Συμφωνημένη Τιμή (€)
+                </label>
+                <p className="text-xs text-blue-100/45">
+                  Αυτόματο σύνολο: €{pricing.grandTotal.toFixed(2)} — επεξεργαστείτε για συμφωνημένη τιμή
+                </p>
+              </div>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={data.finalPriceOverride != null ? data.finalPriceOverride : pricing.grandTotal}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value);
+                  updateData({ finalPriceOverride: Number.isFinite(val) ? val : null });
+                }}
+                className="w-32 rounded-lg border border-[#2b5b85]/80 bg-[#0b2949] px-3 py-2 text-sm font-semibold text-white text-right focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+              />
+            </div>
+            {data.finalPriceOverride != null && Math.abs(data.finalPriceOverride - pricing.grandTotal) > 0.001 && (
+              <p className="text-xs text-amber-300">
+                Η τιμή διαφέρει από το αυτόματο σύνολο κατά €{(data.finalPriceOverride - pricing.grandTotal).toFixed(2)}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -299,7 +329,7 @@ const BookingStep3: React.FC<BookingStep3Props> = ({ data, pricing, updateData }
               <button
                 type="button"
                 onClick={() => updateData({
-                  advancePayment: { enabled: true, amount: pricing.grandTotal, method: data.advancePayment?.method || 'cash' }
+                  advancePayment: { enabled: true, amount: data.finalPriceOverride != null ? data.finalPriceOverride : pricing.grandTotal, method: data.advancePayment?.method || 'cash' }
                 })}
                 className="rounded-lg border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-1 text-xs font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d]"
               >
@@ -308,7 +338,7 @@ const BookingStep3: React.FC<BookingStep3Props> = ({ data, pricing, updateData }
               <button
                 type="button"
                 onClick={() => updateData({
-                  advancePayment: { enabled: true, amount: Math.round(pricing.grandTotal * 0.5 * 100) / 100, method: data.advancePayment?.method || 'cash' }
+                  advancePayment: { enabled: true, amount: Math.round((data.finalPriceOverride != null ? data.finalPriceOverride : pricing.grandTotal) * 0.5 * 100) / 100, method: data.advancePayment?.method || 'cash' }
                 })}
                 className="rounded-lg border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-1 text-xs font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d]"
               >
@@ -317,7 +347,7 @@ const BookingStep3: React.FC<BookingStep3Props> = ({ data, pricing, updateData }
               <button
                 type="button"
                 onClick={() => updateData({
-                  advancePayment: { enabled: true, amount: Math.round(pricing.grandTotal * 0.3 * 100) / 100, method: data.advancePayment?.method || 'cash' }
+                  advancePayment: { enabled: true, amount: Math.round((data.finalPriceOverride != null ? data.finalPriceOverride : pricing.grandTotal) * 0.3 * 100) / 100, method: data.advancePayment?.method || 'cash' }
                 })}
                 className="rounded-lg border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-1 text-xs font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d]"
               >
@@ -329,7 +359,7 @@ const BookingStep3: React.FC<BookingStep3Props> = ({ data, pricing, updateData }
               <div className="flex justify-between text-sm border-t border-[#1e4e7d]/70 pt-3">
                 <span className="text-blue-100/65">Υπόλοιπο μετά προκαταβολή</span>
                 <span className="font-semibold text-amber-300">
-                  €{Math.max(0, pricing.grandTotal - (data.advancePayment.amount || 0)).toFixed(2)}
+                  €{Math.max(0, (data.finalPriceOverride != null ? data.finalPriceOverride : pricing.grandTotal) - (data.advancePayment.amount || 0)).toFixed(2)}
                 </span>
               </div>
             )}

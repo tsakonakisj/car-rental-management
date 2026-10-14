@@ -19,7 +19,7 @@ const daysBetweenUTC = (start: string, end: string) => {
   const [ey, em, ed] = end.split('-').map(Number);
   const s = Date.UTC(sy, sm - 1, sd);
   const e = Date.UTC(ey, em - 1, ed);
-  return Math.max(1, Math.round((e - s) / 86400000));
+  return Math.max(1, Math.round((e - s) / 86400000) + 1);
 };
 
 interface BookingData {
@@ -49,6 +49,7 @@ interface BookingData {
     source: string;
   };
   notes: string;
+  finalPriceOverride: number | null;
   advancePayment: {
     enabled: boolean;
     amount: number;
@@ -122,6 +123,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
         source: 'store'
       },
       notes: '',
+      finalPriceOverride: null,
       advancePayment: { enabled: false, amount: 0, method: 'cash' }
     };
   });
@@ -282,7 +284,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
         daily_rate: pricing.rate,
         insurance_type: bookingData.insuranceType || 'Βασική Ασφάλεια',
         insurance_rate: bookingData.insuranceRate || 0,
-        total_amount: pricing.grandTotal,
+        total_amount: bookingData.finalPriceOverride != null ? bookingData.finalPriceOverride : pricing.grandTotal,
         notes: bookingData.notes || '',
         status: 'upcoming',
         excel_updated: false

@@ -82,6 +82,7 @@ interface EditFormData {
   category: string;
   notes: string;
   extras: { [extraId: string]: number };
+  finalPriceOverride: number | null;
   originalPickupDate: string;
   originalVehicleId: string;
   originalCategory: string;
@@ -117,7 +118,7 @@ function calcDaysBetween(startDate: string, endDate: string): number {
   const [ey, em, ed] = endDate.split('-').map(Number);
   const s = Date.UTC(sy, sm - 1, sd);
   const e = Date.UTC(ey, em - 1, ed);
-  return Math.max(1, Math.round((e - s) / 86400000));
+  return Math.max(1, Math.round((e - s) / 86400000) + 1);
 }
 
 
@@ -345,6 +346,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
         category: reservation.category || '',
         notes: reservation.notes || '',
         extras: extrasMap,
+        finalPriceOverride: null,
         originalPickupDate: pickup.date,
         originalVehicleId: reservation.vehicle_id || '',
         originalCategory: reservation.category || '',
@@ -421,7 +423,8 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
           : price * quantity;
       });
 
-      const totalAmount = (dailyRate * days) + (insuranceRate * days) + extrasTotal;
+      const calculatedTotal = (dailyRate * days) + (insuranceRate * days) + extrasTotal;
+      const totalAmount = editForm.finalPriceOverride != null ? editForm.finalPriceOverride : calculatedTotal;
 
       // Overlap check: prevent double-booking when editing
       if (editForm.vehicleId) {
@@ -1375,6 +1378,25 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                               <div className="flex justify-between text-sm font-bold border-t pt-2">
                                 <span>Σύνολο</span>
                                 <span className="text-emerald-300">{'\u20AC'}{grandTotal.toFixed(2)}</span>
+                              </div>
+                              <div className="mt-3 rounded-lg border border-[#2b5b85]/80 bg-[#0b2949]/60 p-3">
+                                <label className="block text-xs text-blue-100/55 mb-1">Τελική Συμφωνημένη Τιμή (€)</label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={editForm.finalPriceOverride != null ? editForm.finalPriceOverride : grandTotal}
+                                  onChange={(e) => {
+                                    const val = parseFloat(e.target.value);
+                                    setEditForm({ ...editForm, finalPriceOverride: Number.isFinite(val) ? val : null });
+                                  }}
+                                  className="w-full rounded-lg border border-[#2b5b85]/80 bg-[#0b2949] px-3 py-2 text-sm font-semibold text-white text-right focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                                />
+                                {editForm.finalPriceOverride != null && Math.abs(editForm.finalPriceOverride - grandTotal) > 0.001 && (
+                                  <p className="text-xs text-amber-300 mt-1">
+                                    Διαφορά από αυτόματο: {'\u20AC'}{(editForm.finalPriceOverride - grandTotal).toFixed(2)}
+                                  </p>
+                                )}
                               </div>
                             </div>
                           );
