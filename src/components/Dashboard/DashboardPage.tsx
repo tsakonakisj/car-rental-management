@@ -202,7 +202,7 @@ const FLEET_CARD_THEMES: Record<string, DashboardCardTheme> = {
     icon: 'text-[#b7ddff]',
     iconBackground: 'bg-[#1678d9]/70',
     accent: 'text-white',
-    badge: '',
+    badge: 'bg-slate-400/45 text-blue-100',
     decoration: 'from-[#1268f3]/40 via-[#1268f3]/15 to-transparent text-[#1268f3]/30',
   },
   available: {
@@ -210,7 +210,7 @@ const FLEET_CARD_THEMES: Record<string, DashboardCardTheme> = {
     icon: 'text-[#9bffd0]',
     iconBackground: 'bg-emerald-500/65',
     accent: 'text-[#b9ffe0]',
-    badge: '',
+    badge: 'bg-emerald-500/55 text-[#7dffc1]',
     decoration: 'from-emerald-500/35 via-emerald-500/15 to-transparent text-emerald-500/25',
   },
   reserved: {
@@ -218,7 +218,7 @@ const FLEET_CARD_THEMES: Record<string, DashboardCardTheme> = {
     icon: 'text-[#ffe08b]',
     iconBackground: 'bg-amber-500/65',
     accent: 'text-[#fff0a8]',
-    badge: '',
+    badge: 'bg-amber-500/55 text-[#ffe08b]',
     decoration: 'from-amber-500/35 via-amber-500/15 to-transparent text-amber-500/25',
   },
   active: {
@@ -226,7 +226,7 @@ const FLEET_CARD_THEMES: Record<string, DashboardCardTheme> = {
     icon: 'text-[#b7ddff]',
     iconBackground: 'bg-[#1678d9]/70',
     accent: 'text-[#b9e1ff]',
-    badge: '',
+    badge: 'bg-[#1678d9]/65 text-[#a8d6ff]',
     decoration: 'from-[#1268f3]/40 via-[#1268f3]/15 to-transparent text-[#1268f3]/30',
   },
   service: {
@@ -234,7 +234,7 @@ const FLEET_CARD_THEMES: Record<string, DashboardCardTheme> = {
     icon: 'text-[#ffadb5]',
     iconBackground: 'bg-rose-500/65',
     accent: 'text-[#ffc0c7]',
-    badge: '',
+    badge: 'bg-rose-500/55 text-[#ffadb5]',
     decoration: 'from-rose-500/35 via-rose-500/15 to-transparent text-rose-500/25',
   },
 };
@@ -589,11 +589,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
       <div>
         <h2 className="mb-4 text-lg font-semibold tracking-[-0.02em] text-white">Στόλος</h2>
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-          <DashboardMetricCard title="Σύνολο" value={fleetStats.total} icon={TruckIcon} theme={FLEET_CARD_THEMES.total} onClick={() => onNavigateFleet?.()} />
-          <DashboardMetricCard title="Διαθέσιμα" value={fleetStats.available} icon={TruckIcon} theme={FLEET_CARD_THEMES.available} onClick={() => onNavigateFleet?.()} />
-          <DashboardMetricCard title="Κρατημένα" value={fleetStats.reserved} icon={ClockIcon} theme={FLEET_CARD_THEMES.reserved} onClick={() => onNavigateFleet?.()} />
-          <DashboardMetricCard title="Ενεργά" value={fleetStats.active} icon={TruckIcon} theme={FLEET_CARD_THEMES.active} onClick={() => onNavigateReservations?.('active')} />
-          <DashboardMetricCard title="Συντήρηση" value={fleetStats.service} icon={WrenchScrewdriverIcon} theme={FLEET_CARD_THEMES.service} onClick={() => onNavigateFleet?.()} />
+          <DashboardMetricCard title="Σύνολο" value={fleetStats.total} icon={TruckIcon} theme={FLEET_CARD_THEMES.total} badge="Σύνολο" showTitle={false} onClick={() => onNavigateFleet?.()} />
+          <DashboardMetricCard title="Διαθέσιμα" value={fleetStats.available} icon={TruckIcon} theme={FLEET_CARD_THEMES.available} badge="Διαθέσιμα" showTitle={false} onClick={() => onNavigateFleet?.()} />
+          <DashboardMetricCard title="Κρατημένα" value={fleetStats.reserved} icon={ClockIcon} theme={FLEET_CARD_THEMES.reserved} badge="Κρατημένα" showTitle={false} onClick={() => onNavigateFleet?.()} />
+          <DashboardMetricCard title="Ενεργά" value={fleetStats.active} icon={TruckIcon} theme={FLEET_CARD_THEMES.active} badge="Ενεργά" showTitle={false} onClick={() => onNavigateReservations?.('active')} />
+          <DashboardMetricCard title="Συντήρηση" value={fleetStats.service} icon={WrenchScrewdriverIcon} theme={FLEET_CARD_THEMES.service} badge="Συντήρηση" showTitle={false} onClick={() => onNavigateFleet?.()} />
         </div>
       </div>
 
