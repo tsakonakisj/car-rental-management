@@ -587,7 +587,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
     const { date, time } = splitDateTime(dateStr);
     if (!date) return dateStr;
     const [y, m, d] = date.split('-');
-    return `${d}/${m}/${y} ${time}`;
+    return `${d}/${m}/${y}\u00A0${time}`;
   };
 
   if (loading && reservations.length === 0) {
@@ -766,8 +766,8 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                 </div>
               </div>
 
-              <div className="mb-5 flex flex-col gap-5 border-b border-[#1e4e7d]/70 pb-5 sm:flex-row sm:items-center">
-                <div className="relative flex h-28 w-full shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#2b5b85]/60 bg-[#061a31] sm:h-28 sm:w-44">
+              <div className="mb-4 flex flex-col gap-4 border-b border-[#1e4e7d]/70 pb-4 sm:flex-row sm:items-center">
+                <div className="relative flex h-24 w-full shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#2b5b85]/60 bg-[#061a31] sm:h-24 sm:w-40">
                   <TruckIcon className="h-12 w-12 text-[#2b5b85]/70" />
                   {reservation.vehicle?.photo_url && cardPhotoUrls.get(reservation.vehicle.photo_url) && (
                     <img
@@ -779,52 +779,54 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-[0.12em] text-blue-100/50">Όχημα</p>
-                  <p className="truncate text-xl font-semibold tracking-[-0.02em] text-white">
+                  <p className="mb-0.5 text-xs font-semibold uppercase tracking-[0.12em] text-blue-100/50">Όχημα</p>
+                  <p className="truncate text-lg font-semibold tracking-[-0.02em] text-white">
                     {reservation.vehicle ? `${reservation.vehicle.brand} ${reservation.vehicle.model}` : 'Όχημα μη διαθέσιμο'}
                   </p>
-                  <p className="mt-1 text-base font-medium text-blue-100/65">{reservation.vehicle?.plate || '-'}</p>
+                  <p className="mt-0.5 text-sm font-medium text-blue-100/65">{reservation.vehicle?.plate || '-'}</p>
                 </div>
-                <div className="shrink-0 sm:min-w-24">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-blue-100/50">Κατηγορία</p>
-                  <span className="inline-flex min-w-12 items-center justify-center rounded-xl border border-[#3475aa] bg-[#0b2949] px-3 py-2 text-lg font-semibold text-blue-50">
+                <div className="shrink-0 sm:min-w-20">
+                  <p className="mb-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-blue-100/50">Κατηγορία</p>
+                  <span className="inline-flex min-w-10 items-center justify-center rounded-lg border border-[#3475aa] bg-[#0b2949] px-2.5 py-1.5 text-base font-semibold text-blue-50">
                     {reservation.vehicle?.category || reservation.category}
                   </span>
                 </div>
               </div>
 
-              <div className="mb-5 grid grid-cols-1 divide-y divide-[#1e4e7d]/70 rounded-xl border border-[#1e4e7d]/70 bg-[#061a31]/45 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-                <div className="p-3 sm:p-4">
-                  <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-blue-100/50">
-                    <CalendarDaysIcon className="h-5 w-5 text-[#72b9ff]" />
+              <div className="mb-4 grid grid-cols-1 divide-y divide-[#1e4e7d]/70 rounded-xl border border-[#1e4e7d]/70 bg-[#061a31]/45 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+                <div className="p-3">
+                  <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-blue-100/50">
+                    <CalendarDaysIcon className="h-4 w-4 text-[#72b9ff]" />
                     Παραλαβή
                   </div>
-                  <p className="text-sm font-semibold text-white sm:text-base">{formatDateStr(reservation.pickup_date)}</p>
-                  <p className="mt-1 truncate text-sm text-blue-100/60">{reservation.pickup_station?.name || '-'}</p>
+                  <p className="whitespace-nowrap text-sm font-semibold text-white">{formatDateStr(reservation.pickup_date)}</p>
+                  <p className="mt-0.5 truncate text-xs text-blue-100/60">{reservation.pickup_station?.name || '-'}</p>
                 </div>
-                <div className="p-3 sm:p-4">
-                  <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-blue-100/50">
-                    <CalendarDaysIcon className="h-5 w-5 text-[#72b9ff]" />
+                <div className="p-3">
+                  <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-blue-100/50">
+                    <CalendarDaysIcon className="h-4 w-4 text-[#72b9ff]" />
                     Επιστροφή
                   </div>
-                  <p className="text-sm font-semibold text-white sm:text-base">{formatDateStr(reservation.return_date)}</p>
-                  <p className="mt-1 truncate text-sm text-blue-100/60">{reservation.return_station?.name || '-'}</p>
+                  <p className="whitespace-nowrap text-sm font-semibold text-white">{formatDateStr(reservation.return_date)}</p>
+                  <p className="mt-0.5 truncate text-xs text-blue-100/60">{reservation.return_station?.name || '-'}</p>
                 </div>
-                <div className="p-3 sm:p-4">
-                  <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-blue-100/50">
-                    <CurrencyEuroIcon className="h-5 w-5 text-[#72b9ff]" />
+                <div className="p-3">
+                  <div className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.1em] text-blue-100/50">
+                    <CurrencyEuroIcon className="h-4 w-4 text-[#72b9ff]" />
                     Σύνολο
                   </div>
-                  <p className="text-2xl font-bold text-emerald-300">{'\u20AC'}{Number(reservation.total_amount || 0).toFixed(2)}</p>
+                  <p className="text-xl font-bold text-emerald-300">{'\u20AC'}{Number(reservation.total_amount || 0).toFixed(2)}</p>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 border-t border-[#1e4e7d]/70 pt-5">
+              <div className="flex flex-wrap items-center gap-2 border-t border-[#1e4e7d]/70 pt-4">
                 <button
                   onClick={() => setViewReservation(reservation)}
-                  className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm font-semibold text-blue-50 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white sm:flex-none"
+                  className={`inline-flex min-h-10 items-center justify-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm font-semibold text-blue-50 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white ${
+                    reservation.status === 'completed' || reservation.status === 'cancelled' ? 'flex-none' : 'flex-1 sm:flex-none'
+                  }`}
                 >
-                  <EyeIcon className="mr-2 h-5 w-5" />
+                  <EyeIcon className="mr-1.5 h-4 w-4" />
                   Προβολή
                 </button>
                 {reservation.status === 'upcoming' && (
@@ -849,27 +851,27 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                 {reservation.status === 'upcoming' && (
                   <button
                     onClick={() => setContractIssueReservation(reservation)}
-                    className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-emerald-400/50 bg-emerald-600/20 px-3 py-2 text-sm font-semibold text-emerald-200 transition-colors hover:bg-emerald-600/30 sm:flex-none"
+                    className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-emerald-400/50 bg-emerald-600/20 px-3 py-2 text-sm font-semibold text-emerald-200 transition-colors hover:bg-emerald-600/30 sm:flex-none"
                   >
-                    <DocumentTextIcon className="mr-2 h-5 w-5" />
+                    <DocumentTextIcon className="mr-1.5 h-4 w-4" />
                     Έκδοση Συμβολαίου
                   </button>
                 )}
                 {reservation.status === 'upcoming' && (
                   <button
                     onClick={() => onCheckOut?.(reservation.id)}
-                    className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff] sm:flex-none"
+                    className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff] sm:flex-none"
                   >
-                    <TruckIcon className="mr-2 h-5 w-5" />
+                    <TruckIcon className="mr-1.5 h-4 w-4" />
                     Check-Out
                   </button>
                 )}
                 {reservation.status === 'active' && (
                   <button
                     onClick={() => handleCheckInClick(reservation)}
-                    className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-transparent bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(16,185,129,0.22)] transition-colors hover:bg-emerald-500 sm:flex-none"
+                    className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-transparent bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(16,185,129,0.22)] transition-colors hover:bg-emerald-500 sm:flex-none"
                   >
-                    <CheckIcon className="mr-2 h-5 w-5" />
+                    <CheckIcon className="mr-1.5 h-4 w-4" />
                     Check-In
                   </button>
                 )}
