@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { reservationService, customerService, stationService, vehicleService, pricingService, resolveDailyRate, insuranceService, reservationExtrasService, photoService, checkoutService, checkinService, hasVehicleBookingConflict } from '../../lib/database';
 import type { CheckoutDetails, CheckinDetails } from '../../lib/database';
 import { useAuth } from '../../contexts/AuthContext';
@@ -16,9 +16,8 @@ import {
   EllipsisHorizontalIcon,
   CurrencyEuroIcon
 } from '@heroicons/react/24/outline';
-import ContractGenerator from '../PDF/ContractGenerator';
+import ContractGenerator, { type ContractGeneratorRef } from '../PDF/ContractGenerator';
 import BookingConfirmation from '../PDF/BookingConfirmation';
-import ContractIssueModal from '../PDF/ContractIssueModal';
 import PaymentPanel from '../Payments/PaymentPanel';
 import PageHero from '../Layout/PageHero';
 import type { Station, Vehicle, Pricing, Season, Reservation, Insurance, Extra } from '../../types';
@@ -165,7 +164,9 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
   const [editSeasons, setEditSeasons] = useState<Season[]>([]);
   const [editInsurances, setEditInsurances] = useState<Insurance[]>([]);
   const [editExtras, setEditExtras] = useState<Extra[]>([]);
-  const [contractIssueReservation, setContractIssueReservation] = useState<ReservationRow | null>(null);
+  const [contractMode, setContractMode] = useState(false);
+  const [contractGenReservation, setContractGenReservation] = useState<ReservationRow | null>(null);
+  const contractGenRef = useRef<ContractGeneratorRef>(null);
   const [actionsMenuId, setActionsMenuId] = useState<string | null>(null);
   const [cardPhotoUrls, setCardPhotoUrls] = useState<Map<string, string>>(new Map());
 
@@ -218,6 +219,13 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
 
     return () => { cancelled = true; };
   }, [reservations]);
+
+  useEffect(() => {
+    if (contractGenReservation && contractGenRef.current) {
+      contractGenRef.current.generate();
+      setContractGenReservation(null);
+    }
+  }, [contractGenReservation]);
 
   useEffect(() => {
     if (!viewReservation) {
@@ -392,6 +400,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
     setEditing(false);
     setEditForm(null);
     setSaveError('');
+    setContractMode(false);
   };
 
   const handleSaveEdit = async () => {
@@ -500,6 +509,14 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
       setEditForm(null);
       setViewReservation(null);
       await fetchReservations();
+      if (contractMode) {
+        const allRes = await reservationService.getAll();
+        const fresh = (allRes as ReservationRow[]).find(r => r.id === viewReservation.id);
+        if (fresh) {
+          setContractGenReservation(fresh);
+        }
+        setContractMode(false);
+      }
     } catch (err) {
       console.error('Save failed:', err);
       setSaveError('Αποτυχία αποθήκευσης. Δοκιμάστε ξανά.');
@@ -860,7 +877,11 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                         }}
                       />
                       <button
-                        onClick={() => setContractIssueReservation(reservation)}
+                        onClick={() => {
+                        setViewReservation(reservation);
+                        setContractMode(true);
+                        startEditing(reservation);
+                      }}
                         className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-emerald-400/50 bg-emerald-600/20 px-2 py-2.5 text-xs font-semibold text-emerald-200 transition-colors hover:bg-emerald-600/30 sm:text-sm"
                       >
                         <DocumentTextIcon className="h-4 w-4 shrink-0" />
@@ -1558,7 +1579,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                       disabled={saving}
                       className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-[#1268f3] hover:bg-[#2478ff] disabled:opacity-50 transition-colors"
                     >
-                      {saving ? 'Αποθήκευση...' : 'Αποθήκευση'}
+                      {saving ? 'Αποθήκευση...' : (contractMode ? 'Αποθήκευση & Έκδοση Συμβολαίου' : 'Αποθήκευση')}
                     </button>
                   </>
                 )}
@@ -1643,12 +1664,11 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
         </div>
       )}
 
-      {/* Contract Issue Modal */}
-      {contractIssueReservation && (
-        <ContractIssueModal
-          reservation={contractIssueReservation}
-          onClose={() => setContractIssueReservation(null)}
-        />
+      {/* Hidden Contract Generator for programmatic PDF generation after save */}
+      {contractGenReservation && (
+        <div className="hidden">
+          <ContractGenerator ref={contractGenRef} data={getContractData(contractGenReservation)} />
+        </div>
       )}
     </div>
   );
