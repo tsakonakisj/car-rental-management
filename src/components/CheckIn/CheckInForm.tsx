@@ -75,6 +75,7 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, onComplete, on
           }
           if (typeof checkout.fuel_level === 'number') {
             setCheckOutFuelLevel(checkout.fuel_level);
+            setCheckInData(prev => ({ ...prev, fuel_level: checkout.fuel_level }));
           }
         }
       } catch (err) {
@@ -257,6 +258,19 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, onComplete, on
                 <span>100%</span>
               </div>
               <p className="text-center mt-2 font-medium text-white">{checkInData.fuel_level}%</p>
+              {checkOutFuelLevel != null && (
+                <p className="text-xs text-blue-100/45 mt-1 text-center">
+                  Καύσιμο παράδοσης: {checkOutFuelLevel}%
+                </p>
+              )}
+              {checkOutFuelLevel != null && checkInData.fuel_level < checkOutFuelLevel && (
+                <div className="mt-2 rounded-lg border border-amber-400/40 bg-amber-950/40 px-3 py-2">
+                  <p className="text-sm text-amber-200">
+                    Διαφορά καυσίμου: {checkOutFuelLevel - checkInData.fuel_level}%
+                    {' '}({((checkOutFuelLevel - checkInData.fuel_level) / 100 * 100).toFixed(0)}% λιγότερο)
+                  </p>
+                </div>
+              )}
             </div>
 
             <div>
