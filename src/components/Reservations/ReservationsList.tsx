@@ -11,10 +11,12 @@ import {
   ArrowPathIcon,
   MagnifyingGlassIcon,
   CalendarDaysIcon,
-  PencilSquareIcon
+  PencilSquareIcon,
+  DocumentTextIcon
 } from '@heroicons/react/24/outline';
 import ContractGenerator from '../PDF/ContractGenerator';
 import BookingConfirmation from '../PDF/BookingConfirmation';
+import ContractIssueModal from '../PDF/ContractIssueModal';
 import PaymentPanel from '../Payments/PaymentPanel';
 import PageHero from '../Layout/PageHero';
 import type { Station, Vehicle, Pricing, Season, Reservation, Insurance, Extra } from '../../types';
@@ -160,6 +162,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
   const [editSeasons, setEditSeasons] = useState<Season[]>([]);
   const [editInsurances, setEditInsurances] = useState<Insurance[]>([]);
   const [editExtras, setEditExtras] = useState<Extra[]>([]);
+  const [contractIssueReservation, setContractIssueReservation] = useState<ReservationRow | null>(null);
 
   const fetchReservations = useCallback(async () => {
     setLoading(true);
@@ -767,6 +770,15 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                       returnStation: reservation.return_station?.name || '-',
                       totalAmount: Number(reservation.total_amount) || 0,
                     }} />
+                  )}
+                  {reservation.status === 'upcoming' && (
+                    <button
+                      onClick={() => setContractIssueReservation(reservation)}
+                      className="inline-flex min-h-10 items-center rounded-xl border border-green-500/40 bg-green-600/15 px-3 py-1.5 text-sm font-medium text-green-300 transition-colors hover:bg-green-600/25 hover:text-green-200"
+                    >
+                      <DocumentTextIcon className="h-4 w-4 mr-1" />
+                      Έκδοση Συμβολαίου
+                    </button>
                   )}
                   {reservation.status !== 'cancelled' && reservation.status !== 'completed' && (
                     <button
@@ -1468,6 +1480,15 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                         <PencilSquareIcon className="h-4 w-4 mr-2" />
                         Επεξεργασία
                       </button>
+                      {viewReservation.status === 'upcoming' && (
+                        <button
+                          onClick={() => setContractIssueReservation(viewReservation)}
+                          className="inline-flex items-center px-4 py-2 border border-green-500/40 text-sm font-medium rounded-lg text-green-300 bg-green-600/15 hover:bg-green-600/25 transition-colors"
+                        >
+                          <DocumentTextIcon className="h-4 w-4 mr-2" />
+                          Έκδοση Συμβολαίου
+                        </button>
+                      )}
                       {isAdmin && (viewReservation.status === 'upcoming' || viewReservation.status === 'cancelled') && (
                         <button
                           onClick={() => openDeleteConfirm(viewReservation)}
@@ -1583,6 +1604,14 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
             <XMarkIcon className="h-8 w-8" />
           </button>
         </div>
+      )}
+
+      {/* Contract Issue Modal */}
+      {contractIssueReservation && (
+        <ContractIssueModal
+          reservation={contractIssueReservation}
+          onClose={() => setContractIssueReservation(null)}
+        />
       )}
     </div>
   );

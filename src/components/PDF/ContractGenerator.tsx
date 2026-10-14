@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import jsPDF from 'jspdf';
 import { DocumentTextIcon } from '@heroicons/react/24/outline';
 import { loadCompanyConfig, loadContractTerms, company as defaultCompany } from '../../lib/company';
 import { reservationExtrasService } from '../../lib/database';
 
-interface ContractData {
+export interface ContractData {
   reservation: {
     id: string;
     customer: {
@@ -39,8 +39,12 @@ interface ContractData {
   };
 }
 
-interface ContractGeneratorProps {
+export interface ContractGeneratorProps {
   data: ContractData;
+}
+
+export interface ContractGeneratorRef {
+  generate: () => Promise<void>;
 }
 
 interface FontCache {
@@ -125,7 +129,7 @@ function fuelFraction(pct: number): string {
   return '0/8 (0%)';
 }
 
-const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
+const ContractGenerator = forwardRef<ContractGeneratorRef, ContractGeneratorProps>(({ data }, ref) => {
   const [generating, setGenerating] = useState(false);
 
   const generateContract = async () => {
@@ -663,6 +667,8 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
     }
   };
 
+  useImperativeHandle(ref, () => ({ generate: generateContract }));
+
   return (
     <button
       onClick={generateContract}
@@ -673,6 +679,7 @@ const ContractGenerator: React.FC<ContractGeneratorProps> = ({ data }) => {
       {generating ? 'Δημιουργία...' : 'Σύμβολαιο PDF'}
     </button>
   );
-};
+});
 
 export default ContractGenerator;
+
