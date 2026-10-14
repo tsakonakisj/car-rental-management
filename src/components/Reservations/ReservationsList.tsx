@@ -38,6 +38,7 @@ interface ReservationRow {
   total_amount: number;
   notes?: string;
   excel_updated?: boolean;
+  contract_issued_at?: string | null;
   created_at: string;
   customer: {
     id: string;
@@ -221,11 +222,26 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
   }, [reservations]);
 
   useEffect(() => {
-    if (contractGenReservation && contractGenRef.current) {
-      contractGenRef.current.generate();
-      setContractGenReservation(null);
-    }
-  }, [contractGenReservation]);
+    if (!contractGenReservation || !contractGenRef.current) return;
+    const reservationId = contractGenReservation.id;
+    const generator = contractGenRef.current;
+    // Clear first to avoid duplicate generation on rerenders.
+    setContractGenReservation(null);
+    void (async () => {
+      const generated = await generator.generate();
+      if (!generated) {
+        setActionError('Δεν δημιουργήθηκε το PDF συμβολαίου. Δεν καταγράφηκε έκδοση.');
+        return;
+      }
+      try {
+        await reservationService.update(reservationId, { contract_issued_at: new Date().toISOString() });
+        await fetchReservations();
+      } catch (err) {
+        console.error('Failed to record contract issuance:', err);
+        setActionError('Το PDF δημιουργήθηκε, αλλά δεν καταγράφηκε η έκδοση στη βάση.');
+      }
+    })();
+  }, [contractGenReservation, fetchReservations]);
 
   useEffect(() => {
     if (!viewReservation) {
