@@ -44,7 +44,7 @@ export interface ContractGeneratorProps {
 }
 
 export interface ContractGeneratorRef {
-  generate: () => Promise<void>;
+  generate: () => Promise<boolean>;
 }
 
 interface FontCache {
@@ -664,8 +664,10 @@ const ContractGenerator = forwardRef<ContractGeneratorRef, ContractGeneratorProp
       doc.text(`ΑΦΜ: ${company.taxNumber}  |  ${company.registrationNumber}`, PW / 2, footerY + 4, { align: 'center' });
 
       doc.save(`contract-${r.id.substring(0, 8)}.pdf`);
+      return true;
     } catch (err) {
       console.error('PDF generation failed:', err);
+      return false;
     } finally {
       setGenerating(false);
     }
