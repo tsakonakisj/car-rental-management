@@ -198,12 +198,12 @@ const STATUS_CARD_THEMES: Record<string, DashboardCardTheme> = {
 
 const FLEET_CARD_THEMES: Record<string, DashboardCardTheme> = {
   total: {
-    border: 'border-blue-500/60',
-    icon: 'text-[#b7ddff]',
-    iconBackground: 'bg-[#1678d9]/70',
+    border: 'border-slate-400/40',
+    icon: 'text-blue-100',
+    iconBackground: 'bg-slate-500/70',
     accent: 'text-white',
     badge: 'bg-slate-400/45 text-blue-100',
-    decoration: 'from-[#1268f3]/40 via-[#1268f3]/15 to-transparent text-[#1268f3]/30',
+    decoration: 'from-slate-500/30 via-slate-500/10 to-transparent text-slate-400/25',
   },
   available: {
     border: 'border-emerald-500/50',

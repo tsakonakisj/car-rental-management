@@ -12,7 +12,8 @@ import {
   EnvelopeIcon,
   ArrowPathIcon,
   XMarkIcon,
-  CalendarDaysIcon
+  CalendarDaysIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
 
 interface CustomerReservation {
@@ -37,6 +38,12 @@ const CustomerManagement: React.FC<CustomerManagementProps> = ({ onViewReservati
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [customerReservations, setCustomerReservations] = useState<CustomerReservation[]>([]);
   const [loadingReservations, setLoadingReservations] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<Customer | null>(null);
+  const [deleteReservationCount, setDeleteReservationCount] = useState<number | null>(null);
+  const [deleteError, setDeleteError] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   const fetchCustomers = useCallback(async () => {
     setLoading(true);
@@ -61,6 +68,38 @@ const CustomerManagement: React.FC<CustomerManagementProps> = ({ onViewReservati
     customer.phone.includes(searchTerm) ||
     (customer.email || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const openDeleteConfirm = async (customer: Customer) => {
+    setDeleteTarget(customer);
+    setDeleteConfirmText('');
+    setDeleteReservationCount(null);
+    setDeleteError('');
+    setDeleteConfirmOpen(true);
+    try {
+      setDeleteReservationCount(await customerService.getReservationCount(customer.id));
+    } catch (err) {
+      console.error('Failed to check customer reservations:', err);
+      setDeleteError('Δεν ήταν δυνατός ο έλεγχος των κρατήσεων του πελάτη.');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget || deleteReservationCount !== 0) return;
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      await customerService.delete(deleteTarget.id);
+      await fetchCustomers();
+      setDeleteConfirmOpen(false);
+      setDeleteTarget(null);
+      setDeleteConfirmText('');
+    } catch (err) {
+      console.error('Failed to delete customer:', err);
+      setDeleteError('Αποτυχία διαγραφής πελάτη.');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const openCustomerModal = async (customer: Customer) => {
     setSelectedCustomer(customer);
@@ -229,6 +268,14 @@ const CustomerManagement: React.FC<CustomerManagementProps> = ({ onViewReservati
                     <EyeIcon className="mr-1 h-4 w-4" />
                     Προβολή
                   </button>
+                  <button
+                    onClick={() => openDeleteConfirm(customer)}
+                    disabled={deleting && deleteTarget?.id === customer.id}
+                    className="inline-flex min-h-10 items-center justify-center rounded-xl border border-red-400/50 bg-[#071d38] px-3 py-2 text-sm font-medium text-red-100 transition-colors hover:bg-red-900/60 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <TrashIcon className="mr-1 h-4 w-4" />
+                    Διαγραφή
+                  </button>
                 </div>
               </div>
             </div>
@@ -330,6 +377,71 @@ const CustomerManagement: React.FC<CustomerManagementProps> = ({ onViewReservati
                   Κλείσιμο
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {deleteConfirmOpen && deleteTarget && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#020b18]/90">
+          <div className="mx-4 w-full max-w-md rounded-2xl border border-red-400/30 bg-[#0b2949] p-6 shadow-[0_18px_45px_rgba(0,0,0,0.35)]">
+            <div className="mb-4 flex items-center">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full border border-red-400/30 bg-red-500/15">
+                <TrashIcon className="h-5 w-5 text-red-300" />
+              </div>
+              <h3 className="ml-3 text-lg font-semibold text-white">Οριστική Διαγραφή Πελάτη</h3>
+            </div>
+            <p className="mb-2 text-sm text-blue-100/80">
+              Η διαγραφή του πελάτη <span className="font-medium text-white">{deleteTarget.name}</span> είναι μη αναστρέψιμη.
+            </p>
+            {deleteReservationCount === null && !deleteError && (
+              <p className="mb-4 text-sm text-blue-100/60">Έλεγχος ιστορικού κρατήσεων...</p>
+            )}
+            {deleteReservationCount !== null && deleteReservationCount > 0 && (
+              <p className="mb-4 text-sm text-amber-200">
+                Δεν είναι δυνατή η διαγραφή: ο πελάτης έχει {deleteReservationCount} συνδεδεμένες {deleteReservationCount === 1 ? 'κράτηση' : 'κρατήσεις'}. Το ιστορικό και τα οικονομικά δεδομένα διατηρούνται.
+              </p>
+            )}
+            {deleteReservationCount === 0 && (
+              <>
+                <p className="mb-4 text-sm text-blue-100/60">
+                  Για επιβεβαίωση, πληκτρολογήστε τον κωδικό πελάτη:
+                  <span className="ml-1 font-mono font-medium text-[#8ec7ff]">{deleteTarget.id.substring(0, 8).toUpperCase()}</span>
+                </p>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
+                  placeholder="Κωδικός πελάτη"
+                  className="mb-4 w-full rounded-xl border border-[#2b5b85]/80 bg-[#071d38]/90 px-3 py-2 font-mono text-sm text-white focus:outline-none focus:ring-2 focus:ring-red-400/40"
+                  autoFocus
+                />
+              </>
+            )}
+            {deleteError && <p className="mb-4 text-sm text-red-300">{deleteError}</p>}
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  setDeleteConfirmOpen(false);
+                  setDeleteTarget(null);
+                  setDeleteConfirmText('');
+                  setDeleteError('');
+                }}
+                disabled={deleting}
+                className="rounded-lg border border-[#2b5b85]/80 bg-[#071d38] px-4 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:bg-[#0b2949]/70"
+              >
+                Άκυρο
+              </button>
+              {deleteReservationCount === 0 && (
+                <button
+                  onClick={handleDelete}
+                  disabled={deleteConfirmText !== deleteTarget.id.substring(0, 8).toUpperCase() || deleting}
+                  className="inline-flex items-center rounded-lg border border-red-400/50 bg-red-700 px-4 py-2 text-sm font-medium text-red-100 transition-colors hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  <TrashIcon className="mr-2 h-4 w-4" />
+                  {deleting ? 'Διαγραφή...' : 'Διαγραφή'}
+                </button>
+              )}
             </div>
           </div>
         </div>

@@ -63,6 +63,18 @@ export const customerService = {
     return data || [];
   },
 
+  async getReservationCount(id: string): Promise<number> {
+    if (isDemo) return 0;
+
+    const { count, error } = await supabase!
+      .from('reservations')
+      .select('id', { count: 'exact', head: true })
+      .eq('customer_id', id);
+
+    if (error) throw error;
+    return count || 0;
+  },
+
   async findByPhoneOrEmail(phone: string, email: string): Promise<Customer | null> {
     if (isDemo) {
       const match = mockCustomers.find(
