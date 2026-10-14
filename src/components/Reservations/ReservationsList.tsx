@@ -13,7 +13,8 @@ import {
   CalendarDaysIcon,
   PencilSquareIcon,
   DocumentTextIcon,
-  EllipsisHorizontalIcon
+  EllipsisHorizontalIcon,
+  CurrencyEuroIcon
 } from '@heroicons/react/24/outline';
 import ContractGenerator from '../PDF/ContractGenerator';
 import BookingConfirmation from '../PDF/BookingConfirmation';
@@ -54,6 +55,7 @@ interface ReservationRow {
     brand: string;
     model: string;
     category: string;
+    photo_url?: string | null;
   } | null;
   pickup_station: {
     name: string;
@@ -699,66 +701,115 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                   </h3>
                   <p className="text-sm text-blue-100/65">{reservation.customer?.phone || '-'}</p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center justify-end gap-2">
                   <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium cursor-pointer ${
+                    className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
                       reservation.excel_updated
                         ? 'bg-emerald-500/15 text-emerald-300 ring-1 ring-inset ring-emerald-400/40'
-                        : 'bg-amber-500/15 text-amber-300 ring-1 ring-inset ring-amber-400/40'
+                        : 'bg-amber-500/15 text-amber-300 ring-1 ring-inset ring-amber-400/50'
                     }`}
                     onClick={(e) => { e.stopPropagation(); handleExcelToggle(reservation.id, !!reservation.excel_updated); }}
                   >
-                    {reservation.excel_updated ? '\u{1F7E2} Excel ενημερώθηκε' : '\u{1F7E0} Excel εκκρεμεί'}
+                    <span className={`mr-1.5 h-2.5 w-2.5 rounded-full ${reservation.excel_updated ? 'bg-emerald-300' : 'bg-amber-300'}`} />
+                    {reservation.excel_updated ? 'Excel ενημερώθηκε' : 'Excel εκκρεμεί'}
                   </span>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(reservation.status)}`}>
+                  <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(reservation.status)}`}>
                     {getStatusLabel(reservation.status)}
                   </span>
+                  <div className="relative">
+                    <button
+                      onClick={() => setActionsMenuId(actionsMenuId === reservation.id ? null : reservation.id)}
+                      className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
+                      aria-label="Περισσότερες ενέργειες"
+                    >
+                      <EllipsisHorizontalIcon className="h-5 w-5" />
+                    </button>
+                    {actionsMenuId === reservation.id && (
+                      <>
+                        <div className="fixed inset-0 z-30" onClick={() => setActionsMenuId(null)} />
+                        <div className="absolute right-0 top-full z-40 mt-2 w-48 overflow-hidden rounded-xl border border-[#1e4e7d]/80 bg-[#0b2949] shadow-[0_16px_36px_rgba(0,0,0,0.35)]">
+                          {reservation.status !== 'cancelled' && reservation.status !== 'completed' && (
+                            <button
+                              className="flex w-full items-center px-3 py-2.5 text-left text-xs font-medium text-red-300 transition-colors hover:bg-red-900/40"
+                              onClick={() => { setActionsMenuId(null); handleStatusChange(reservation.id, 'cancelled'); }}
+                              disabled={changingStatus === reservation.id}
+                            >
+                              <TrashIcon className="mr-2 h-4 w-4" />
+                              {changingStatus === reservation.id ? '...' : 'Ακύρωση Κράτησης'}
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-blue-100/50">Όχημα</p>
-                  <p className="text-sm text-blue-50">
-                    {reservation.vehicle
-                      ? `${reservation.vehicle.plate} ${reservation.vehicle.brand} ${reservation.vehicle.model}`
-                      : '-'}
+              <div className="mb-5 flex flex-col gap-5 border-b border-[#1e4e7d]/70 pb-5 sm:flex-row sm:items-center">
+                <div className="relative flex h-28 w-full shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#2b5b85]/60 bg-[#061a31] sm:h-28 sm:w-44">
+                  <TruckIcon className="h-12 w-12 text-[#2b5b85]/70" />
+                  {reservation.vehicle?.photo_url && (
+                    <img
+                      src={reservation.vehicle.photo_url}
+                      alt={`${reservation.vehicle.brand} ${reservation.vehicle.model}`}
+                      className="absolute inset-0 h-full w-full object-contain p-2"
+                      onError={(event) => { event.currentTarget.style.display = 'none'; }}
+                    />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-[0.12em] text-blue-100/50">Όχημα</p>
+                  <p className="truncate text-xl font-semibold tracking-[-0.02em] text-white">
+                    {reservation.vehicle ? `${reservation.vehicle.brand} ${reservation.vehicle.model}` : 'Όχημα μη διαθέσιμο'}
                   </p>
+                  <p className="mt-1 text-base font-medium text-blue-100/65">{reservation.vehicle?.plate || '-'}</p>
                 </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-blue-100/50">Κατηγορία</p>
-                  <p className="text-sm text-blue-50">{reservation.vehicle?.category || reservation.category}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-blue-100/50">Σύνολο</p>
-                  <p className="text-sm font-semibold text-emerald-300">
-                    {'\u20AC'}{Number(reservation.total_amount || 0).toFixed(2)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-blue-100/50">Παραλαβή</p>
-                  <p className="text-sm text-blue-50">{formatDateStr(reservation.pickup_date)}</p>
-                  <p className="text-xs text-blue-100/55">{reservation.pickup_station?.name || '-'}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.1em] text-blue-100/50">Παράδοση</p>
-                  <p className="text-sm text-blue-50">{formatDateStr(reservation.return_date)}</p>
-                  <p className="text-xs text-blue-100/55">{reservation.return_station?.name || '-'}</p>
+                <div className="shrink-0 sm:min-w-24">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-blue-100/50">Κατηγορία</p>
+                  <span className="inline-flex min-w-12 items-center justify-center rounded-xl border border-[#3475aa] bg-[#0b2949] px-3 py-2 text-lg font-semibold text-blue-50">
+                    {reservation.vehicle?.category || reservation.category}
+                  </span>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#1e4e7d]/70 pt-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    onClick={() => setViewReservation(reservation)}
-                    className="inline-flex items-center rounded-lg border border-[#2b5b85]/80 bg-[#0b2949]/75 px-2.5 py-1.5 text-xs font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
-                  >
-                    <EyeIcon className="h-4 w-4 mr-1" />
-                    Προβολή
-                  </button>
+              <div className="mb-5 grid grid-cols-1 divide-y divide-[#1e4e7d]/70 rounded-xl border border-[#1e4e7d]/70 bg-[#061a31]/45 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+                <div className="p-3 sm:p-4">
+                  <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-blue-100/50">
+                    <CalendarDaysIcon className="h-5 w-5 text-[#72b9ff]" />
+                    Παραλαβή
+                  </div>
+                  <p className="text-sm font-semibold text-white sm:text-base">{formatDateStr(reservation.pickup_date)}</p>
+                  <p className="mt-1 truncate text-sm text-blue-100/60">{reservation.pickup_station?.name || '-'}</p>
+                </div>
+                <div className="p-3 sm:p-4">
+                  <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-blue-100/50">
+                    <CalendarDaysIcon className="h-5 w-5 text-[#72b9ff]" />
+                    Επιστροφή
+                  </div>
+                  <p className="text-sm font-semibold text-white sm:text-base">{formatDateStr(reservation.return_date)}</p>
+                  <p className="mt-1 truncate text-sm text-blue-100/60">{reservation.return_station?.name || '-'}</p>
+                </div>
+                <div className="p-3 sm:p-4">
+                  <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.1em] text-blue-100/50">
+                    <CurrencyEuroIcon className="h-5 w-5 text-[#72b9ff]" />
+                    Σύνολο
+                  </div>
+                  <p className="text-2xl font-bold text-emerald-300">{'\u20AC'}{Number(reservation.total_amount || 0).toFixed(2)}</p>
+                </div>
+              </div>
 
-                  {reservation.status === 'upcoming' && (
-                    <BookingConfirmation data={{
+              <div className="flex flex-wrap items-center gap-2 border-t border-[#1e4e7d]/70 pt-5">
+                <button
+                  onClick={() => setViewReservation(reservation)}
+                  className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm font-semibold text-blue-50 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white sm:flex-none"
+                >
+                  <EyeIcon className="mr-2 h-5 w-5" />
+                  Προβολή
+                </button>
+                {reservation.status === 'upcoming' && (
+                  <BookingConfirmation
+                    compact
+                    data={{
                       reservationId: reservation.id,
                       customerName: reservation.customer?.name || '-',
                       customerPhone: reservation.customer?.phone || '-',
@@ -771,67 +822,36 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                       pickupStation: reservation.pickup_station?.name || '-',
                       returnStation: reservation.return_station?.name || '-',
                       totalAmount: Number(reservation.total_amount) || 0,
-                    }} />
-                  )}
-
-                  {reservation.status === 'upcoming' && (
-                    <button
-                      onClick={() => setContractIssueReservation(reservation)}
-                      className="inline-flex items-center rounded-lg border border-green-500/40 bg-green-600/15 px-2.5 py-1.5 text-xs font-medium text-green-300 transition-colors hover:bg-green-600/25 hover:text-green-200"
-                    >
-                      <DocumentTextIcon className="h-4 w-4 mr-1" />
-                      Συμβόλαιο
-                    </button>
-                  )}
-
-                  {/* Actions menu */}
-                  <div className="relative">
-                    <button
-                      onClick={() => setActionsMenuId(actionsMenuId === reservation.id ? null : reservation.id)}
-                      className="inline-flex items-center rounded-lg border border-[#2b5b85]/80 bg-[#0b2949]/75 px-2 py-1.5 text-xs font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
-                    >
-                      <EllipsisHorizontalIcon className="h-4 w-4" />
-                    </button>
-                    {actionsMenuId === reservation.id && (
-                      <>
-                        <div className="fixed inset-0 z-30" onClick={() => setActionsMenuId(null)} />
-                        <div className="absolute left-0 top-full mt-1 z-40 w-44 rounded-lg border border-[#1e4e7d]/70 bg-[#0b2949] shadow-lg overflow-hidden">
-                          {reservation.status !== 'cancelled' && reservation.status !== 'completed' && (
-                            <button
-                              className="flex w-full items-center px-3 py-2 text-xs font-medium text-red-300 hover:bg-red-900/40 transition-colors"
-                              onClick={() => { setActionsMenuId(null); handleStatusChange(reservation.id, 'cancelled'); }}
-                              disabled={changingStatus === reservation.id}
-                            >
-                              <TrashIcon className="h-4 w-4 mr-2" />
-                              {changingStatus === reservation.id ? '...' : 'Ακύρωση Κράτησης'}
-                            </button>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-2 justify-end">
-                  {reservation.status === 'upcoming' && (
-                    <button
-                      onClick={() => onCheckOut?.(reservation.id)}
-                      className="inline-flex items-center rounded-lg border border-transparent bg-[#1268f3] px-2.5 py-1.5 text-xs font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
-                    >
-                      <TruckIcon className="h-4 w-4 mr-1" />
-                      Check-out
-                    </button>
-                  )}
-                  {reservation.status === 'active' && (
-                    <button
-                      onClick={() => handleCheckInClick(reservation)}
-                      className="inline-flex items-center rounded-lg border border-transparent bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-[0_8px_20px_rgba(16,185,129,0.22)] transition-colors hover:bg-emerald-500"
-                    >
-                      <CheckIcon className="h-4 w-4 mr-1" />
-                      Check-in
-                    </button>
-                  )}
-                </div>
+                    }}
+                  />
+                )}
+                {reservation.status === 'upcoming' && (
+                  <button
+                    onClick={() => setContractIssueReservation(reservation)}
+                    className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-emerald-400/50 bg-emerald-600/20 px-3 py-2 text-sm font-semibold text-emerald-200 transition-colors hover:bg-emerald-600/30 sm:flex-none"
+                  >
+                    <DocumentTextIcon className="mr-2 h-5 w-5" />
+                    Έκδοση Συμβολαίου
+                  </button>
+                )}
+                {reservation.status === 'upcoming' && (
+                  <button
+                    onClick={() => onCheckOut?.(reservation.id)}
+                    className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff] sm:flex-none"
+                  >
+                    <TruckIcon className="mr-2 h-5 w-5" />
+                    Check-Out
+                  </button>
+                )}
+                {reservation.status === 'active' && (
+                  <button
+                    onClick={() => handleCheckInClick(reservation)}
+                    className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-transparent bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(16,185,129,0.22)] transition-colors hover:bg-emerald-500 sm:flex-none"
+                  >
+                    <CheckIcon className="mr-2 h-5 w-5" />
+                    Check-In
+                  </button>
+                )}
               </div>
             </div>
           </div>

@@ -21,6 +21,7 @@ interface BookingConfirmationData {
 
 interface BookingConfirmationProps {
   data: BookingConfirmationData;
+  compact?: boolean;
 }
 
 const methodLabels: Record<string, string> = {
@@ -296,7 +297,7 @@ function drawConfirmationCopy(
   return y + 4;
 }
 
-const BookingConfirmation: React.FC<BookingConfirmationProps> = ({ data }) => {
+const BookingConfirmation: React.FC<BookingConfirmationProps> = ({ data, compact = false }) => {
   const [generating, setGenerating] = useState(false);
 
   const generate = async () => {
@@ -349,7 +350,9 @@ const BookingConfirmation: React.FC<BookingConfirmationProps> = ({ data }) => {
     <button
       onClick={generate}
       disabled={generating}
-      className="inline-flex items-center px-3 py-1.5 border border-[#2b5b85]/80 bg-[#0b2949]/75 text-sm font-medium rounded text-[#8ec7ff] hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      className={compact
+        ? 'inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm font-semibold text-blue-50 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none'
+        : 'inline-flex items-center px-3 py-1.5 border border-[#2b5b85]/80 bg-[#0b2949]/75 text-sm font-medium rounded text-[#8ec7ff] hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors'}
     >
       <PrinterIcon className="h-4 w-4 mr-1.5" />
       {generating ? 'Δημιουργία...' : 'Αποδεικτικό Κράτησης'}
