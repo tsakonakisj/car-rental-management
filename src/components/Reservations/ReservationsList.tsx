@@ -167,6 +167,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
   const [editExtras, setEditExtras] = useState<Extra[]>([]);
   const [contractIssueReservation, setContractIssueReservation] = useState<ReservationRow | null>(null);
   const [actionsMenuId, setActionsMenuId] = useState<string | null>(null);
+  const [cardPhotoUrls, setCardPhotoUrls] = useState<Map<string, string>>(new Map());
 
   const fetchReservations = useCallback(async () => {
     setLoading(true);
@@ -197,6 +198,26 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
       setViewReservation(match);
     }
   }, [initialViewReservationId, reservations]);
+
+  useEffect(() => {
+    const paths = reservations
+      .map((reservation) => reservation.vehicle?.photo_url)
+      .filter((path): path is string => !!path);
+    if (paths.length === 0) {
+      setCardPhotoUrls(new Map());
+      return;
+    }
+
+    let cancelled = false;
+    photoService.getSignedUrls(paths, 3600).then((urls) => {
+      if (!cancelled) setCardPhotoUrls(urls);
+    }).catch((err) => {
+      console.error('Failed to load reservation vehicle photos:', err);
+      if (!cancelled) setCardPhotoUrls(new Map());
+    });
+
+    return () => { cancelled = true; };
+  }, [reservations]);
 
   useEffect(() => {
     if (!viewReservation) {
@@ -748,9 +769,9 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
               <div className="mb-5 flex flex-col gap-5 border-b border-[#1e4e7d]/70 pb-5 sm:flex-row sm:items-center">
                 <div className="relative flex h-28 w-full shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[#2b5b85]/60 bg-[#061a31] sm:h-28 sm:w-44">
                   <TruckIcon className="h-12 w-12 text-[#2b5b85]/70" />
-                  {reservation.vehicle?.photo_url && (
+                  {reservation.vehicle?.photo_url && cardPhotoUrls.get(reservation.vehicle.photo_url) && (
                     <img
-                      src={reservation.vehicle.photo_url}
+                      src={cardPhotoUrls.get(reservation.vehicle.photo_url)}
                       alt={`${reservation.vehicle.brand} ${reservation.vehicle.model}`}
                       className="absolute inset-0 h-full w-full object-contain p-2"
                       onError={(event) => { event.currentTarget.style.display = 'none'; }}
