@@ -95,6 +95,10 @@ const MainApp: React.FC = () => {
         alert('Δεν έχει επιλεγεί όχημα για αυτή την κράτηση');
         return;
       }
+      if (!(reservation as any).contract_issued_at) {
+        const proceed = window.confirm('Δεν έχει καταγραφεί έκδοση συμβολαίου για αυτή την κράτηση.\n\nΘέλεις να συνεχίσεις με το Check-Out;');
+        if (!proceed) return;
+      }
       setCheckOutVehicleOdometer((reservation as any).vehicle?.odometer);
       setCheckOutReservation(reservationId);
     } catch {
