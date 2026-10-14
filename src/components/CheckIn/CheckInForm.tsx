@@ -32,17 +32,19 @@ interface CheckInData {
 
 interface CheckInFormProps {
   reservationId: string;
+  vehicleFuelTankCapacity?: number | null;
   onComplete: (data: CheckInData) => void;
   onCancel: () => void;
   submitting?: boolean;
 }
 
-const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, onComplete, onCancel, submitting = false }) => {
+const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTankCapacity, onComplete, onCancel, submitting = false }) => {
   const { t } = useLanguage();
   const [checkOutOdometer, setCheckOutOdometer] = useState<number | null>(null);
   const [checkOutFuelLevel, setCheckOutFuelLevel] = useState<number | null>(null);
   const [odometerError, setOdometerError] = useState('');
   const [fuelWarningDismissed, setFuelWarningDismissed] = useState(false);
+  const [fuelPricePerLiter, setFuelPricePerLiter] = useState<string>('');
   const [checkInData, setCheckInData] = useState<CheckInData>({
     fuel_level: 100,
     odometer: 0,
@@ -203,6 +205,28 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, onComplete, on
            checkInData.new_damages.reduce((total, damage) => total + (damage.estimated_cost || 0), 0);
   };
 
+  const fuelDiffPercent = checkOutFuelLevel != null ? Math.max(0, checkOutFuelLevel - checkInData.fuel_level) : 0;
+  const missingLiters = vehicleFuelTankCapacity != null && fuelDiffPercent > 0
+    ? (fuelDiffPercent / 100) * vehicleFuelTankCapacity
+    : 0;
+  const pricePerLiter = parseFloat(fuelPricePerLiter) || 0;
+  const proposedFuelCharge = missingLiters > 0 && pricePerLiter > 0 ? missingLiters * pricePerLiter : 0;
+
+  const addFuelChargeFromCalculation = () => {
+    if (proposedFuelCharge <= 0) return;
+    const charge = {
+      id: Date.now().toString(),
+      type: 'Καύσιμο',
+      amount: parseFloat(proposedFuelCharge.toFixed(2)),
+      description: `Διαφορά ${fuelDiffPercent}% (${missingLiters.toFixed(1)}L × €${pricePerLiter.toFixed(2)}/L)`,
+    };
+    setCheckInData(prev => ({
+      ...prev,
+      additional_charges: [...prev.additional_charges, charge]
+    }));
+    setFuelWarningDismissed(false);
+  };
+
   const handleSubmit = () => {
     if (checkOutOdometer != null && checkInData.odometer < checkOutOdometer) {
       setOdometerError(`Τα χιλιόμετρα επιστροφής δεν μπορούν να είναι μικρότερα από τα χιλιόμετρα check-out (${checkOutOdometer}).`);
@@ -267,7 +291,52 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, onComplete, on
                 <div className="mt-2 rounded-lg border border-amber-400/40 bg-amber-950/40 px-3 py-2">
                   <p className="text-sm text-amber-200">
                     Διαφορά καυσίμου: {checkOutFuelLevel - checkInData.fuel_level}%
-                    {' '}({((checkOutFuelLevel - checkInData.fuel_level) / 100 * 100).toFixed(0)}% λιγότερο)
+                  </p>
+                </div>
+              )}
+              {checkOutFuelLevel != null && checkInData.fuel_level < checkOutFuelLevel && vehicleFuelTankCapacity != null && (
+                <div className="mt-3 rounded-lg border border-[#1e4e7d]/70 bg-[#071d38]/90 px-4 py-3 space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-blue-100/65">Χωρητικότητα ρεζερβουάρ:</span>
+                    <span className="font-medium text-white">{vehicleFuelTankCapacity} L</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-blue-100/65">Ελλειμμα καυσίμου:</span>
+                    <span className="font-medium text-amber-300">{missingLiters.toFixed(1)} L</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm text-blue-100/65 whitespace-nowrap">Τιμή ανά λίτρο (€)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={fuelPricePerLiter}
+                      onChange={(e) => setFuelPricePerLiter(e.target.value)}
+                      placeholder="π.χ. 1.75"
+                      className="flex-1 rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                    />
+                  </div>
+                  {proposedFuelCharge > 0 && (
+                    <>
+                      <div className="flex items-center justify-between text-sm border-t border-[#1e4e7d]/70 pt-3">
+                        <span className="text-blue-100/65">Προτεινόμενη χρέωση καυσίμου:</span>
+                        <span className="font-bold text-amber-300">€{proposedFuelCharge.toFixed(2)}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={addFuelChargeFromCalculation}
+                        className="w-full rounded-xl border border-amber-400/40 bg-amber-500/15 px-4 py-2 text-sm font-semibold text-amber-200 transition-colors hover:bg-amber-500/25"
+                      >
+                        Προσθήκη χρέωσης καυσίμου €{proposedFuelCharge.toFixed(2)}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+              {checkOutFuelLevel != null && checkInData.fuel_level < checkOutFuelLevel && vehicleFuelTankCapacity == null && (
+                <div className="mt-2 rounded-lg border border-[#1e4e7d]/70 bg-[#071d38]/90 px-3 py-2">
+                  <p className="text-xs text-blue-100/55">
+                    Η χωρητικότητα ρεζερβουάρ δεν έχει οριστεί για αυτό το όχημα. Η αυτοματοποιημένη υπολογισμός καυσίμου δεν είναι διαθέσιμος — προσθέστε χρέωση καυσίμου χειροκίνητα από τις Επιπλέον Χρεώσεις.
                   </p>
                 </div>
               )}

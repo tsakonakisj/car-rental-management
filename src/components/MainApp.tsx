@@ -26,6 +26,7 @@ const MainApp: React.FC = () => {
   const [checkOutReservation, setCheckOutReservation] = useState<string | null>(null);
   const [checkOutVehicleOdometer, setCheckOutVehicleOdometer] = useState<number | undefined>(undefined);
   const [checkInReservation, setCheckInReservation] = useState<string | null>(null);
+  const [checkInVehicleFuelTankCapacity, setCheckInVehicleFuelTankCapacity] = useState<number | null | undefined>(undefined);
   const [reservationRefresh, setReservationRefresh] = useState(0);
   const [checkOutError, setCheckOutError] = useState('');
   const [checkInError, setCheckInError] = useState('');
@@ -114,6 +115,9 @@ const MainApp: React.FC = () => {
         setCheckInError('Πρέπει να γίνει πρώτα check-out πριν το check-in.');
         return;
       }
+      const allReservations = await reservationService.getAll();
+      const reservation = allReservations.find((r: any) => r.id === reservationId);
+      setCheckInVehicleFuelTankCapacity((reservation as any)?.vehicle?.fuel_tank_capacity ?? null);
       setCheckInReservation(reservationId);
     } catch {
       setCheckInError('Αποτυχία φόρτωσης κράτησης.');
@@ -246,6 +250,7 @@ const MainApp: React.FC = () => {
           )}
           <CheckInForm
             reservationId={checkInReservation}
+            vehicleFuelTankCapacity={checkInVehicleFuelTankCapacity}
             onComplete={handleCheckInComplete}
             onCancel={() => setCheckInReservation(null)}
             submitting={checkInSubmitting}
