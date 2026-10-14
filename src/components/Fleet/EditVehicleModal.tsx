@@ -32,6 +32,7 @@ const DEFAULT_FORM = {
   last_service: '',
   next_service_date: '',
   next_service_odometer: '' as string | number,
+  fuel_tank_capacity: '' as string | number,
 };
 
 const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, onSaved }) => {
@@ -52,6 +53,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
           last_service: vehicle.last_service || '',
           next_service_date: vehicle.next_service_date || '',
           next_service_odometer: vehicle.next_service_odometer ?? '',
+          fuel_tank_capacity: vehicle.fuel_tank_capacity ?? '',
         }
       : DEFAULT_FORM
   );
@@ -165,6 +167,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
         last_service: form.last_service || null,
         next_service_date: (form.next_service_date as string) || null,
         next_service_odometer: form.next_service_odometer !== '' ? Number(form.next_service_odometer) : null,
+        fuel_tank_capacity: form.fuel_tank_capacity !== '' ? Number(form.fuel_tank_capacity) : null,
         photo_url: mainPhotoPath || null,
       };
       const saved = isEdit
@@ -411,6 +414,18 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
                 placeholder="π.χ. 150000"
                 value={form.next_service_odometer}
                 onChange={(e) => setForm((p) => ({ ...p, next_service_odometer: e.target.value }))}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-blue-100/65">Χωρητικότητα Ρεζερβουάρ (L)</label>
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                placeholder="π.χ. 55"
+                value={form.fuel_tank_capacity}
+                onChange={(e) => setForm((p) => ({ ...p, fuel_tank_capacity: e.target.value }))}
                 className={inputClass}
               />
             </div>
