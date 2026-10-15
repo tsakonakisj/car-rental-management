@@ -39,6 +39,7 @@ interface ReservationRow {
   notes?: string;
   excel_updated?: boolean;
   contract_issued_at?: string | null;
+  booking_confirmation_issued_at?: string | null;
   created_at: string;
   customer: {
     id: string;
@@ -878,6 +879,11 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                     <>
                       <BookingConfirmation
                         compact
+                        issuedAt={reservation.booking_confirmation_issued_at}
+                        onIssued={(issuedAt) => setReservations(prev => prev.map(r =>
+                          r.id === reservation.id ? { ...r, booking_confirmation_issued_at: issuedAt } : r
+                        ))}
+                        onError={setActionError}
                         data={{
                           reservationId: reservation.id,
                           customerName: reservation.customer?.name || '-',

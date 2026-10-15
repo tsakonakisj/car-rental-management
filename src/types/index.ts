@@ -110,6 +110,7 @@ export interface Reservation {
   created_at: string;
   created_by?: string;
   contract_issued_at?: string | null;
+  booking_confirmation_issued_at?: string | null;
 }
 
 export interface ReservationExtra {

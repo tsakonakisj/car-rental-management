@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import jsPDF from 'jspdf';
 import { PrinterIcon } from '@heroicons/react/24/outline';
 import { loadCompanyConfig, company as defaultCompany } from '../../lib/company';
-import { paymentService } from '../../lib/database';
+import { paymentService, reservationService } from '../../lib/database';
 import type { Payment } from '../../types';
 import { loadFonts, registerFonts, fmtDateTime } from './ContractGenerator';
 
@@ -22,6 +22,9 @@ interface BookingConfirmationData {
 interface BookingConfirmationProps {
   data: BookingConfirmationData;
   compact?: boolean;
+  issuedAt?: string | null;
+  onIssued?: (issuedAt: string) => void;
+  onError?: (message: string) => void;
 }
 
 const methodLabels: Record<string, string> = {
@@ -297,7 +300,7 @@ function drawConfirmationCopy(
   return y + 4;
 }
 
-const BookingConfirmation: React.FC<BookingConfirmationProps> = ({ data, compact = false }) => {
+const BookingConfirmation: React.FC<BookingConfirmationProps> = ({ data, compact = false, issuedAt, onIssued, onError }) => {
   const [generating, setGenerating] = useState(false);
 
   const generate = async () => {
@@ -338,9 +341,18 @@ const BookingConfirmation: React.FC<BookingConfirmationProps> = ({ data, compact
       // Office copy (bottom half)
       drawConfirmationCopy(doc, fontName, company, data, payments, cutY + 4, 'ΑΝΤΙΓΡΑΦΟ ΓΡΑΦΕΙΟΥ / OFFICE COPY');
 
-      doc.save(`booking-confirmation-${data.reservationId.substring(0, 8)}.pdf`);
+      await doc.save(`booking-confirmation-${data.reservationId.substring(0, 8)}.pdf`, { returnPromise: true });
+      try {
+        const timestamp = new Date().toISOString();
+        await reservationService.update(data.reservationId, { booking_confirmation_issued_at: timestamp });
+        onIssued?.(timestamp);
+      } catch (err) {
+        console.error('Failed to record booking confirmation issuance:', err);
+        onError?.('Το PDF δημιουργήθηκε, αλλά δεν καταγράφηκε η έκδοση του αποδεικτικού στη βάση.');
+      }
     } catch (err) {
       console.error('Booking confirmation PDF failed:', err);
+      onError?.('Δεν δημιουργήθηκε το PDF αποδεικτικού. Δεν καταγράφηκε έκδοση.');
     } finally {
       setGenerating(false);
     }
@@ -355,7 +367,7 @@ const BookingConfirmation: React.FC<BookingConfirmationProps> = ({ data, compact
         : 'inline-flex items-center px-3 py-1.5 border border-[#2b5b85]/80 bg-[#0b2949]/75 text-sm font-medium rounded text-[#8ec7ff] hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors'}
     >
       <PrinterIcon className="h-4 w-4 shrink-0" />
-      <span className="truncate">{generating ? 'Δημιουργία...' : 'Αποδεικτικό Κράτησης'}</span>
+      <span className="truncate">{generating ? 'Δημιουργία...' : issuedAt ? 'Αποδεικτικό Εκδόθηκε ✓' : 'Αποδεικτικό Κράτησης'}</span>
     </button>
   );
 };
