@@ -813,6 +813,15 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                               {changingStatus === reservation.id ? '...' : 'Ακύρωση Κράτησης'}
                             </button>
                           )}
+                          {isAdmin && (reservation.status === 'upcoming' || reservation.status === 'cancelled') && (
+                            <button
+                              className="flex w-full items-center px-3 py-2.5 text-left text-xs font-medium text-red-300 transition-colors hover:bg-red-900/40"
+                              onClick={() => { setActionsMenuId(null); openDeleteConfirm(reservation); }}
+                            >
+                              <TrashIcon className="mr-2 h-4 w-4" />
+                              Διαγραφή Κράτησης
+                            </button>
+                          )}
                         </div>
                       </>
                     )}
