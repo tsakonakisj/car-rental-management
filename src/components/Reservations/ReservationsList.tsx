@@ -902,7 +902,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                         className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-emerald-400/50 bg-emerald-600/20 px-2 py-2.5 text-xs font-semibold text-emerald-200 transition-colors hover:bg-emerald-600/30 sm:text-sm"
                       >
                         <DocumentTextIcon className="h-4 w-4 shrink-0" />
-                        <span className="truncate">Έκδοση Συμβολαίου</span>
+                        <span className="truncate">{reservation.contract_issued_at ? 'Συμβόλαιο Εκδόθηκε ✓' : 'Έκδοση Συμβολαίου'}</span>
                       </button>
                       <button
                         onClick={() => onCheckOut?.(reservation.id)}
