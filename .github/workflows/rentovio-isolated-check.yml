@@ -3,6 +3,7 @@ name: Rentovio isolated code verification
 on:
   push:
     branches:
+      - main
       - feature/atomic-checkout-checkin-2026-10-17
       - feature/prevent-overlapping-reservations-2026-10-17
     paths:
