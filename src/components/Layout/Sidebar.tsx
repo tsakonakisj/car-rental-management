@@ -13,12 +13,11 @@ import {
   CogIcon
 } from '@heroicons/react/24/outline';
 
-export type AppRole = 'admin' | 'manager' | 'agent';
+export type AppRole = 'admin' | 'manager';
 
 const ROLE_TAB_ACCESS: Record<AppRole, string[]> = {
   admin: ['dashboard', 'bookings', 'customers', 'fleet', 'pricing', 'reports', 'users', 'settings'],
   manager: ['dashboard', 'bookings', 'customers', 'fleet', 'pricing', 'reports'],
-  agent: ['dashboard', 'bookings', 'customers', 'fleet'],
 };
 
 export function isTabAllowed(role: string | undefined, tab: string): boolean {
