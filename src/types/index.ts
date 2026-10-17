@@ -37,6 +37,7 @@ export interface Vehicle {
   next_service_odometer?: number | null;
   photo_url?: string | null;
   fuel_tank_capacity?: number | null;
+  current_station_id?: string | null;
   created_at: string;
 }
 
