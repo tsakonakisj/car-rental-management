@@ -7,6 +7,7 @@ interface TurnstileInstance {
     'expired-callback': () => void;
     'error-callback': () => void;
     theme?: 'auto' | 'dark' | 'light';
+    size?: 'normal' | 'compact';
   }) => string;
   remove: (widgetId: string) => void;
   reset: (widgetId: string) => void;
@@ -40,6 +41,7 @@ const TurnstileCaptcha: React.FC<Props> = ({ siteKey, onToken, resetKey }) => {
       widgetIdRef.current = window.turnstile.render(containerRef.current, {
         sitekey: siteKey,
         theme: 'dark',
+        size: 'compact',
         callback: (token) => onTokenRef.current(token),
         'expired-callback': () => onTokenRef.current(null),
         'error-callback': () => onTokenRef.current(null),
@@ -79,7 +81,7 @@ const TurnstileCaptcha: React.FC<Props> = ({ siteKey, onToken, resetKey }) => {
     }
   }, [resetKey]);
 
-  return <div ref={containerRef} className="min-h-[65px]" aria-label="Έλεγχος ασφαλείας CAPTCHA" />;
+  return <div className="flex w-full min-w-0 justify-center overflow-hidden"><div ref={containerRef} className="min-h-[140px] max-w-full" aria-label="Έλεγχος ασφαλείας CAPTCHA" /></div>;
 };
 
 export default TurnstileCaptcha;
