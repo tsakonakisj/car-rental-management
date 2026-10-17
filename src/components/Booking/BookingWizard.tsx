@@ -321,7 +321,9 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
     } catch (error: any) {
       console.error('Booking creation failed:', error);
       const msg = error?.message || error?.error_description || JSON.stringify(error);
-      setSaveError(`Αποτυχία: ${msg}`);
+      setSaveError(error?.code === '23P01' || msg.includes('reservations_no_vehicle_time_overlap')
+        ? 'Το όχημα έχει ήδη κράτηση για αυτές τις ημερομηνίες και ώρες.'
+        : `Αποτυχία: ${msg}`);
     } finally {
       setSaving(false);
     }
