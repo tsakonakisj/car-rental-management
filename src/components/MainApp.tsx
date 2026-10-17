@@ -93,18 +93,18 @@ const MainApp: React.FC = () => {
       const reservation = allReservations.find((r: any) => r.id === reservationId);
       if (!reservation) return;
       if (!(reservation as any).vehicle_id) {
-        setCheckOutError('Δεν έχει επιλεγεί όχημα για αυτή την κράτηση.');
+        window.alert('Δεν έχει επιλεγεί όχημα για αυτή την κράτηση.');
         return;
       }
       const vehicles = await vehicleService.getAll();
       const vehicle = vehicles.find(v => v.id === reservation.vehicle_id);
       if (!vehicle) {
-        setCheckOutError('Το όχημα της κράτησης δεν βρέθηκε. Το Check-Out δεν επιτρέπεται.');
+        window.alert('Το όχημα της κράτησης δεν βρέθηκε. Το Check-Out δεν επιτρέπεται.');
         return;
       }
       const documentError = checkoutDocumentError(reservation, vehicle);
       if (documentError) {
-        setCheckOutError(documentError);
+        window.alert(documentError);
         return;
       }
       if (!(reservation as any).contract_issued_at) {
