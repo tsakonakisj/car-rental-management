@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import TurnstileCaptcha from '../Login/TurnstileCaptcha';
 import { Bars3Icon, ChevronDownIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
 
 interface HeaderProps {
@@ -15,7 +16,11 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, previewRole = 'admin',
   const { user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [changePassword, setChangePassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
   const [password, setPassword] = useState('');
+  const captchaSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY?.trim() || '';
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [passwordSaved, setPasswordSaved] = useState(false);
@@ -42,8 +47,11 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, previewRole = 'admin',
 
   const openPasswordChange = () => {
     setMenuOpen(false);
+    setCurrentPassword('');
     setPassword('');
     setConfirmPassword('');
+    setCaptchaToken(null);
+    setCaptchaResetKey((key) => key + 1);
     setPasswordError('');
     setPasswordSaved(false);
     setChangePassword(true);
@@ -52,6 +60,14 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, previewRole = 'admin',
   const submitPassword = async (event: React.FormEvent) => {
     event.preventDefault();
     setPasswordError('');
+    if (!currentPassword) {
+      setPasswordError('Συμπληρώστε τον τρέχοντα κωδικό σας.');
+      return;
+    }
+    if (captchaSiteKey && !captchaToken) {
+      setPasswordError('Ολοκληρώστε τον έλεγχο ασφαλείας CAPTCHA.');
+      return;
+    }
     if (password.length < 8) {
       setPasswordError('Ο νέος κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες.');
       return;
@@ -62,14 +78,31 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, previewRole = 'admin',
     }
     setSaving(true);
     try {
+      // Verify the current Supabase Auth password before changing it.
+      // The signed-in identity is taken from Supabase, never from a form field.
+      const { data: identity, error: identityError } = await supabase.auth.getUser();
+      if (identityError || !identity.user?.email) throw new Error('Δεν ήταν δυνατή η επιβεβαίωση του λογαριασμού.');
+      const originalUserId = identity.user.id;
+      const { data: verified, error: verifyError } = await supabase.auth.signInWithPassword({
+        email: identity.user.email,
+        password: currentPassword,
+        options: captchaToken ? { captchaToken } : undefined,
+      });
+      if (verifyError || verified.user?.id !== originalUserId) {
+        throw new Error('Ο τρέχων κωδικός είναι λανθασμένος ή ο έλεγχος ασφαλείας απέτυχε.');
+      }
+
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
       setPasswordSaved(true);
+      setCurrentPassword('');
       setPassword('');
       setConfirmPassword('');
     } catch (error) {
       setPasswordError(error instanceof Error ? error.message : 'Η αλλαγή κωδικού απέτυχε.');
     } finally {
+      setCaptchaToken(null);
+      setCaptchaResetKey((key) => key + 1);
       setSaving(false);
     }
   };
@@ -129,12 +162,16 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, previewRole = 'admin',
               </div>
             ) : (
               <form onSubmit={submitPassword} className="space-y-4">
+                <label className="block text-sm">Τρέχων κωδικός
+                  <input type="password" autoComplete="current-password" required value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="mt-1 w-full rounded-lg border border-[#2b5b85] bg-[#061a35] p-3 text-white" />
+                </label>
                 <label className="block text-sm">Νέος κωδικός
                   <input type="password" autoComplete="new-password" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 w-full rounded-lg border border-[#2b5b85] bg-[#061a35] p-3 text-white" />
                 </label>
                 <label className="block text-sm">Επιβεβαίωση νέου κωδικού
                   <input type="password" autoComplete="new-password" minLength={8} required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="mt-1 w-full rounded-lg border border-[#2b5b85] bg-[#061a35] p-3 text-white" />
                 </label>
+                {captchaSiteKey && <TurnstileCaptcha siteKey={captchaSiteKey} onToken={setCaptchaToken} resetKey={captchaResetKey} />}
                 {passwordError && <p role="alert" className="text-sm text-red-300">{passwordError}</p>}
                 <div className="flex justify-end gap-3">
                   <button type="button" onClick={() => setChangePassword(false)} className="rounded-lg border border-[#2b5b85] px-4 py-2">Ακύρωση</button>
