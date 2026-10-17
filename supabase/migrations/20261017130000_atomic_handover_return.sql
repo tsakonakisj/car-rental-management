@@ -176,7 +176,7 @@ BEGIN
   FOR v_charge IN SELECT value FROM jsonb_array_elements(p_additional_charges) AS t(value) LOOP
     IF jsonb_typeof(v_charge) <> 'object'
        OR NULLIF(btrim(v_charge->>'type'), '') IS NULL
-       OR jsonb_typeof(v_charge->'amount') <> 'number'
+       OR COALESCE(jsonb_typeof(v_charge->'amount'), '') <> 'number'
        OR (v_charge->>'amount')::numeric < 0 THEN
       RAISE EXCEPTION 'CHECKIN_DENIED:CHARGES';
     END IF;
