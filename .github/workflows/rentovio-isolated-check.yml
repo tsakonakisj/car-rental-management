@@ -1,0 +1,41 @@
+name: Rentovio isolated code verification
+
+on:
+  push:
+    branches:
+      - feature/atomic-checkout-checkin-2026-10-17
+    paths:
+      - ".github/workflows/rentovio-isolated-check.yml"
+      - "src/**"
+      - "supabase/migrations/20261017*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Compile and build TypeScript/React
+        run: npm run build
+      - name: Verify security migration and atomic calls exist
+        shell: bash
+        run: |
+          grep -q "CREATE OR REPLACE FUNCTION public.complete_vehicle_checkout" supabase/migrations/20261017130000_atomic_handover_return.sql
+          grep -q "CREATE OR REPLACE FUNCTION public.complete_vehicle_checkin" supabase/migrations/20261017130000_atomic_handover_return.sql
+          grep -q "REVOKE INSERT ON TABLE public.checkouts, public.checkins FROM authenticated" supabase/migrations/20261017130000_atomic_handover_return.sql
+          grep -q "rpc('complete_vehicle_checkout'" src/lib/database.ts
+          grep -q "rpc('complete_vehicle_checkin'" src/lib/database.ts
+          if grep -A 120 'export const checkoutService' src/lib/database.ts | grep -q "from('checkouts').*insert"; then exit 1; fi
+          echo "Code verification passed (no database connections)."
