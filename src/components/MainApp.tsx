@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { reservationService, vehicleService, checkoutService, checkinService } from '../lib/database';
+import { checkoutDocumentError } from '../lib/vehicleDocuments';
 import LoginForm from './Login/LoginForm';
 import Header from './Layout/Header';
 import Sidebar, { isTabAllowed } from './Layout/Sidebar';
@@ -92,7 +93,18 @@ const MainApp: React.FC = () => {
       const reservation = allReservations.find((r: any) => r.id === reservationId);
       if (!reservation) return;
       if (!(reservation as any).vehicle_id) {
-        alert('Δεν έχει επιλεγεί όχημα για αυτή την κράτηση');
+        setCheckOutError('Δεν έχει επιλεγεί όχημα για αυτή την κράτηση.');
+        return;
+      }
+      const vehicles = await vehicleService.getAll();
+      const vehicle = vehicles.find(v => v.id === reservation.vehicle_id);
+      if (!vehicle) {
+        setCheckOutError('Το όχημα της κράτησης δεν βρέθηκε. Το Check-Out δεν επιτρέπεται.');
+        return;
+      }
+      const documentError = checkoutDocumentError(reservation, vehicle);
+      if (documentError) {
+        setCheckOutError(documentError);
         return;
       }
       if (!(reservation as any).contract_issued_at) {
@@ -141,6 +153,21 @@ const MainApp: React.FC = () => {
       const allReservations = await reservationService.getAll();
       const reservation = allReservations.find((r: any) => r.id === checkOutReservation);
       if (!reservation) throw new Error('Reservation not found');
+      if (!reservation.vehicle_id) {
+        setCheckOutError('Δεν έχει επιλεγεί όχημα για αυτή την κράτηση.');
+        return;
+      }
+      const vehicles = await vehicleService.getAll();
+      const vehicle = vehicles.find(v => v.id === reservation.vehicle_id);
+      if (!vehicle) {
+        setCheckOutError('Το όχημα της κράτησης δεν βρέθηκε. Το Check-Out δεν επιτρέπεται.');
+        return;
+      }
+      const documentError = checkoutDocumentError(reservation, vehicle);
+      if (documentError) {
+        setCheckOutError(documentError);
+        return;
+      }
 
       await checkoutService.create({
         reservation_id: checkOutReservation,
@@ -162,7 +189,16 @@ const MainApp: React.FC = () => {
       setReservationRefresh(prev => prev + 1);
     } catch (err) {
       console.error('Check-out save failed:', err);
-      setCheckOutError('Αποτυχία ολοκλήρωσης check-out. Ελέγξτε αν η κράτηση ενημερώθηκε σωστά.');
+      const message = err instanceof Error ? err.message : '';
+      if (message.includes('CHECKOUT_DOCUMENTS_INVALID:INSURANCE')) {
+        setCheckOutError('Η ασφάλεια δεν καλύπτει ολόκληρη την περίοδο ενοικίασης. Το Check-Out δεν επιτρέπεται.');
+      } else if (message.includes('CHECKOUT_DOCUMENTS_INVALID:INSPECTION')) {
+        setCheckOutError('Το ΚΤΕΟ δεν καλύπτει ολόκληρη την περίοδο ενοικίασης. Το Check-Out δεν επιτρέπεται.');
+      } else if (message.includes('CHECKOUT_DOCUMENTS_INVALID:RESERVATION_OR_VEHICLE')) {
+        setCheckOutError('Λείπουν ή δεν είναι έγκυρα τα στοιχεία κράτησης ή οχήματος. Το Check-Out δεν επιτρέπεται.');
+      } else {
+        setCheckOutError('Αποτυχία ολοκλήρωσης check-out. Ελέγξτε αν η κράτηση ενημερώθηκε σωστά.');
+      }
     } finally {
       setCheckOutSubmitting(false);
     }
