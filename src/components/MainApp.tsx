@@ -169,21 +169,13 @@ const MainApp: React.FC = () => {
         return;
       }
 
-      await checkoutService.create({
+      await checkoutService.complete({
         reservation_id: checkOutReservation,
         fuel_level: data.fuel_level,
         odometer: data.odometer,
         accessories_given: data.accessories_given,
         damages: data.damages,
-        checked_out_by: user?.id,
       });
-
-      const updated = await reservationService.update(checkOutReservation, { status: 'active' });
-      if (!updated) throw new Error('Failed to update reservation status');
-
-      if ((reservation as any).vehicle_id) {
-        await vehicleService.update((reservation as any).vehicle_id, { status: 'rented' });
-      }
 
       setCheckOutReservation(null);
       setReservationRefresh(prev => prev + 1);
@@ -197,7 +189,7 @@ const MainApp: React.FC = () => {
       } else if (message.includes('CHECKOUT_DOCUMENTS_INVALID:RESERVATION_OR_VEHICLE')) {
         setCheckOutError('Λείπουν ή δεν είναι έγκυρα τα στοιχεία κράτησης ή οχήματος. Το Check-Out δεν επιτρέπεται.');
       } else {
-        setCheckOutError('Αποτυχία ολοκλήρωσης check-out. Ελέγξτε αν η κράτηση ενημερώθηκε σωστά.');
+        setCheckOutError('Αποτυχία ολοκλήρωσης Check-Out. Δεν αποθηκεύτηκε μερική συναλλαγή.');
       }
     } finally {
       setCheckOutSubmitting(false);
@@ -218,37 +210,30 @@ const MainApp: React.FC = () => {
       const reservation = allReservations.find((r: any) => r.id === checkInReservation);
       if (!reservation) throw new Error('Reservation not found');
 
-      await checkinService.create({
+      await checkinService.complete({
         reservation_id: checkInReservation,
         fuel_level: data.fuel_level,
         odometer: data.odometer,
         new_damages: data.new_damages,
         additional_charges: data.additional_charges,
-        checked_in_by: user?.id,
       });
-
-      const updated = await reservationService.update(checkInReservation, { status: 'completed' });
-      if (!updated) throw new Error('Failed to update reservation status');
-
-      if ((reservation as any).vehicle_id) {
-        const vehicleId = (reservation as any).vehicle_id;
-        const currentOdometer = (reservation as any).vehicle?.odometer ?? 0;
-        const returnOdometer = Number(data.odometer);
-        const vehicleUpdates: Partial<{ status: string; odometer: number }> = { status: 'available' };
-        if (!isNaN(returnOdometer) && returnOdometer >= currentOdometer) {
-          vehicleUpdates.odometer = returnOdometer;
-        }
-        const vehicleUpdated = await vehicleService.update(vehicleId, vehicleUpdates);
-        if (!vehicleUpdated) {
-          setCheckInError('Η κράτηση ολοκληρώθηκε αλλά η ενημέρωση του οχήματος απέτυχε. Ελέγξτε το χιλιομετρητή.');
-        }
-      }
 
       setCheckInReservation(null);
       setReservationRefresh(prev => prev + 1);
     } catch (err) {
       console.error('Check-in save failed:', err);
-      setCheckInError('Αποτυχία ολοκλήρωσης check-in. Ελέγξτε αν η κράτηση ενημερώθηκε σωστά.');
+      const message = err instanceof Error ? err.message : '';
+      if (message.includes('CHECKIN_DENIED:ALREADY_DONE')) {
+        setCheckInError('Έχει ήδη πραγματοποιηθεί Check-In για αυτή την κράτηση.');
+      } else if (message.includes('CHECKIN_DENIED:NO_CHECKOUT')) {
+        setCheckInError('Δεν μπορεί να γίνει Check-In χωρίς προηγούμενο Check-Out.');
+      } else if (message.includes('CHECKIN_DENIED:MEASUREMENTS')) {
+        setCheckInError('Ελέγξτε τη στάθμη καυσίμου και τα χιλιόμετρα του οχήματος.');
+      } else if (message.includes('CHECKIN_DENIED:RESERVATION_STATUS') || message.includes('CHECKIN_DENIED:VEHICLE_STATUS')) {
+        setCheckInError('Η κατάσταση της κράτησης ή του οχήματος δεν επιτρέπει Check-In.');
+      } else {
+        setCheckInError('Αποτυχία ολοκλήρωσης Check-In. Δεν αποθηκεύτηκε μερική συναλλαγή.');
+      }
     } finally {
       setCheckInSubmitting(false);
     }
