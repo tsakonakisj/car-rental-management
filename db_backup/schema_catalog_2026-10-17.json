@@ -1,0 +1,2992 @@
+{
+  "snapshot_date": "2026-10-17",
+  "source": "read-only PostgreSQL catalog queries via connected Supabase",
+  "project_ref": "gvmjtfaehvdqgnworxqw",
+  "backup_branch": "backup/rentovio-2026-10-17",
+  "description": "Schema metadata reference, NOT a pg_dump, not an executable restore and not database row data",
+  "columns": [
+    {
+      "table_name": "checkins",
+      "ordinal_position": 1,
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": "uuid_generate_v4()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "checkins",
+      "ordinal_position": 2,
+      "column_name": "reservation_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "checkins",
+      "ordinal_position": 3,
+      "column_name": "fuel_level",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "checkins",
+      "ordinal_position": 4,
+      "column_name": "odometer",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "checkins",
+      "ordinal_position": 5,
+      "column_name": "new_damage_ids",
+      "data_type": "ARRAY",
+      "udt_name": "_uuid",
+      "is_nullable": "YES",
+      "column_default": "'{}'::uuid[]",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "checkins",
+      "ordinal_position": 6,
+      "column_name": "additional_charges",
+      "data_type": "jsonb",
+      "udt_name": "jsonb",
+      "is_nullable": "YES",
+      "column_default": "'[]'::jsonb",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "checkins",
+      "ordinal_position": 7,
+      "column_name": "checked_in_by",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "checkins",
+      "ordinal_position": 8,
+      "column_name": "checked_in_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "checkins",
+      "ordinal_position": 9,
+      "column_name": "notes",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "checkouts",
+      "ordinal_position": 1,
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": "uuid_generate_v4()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "checkouts",
+      "ordinal_position": 2,
+      "column_name": "reservation_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "checkouts",
+      "ordinal_position": 3,
+      "column_name": "fuel_level",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "checkouts",
+      "ordinal_position": 4,
+      "column_name": "odometer",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "checkouts",
+      "ordinal_position": 5,
+      "column_name": "accessories_given",
+      "data_type": "ARRAY",
+      "udt_name": "_text",
+      "is_nullable": "YES",
+      "column_default": "'{}'::text[]",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "checkouts",
+      "ordinal_position": 6,
+      "column_name": "damage_ids",
+      "data_type": "ARRAY",
+      "udt_name": "_uuid",
+      "is_nullable": "YES",
+      "column_default": "'{}'::uuid[]",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "checkouts",
+      "ordinal_position": 7,
+      "column_name": "checked_out_by",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "checkouts",
+      "ordinal_position": 8,
+      "column_name": "checked_out_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "checkouts",
+      "ordinal_position": 9,
+      "column_name": "notes",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "cron_secrets",
+      "ordinal_position": 1,
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": "gen_random_uuid()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "cron_secrets",
+      "ordinal_position": 2,
+      "column_name": "name",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "cron_secrets",
+      "ordinal_position": 3,
+      "column_name": "value",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "cron_secrets",
+      "ordinal_position": 4,
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "customers",
+      "ordinal_position": 1,
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": "uuid_generate_v4()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "customers",
+      "ordinal_position": 2,
+      "column_name": "name",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "customers",
+      "ordinal_position": 3,
+      "column_name": "phone",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "customers",
+      "ordinal_position": 4,
+      "column_name": "email",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "customers",
+      "ordinal_position": 5,
+      "column_name": "country",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "customers",
+      "ordinal_position": 6,
+      "column_name": "license_number",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "customers",
+      "ordinal_position": 7,
+      "column_name": "birth_date",
+      "data_type": "date",
+      "udt_name": "date",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "customers",
+      "ordinal_position": 8,
+      "column_name": "notes",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "customers",
+      "ordinal_position": 9,
+      "column_name": "source",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": "'store'::text",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "customers",
+      "ordinal_position": 10,
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "customers",
+      "ordinal_position": 11,
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "damages",
+      "ordinal_position": 1,
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": "uuid_generate_v4()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "damages",
+      "ordinal_position": 2,
+      "column_name": "description",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "damages",
+      "ordinal_position": 3,
+      "column_name": "estimated_cost",
+      "data_type": "numeric",
+      "udt_name": "numeric",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 8,
+      "numeric_scale": 2,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "damages",
+      "ordinal_position": 4,
+      "column_name": "photo_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "damages",
+      "ordinal_position": 5,
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "extras",
+      "ordinal_position": 1,
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": "uuid_generate_v4()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "extras",
+      "ordinal_position": 2,
+      "column_name": "name",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "extras",
+      "ordinal_position": 3,
+      "column_name": "name_en",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "extras",
+      "ordinal_position": 4,
+      "column_name": "type",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "extras",
+      "ordinal_position": 5,
+      "column_name": "price",
+      "data_type": "numeric",
+      "udt_name": "numeric",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 8,
+      "numeric_scale": 2,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "extras",
+      "ordinal_position": 6,
+      "column_name": "active",
+      "data_type": "boolean",
+      "udt_name": "bool",
+      "is_nullable": "YES",
+      "column_default": "true",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "extras",
+      "ordinal_position": 7,
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "insurance_types",
+      "ordinal_position": 1,
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": "uuid_generate_v4()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "insurance_types",
+      "ordinal_position": 2,
+      "column_name": "name",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "insurance_types",
+      "ordinal_position": 3,
+      "column_name": "name_en",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "insurance_types",
+      "ordinal_position": 4,
+      "column_name": "daily_rate",
+      "data_type": "numeric",
+      "udt_name": "numeric",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 8,
+      "numeric_scale": 2,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "insurance_types",
+      "ordinal_position": 5,
+      "column_name": "category",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "insurance_types",
+      "ordinal_position": 6,
+      "column_name": "active",
+      "data_type": "boolean",
+      "udt_name": "bool",
+      "is_nullable": "YES",
+      "column_default": "true",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "insurance_types",
+      "ordinal_position": 7,
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "payments",
+      "ordinal_position": 1,
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": "uuid_generate_v4()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "payments",
+      "ordinal_position": 2,
+      "column_name": "reservation_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "payments",
+      "ordinal_position": 3,
+      "column_name": "amount",
+      "data_type": "numeric",
+      "udt_name": "numeric",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 10,
+      "numeric_scale": 2,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "payments",
+      "ordinal_position": 4,
+      "column_name": "method",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "payments",
+      "ordinal_position": 5,
+      "column_name": "notes",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "payments",
+      "ordinal_position": 6,
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "payments",
+      "ordinal_position": 7,
+      "column_name": "created_by",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "photos",
+      "ordinal_position": 1,
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": "uuid_generate_v4()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "photos",
+      "ordinal_position": 2,
+      "column_name": "url",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "photos",
+      "ordinal_position": 3,
+      "column_name": "type",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "photos",
+      "ordinal_position": 4,
+      "column_name": "reference_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "photos",
+      "ordinal_position": 5,
+      "column_name": "description",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "photos",
+      "ordinal_position": 6,
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "pricing",
+      "ordinal_position": 1,
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": "uuid_generate_v4()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "pricing",
+      "ordinal_position": 2,
+      "column_name": "category",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "pricing",
+      "ordinal_position": 3,
+      "column_name": "daily_rate",
+      "data_type": "numeric",
+      "udt_name": "numeric",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 8,
+      "numeric_scale": 2,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "pricing",
+      "ordinal_position": 4,
+      "column_name": "season_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "pricing",
+      "ordinal_position": 5,
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservation_extras",
+      "ordinal_position": 1,
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": "uuid_generate_v4()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservation_extras",
+      "ordinal_position": 2,
+      "column_name": "reservation_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservation_extras",
+      "ordinal_position": 3,
+      "column_name": "extra_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservation_extras",
+      "ordinal_position": 4,
+      "column_name": "quantity",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "NO",
+      "column_default": "1",
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservation_extras",
+      "ordinal_position": 5,
+      "column_name": "daily_rate",
+      "data_type": "numeric",
+      "udt_name": "numeric",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 8,
+      "numeric_scale": 2,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservation_extras",
+      "ordinal_position": 6,
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservations",
+      "ordinal_position": 1,
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": "uuid_generate_v4()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservations",
+      "ordinal_position": 2,
+      "column_name": "customer_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservations",
+      "ordinal_position": 3,
+      "column_name": "vehicle_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservations",
+      "ordinal_position": 4,
+      "column_name": "category",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservations",
+      "ordinal_position": 5,
+      "column_name": "pickup_date",
+      "data_type": "timestamp without time zone",
+      "udt_name": "timestamp",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservations",
+      "ordinal_position": 6,
+      "column_name": "return_date",
+      "data_type": "timestamp without time zone",
+      "udt_name": "timestamp",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservations",
+      "ordinal_position": 7,
+      "column_name": "pickup_station_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservations",
+      "ordinal_position": 8,
+      "column_name": "return_station_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservations",
+      "ordinal_position": 9,
+      "column_name": "status",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": "'upcoming'::text",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservations",
+      "ordinal_position": 10,
+      "column_name": "daily_rate",
+      "data_type": "numeric",
+      "udt_name": "numeric",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 8,
+      "numeric_scale": 2,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservations",
+      "ordinal_position": 11,
+      "column_name": "insurance_type",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": "'basic'::text",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservations",
+      "ordinal_position": 12,
+      "column_name": "insurance_rate",
+      "data_type": "numeric",
+      "udt_name": "numeric",
+      "is_nullable": "YES",
+      "column_default": "0",
+      "character_maximum_length": null,
+      "numeric_precision": 8,
+      "numeric_scale": 2,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservations",
+      "ordinal_position": 13,
+      "column_name": "total_amount",
+      "data_type": "numeric",
+      "udt_name": "numeric",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 10,
+      "numeric_scale": 2,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservations",
+      "ordinal_position": 14,
+      "column_name": "notes",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservations",
+      "ordinal_position": 15,
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservations",
+      "ordinal_position": 16,
+      "column_name": "created_by",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservations",
+      "ordinal_position": 17,
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservations",
+      "ordinal_position": 18,
+      "column_name": "excel_updated",
+      "data_type": "boolean",
+      "udt_name": "bool",
+      "is_nullable": "YES",
+      "column_default": "false",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservations",
+      "ordinal_position": 20,
+      "column_name": "contract_issued_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "reservations",
+      "ordinal_position": 21,
+      "column_name": "booking_confirmation_issued_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "seasons",
+      "ordinal_position": 1,
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": "uuid_generate_v4()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "seasons",
+      "ordinal_position": 2,
+      "column_name": "name",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "seasons",
+      "ordinal_position": 3,
+      "column_name": "start_date",
+      "data_type": "date",
+      "udt_name": "date",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "seasons",
+      "ordinal_position": 4,
+      "column_name": "end_date",
+      "data_type": "date",
+      "udt_name": "date",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "seasons",
+      "ordinal_position": 5,
+      "column_name": "multiplier",
+      "data_type": "numeric",
+      "udt_name": "numeric",
+      "is_nullable": "NO",
+      "column_default": "1.0",
+      "character_maximum_length": null,
+      "numeric_precision": 3,
+      "numeric_scale": 2,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "seasons",
+      "ordinal_position": 6,
+      "column_name": "active",
+      "data_type": "boolean",
+      "udt_name": "bool",
+      "is_nullable": "YES",
+      "column_default": "true",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "seasons",
+      "ordinal_position": 7,
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "seasons",
+      "ordinal_position": 8,
+      "column_name": "start_month",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "seasons",
+      "ordinal_position": 9,
+      "column_name": "start_day",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "seasons",
+      "ordinal_position": 10,
+      "column_name": "end_month",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "seasons",
+      "ordinal_position": 11,
+      "column_name": "end_day",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "seasons",
+      "ordinal_position": 12,
+      "column_name": "priority",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "YES",
+      "column_default": "0",
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "seasons",
+      "ordinal_position": 13,
+      "column_name": "start_month_2",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "seasons",
+      "ordinal_position": 14,
+      "column_name": "start_day_2",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "seasons",
+      "ordinal_position": 15,
+      "column_name": "end_month_2",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "seasons",
+      "ordinal_position": 16,
+      "column_name": "end_day_2",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "seasons",
+      "ordinal_position": 17,
+      "column_name": "start_month_3",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "seasons",
+      "ordinal_position": 18,
+      "column_name": "start_day_3",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "seasons",
+      "ordinal_position": 19,
+      "column_name": "end_month_3",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "seasons",
+      "ordinal_position": 20,
+      "column_name": "end_day_3",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "settings",
+      "ordinal_position": 1,
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": "uuid_generate_v4()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "settings",
+      "ordinal_position": 2,
+      "column_name": "key",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "settings",
+      "ordinal_position": 3,
+      "column_name": "value",
+      "data_type": "jsonb",
+      "udt_name": "jsonb",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "settings",
+      "ordinal_position": 4,
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "settings",
+      "ordinal_position": 5,
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "stations",
+      "ordinal_position": 1,
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": "uuid_generate_v4()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "stations",
+      "ordinal_position": 2,
+      "column_name": "name",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "stations",
+      "ordinal_position": 3,
+      "column_name": "name_en",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "stations",
+      "ordinal_position": 4,
+      "column_name": "address",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "stations",
+      "ordinal_position": 5,
+      "column_name": "active",
+      "data_type": "boolean",
+      "udt_name": "bool",
+      "is_nullable": "YES",
+      "column_default": "true",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "stations",
+      "ordinal_position": 6,
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "users",
+      "ordinal_position": 1,
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": "uuid_generate_v4()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "users",
+      "ordinal_position": 2,
+      "column_name": "email",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "users",
+      "ordinal_position": 3,
+      "column_name": "name",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "users",
+      "ordinal_position": 4,
+      "column_name": "role",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "users",
+      "ordinal_position": 5,
+      "column_name": "active",
+      "data_type": "boolean",
+      "udt_name": "bool",
+      "is_nullable": "YES",
+      "column_default": "true",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "users",
+      "ordinal_position": 6,
+      "column_name": "last_login",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "users",
+      "ordinal_position": 7,
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "users",
+      "ordinal_position": 8,
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "users",
+      "ordinal_position": 9,
+      "column_name": "auth_user_id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "vehicles",
+      "ordinal_position": 1,
+      "column_name": "id",
+      "data_type": "uuid",
+      "udt_name": "uuid",
+      "is_nullable": "NO",
+      "column_default": "uuid_generate_v4()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "vehicles",
+      "ordinal_position": 2,
+      "column_name": "plate",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "vehicles",
+      "ordinal_position": 3,
+      "column_name": "brand",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "vehicles",
+      "ordinal_position": 4,
+      "column_name": "model",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "vehicles",
+      "ordinal_position": 5,
+      "column_name": "category",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "vehicles",
+      "ordinal_position": 6,
+      "column_name": "year",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "vehicles",
+      "ordinal_position": 7,
+      "column_name": "transmission",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "vehicles",
+      "ordinal_position": 8,
+      "column_name": "fuel_type",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "vehicles",
+      "ordinal_position": 9,
+      "column_name": "status",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "NO",
+      "column_default": "'available'::text",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "vehicles",
+      "ordinal_position": 10,
+      "column_name": "insurance_expiry",
+      "data_type": "date",
+      "udt_name": "date",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "vehicles",
+      "ordinal_position": 11,
+      "column_name": "inspection_expiry",
+      "data_type": "date",
+      "udt_name": "date",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "vehicles",
+      "ordinal_position": 12,
+      "column_name": "last_service",
+      "data_type": "date",
+      "udt_name": "date",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "vehicles",
+      "ordinal_position": 13,
+      "column_name": "odometer",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "YES",
+      "column_default": "0",
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "vehicles",
+      "ordinal_position": 14,
+      "column_name": "created_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "vehicles",
+      "ordinal_position": 15,
+      "column_name": "updated_at",
+      "data_type": "timestamp with time zone",
+      "udt_name": "timestamptz",
+      "is_nullable": "YES",
+      "column_default": "now()",
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "vehicles",
+      "ordinal_position": 16,
+      "column_name": "photo_url",
+      "data_type": "text",
+      "udt_name": "text",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "vehicles",
+      "ordinal_position": 17,
+      "column_name": "next_service_date",
+      "data_type": "date",
+      "udt_name": "date",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "vehicles",
+      "ordinal_position": 18,
+      "column_name": "next_service_odometer",
+      "data_type": "integer",
+      "udt_name": "int4",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": 32,
+      "numeric_scale": 0,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    },
+    {
+      "table_name": "vehicles",
+      "ordinal_position": 19,
+      "column_name": "fuel_tank_capacity",
+      "data_type": "numeric",
+      "udt_name": "numeric",
+      "is_nullable": "YES",
+      "column_default": null,
+      "character_maximum_length": null,
+      "numeric_precision": null,
+      "numeric_scale": null,
+      "identity_generation": null,
+      "is_generated": "NEVER"
+    }
+  ],
+  "constraints": [
+    {
+      "table_name": "checkins",
+      "constraint_name": "checkins_checked_in_by_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (checked_in_by) REFERENCES users(id)"
+    },
+    {
+      "table_name": "checkins",
+      "constraint_name": "checkins_fuel_level_check",
+      "type": "c",
+      "definition": "CHECK (((fuel_level >= 0) AND (fuel_level <= 100)))"
+    },
+    {
+      "table_name": "checkins",
+      "constraint_name": "checkins_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "checkins",
+      "constraint_name": "checkins_reservation_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (reservation_id) REFERENCES reservations(id)"
+    },
+    {
+      "table_name": "checkouts",
+      "constraint_name": "checkouts_checked_out_by_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (checked_out_by) REFERENCES users(id)"
+    },
+    {
+      "table_name": "checkouts",
+      "constraint_name": "checkouts_fuel_level_check",
+      "type": "c",
+      "definition": "CHECK (((fuel_level >= 0) AND (fuel_level <= 100)))"
+    },
+    {
+      "table_name": "checkouts",
+      "constraint_name": "checkouts_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "checkouts",
+      "constraint_name": "checkouts_reservation_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (reservation_id) REFERENCES reservations(id)"
+    },
+    {
+      "table_name": "checkouts",
+      "constraint_name": "checkouts_reservation_id_unique",
+      "type": "u",
+      "definition": "UNIQUE (reservation_id)"
+    },
+    {
+      "table_name": "cron_secrets",
+      "constraint_name": "cron_secrets_name_key",
+      "type": "u",
+      "definition": "UNIQUE (name)"
+    },
+    {
+      "table_name": "cron_secrets",
+      "constraint_name": "cron_secrets_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "customers",
+      "constraint_name": "customers_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "customers",
+      "constraint_name": "customers_source_check",
+      "type": "c",
+      "definition": "CHECK ((source = ANY (ARRAY['store'::text, 'phone'::text, 'instagram'::text, 'whatsapp'::text, 'website'::text, 'repeat'::text, 'other'::text, 'walk-in'::text])))"
+    },
+    {
+      "table_name": "damages",
+      "constraint_name": "damages_photo_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (photo_id) REFERENCES photos(id)"
+    },
+    {
+      "table_name": "damages",
+      "constraint_name": "damages_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "extras",
+      "constraint_name": "extras_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "extras",
+      "constraint_name": "extras_type_check",
+      "type": "c",
+      "definition": "CHECK ((type = ANY (ARRAY['daily'::text, 'one-time'::text])))"
+    },
+    {
+      "table_name": "insurance_types",
+      "constraint_name": "insurance_types_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "payments",
+      "constraint_name": "payments_created_by_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (created_by) REFERENCES users(id)"
+    },
+    {
+      "table_name": "payments",
+      "constraint_name": "payments_method_check",
+      "type": "c",
+      "definition": "CHECK ((method = ANY (ARRAY['cash'::text, 'card'::text, 'transfer'::text])))"
+    },
+    {
+      "table_name": "payments",
+      "constraint_name": "payments_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "payments",
+      "constraint_name": "payments_reservation_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (reservation_id) REFERENCES reservations(id)"
+    },
+    {
+      "table_name": "photos",
+      "constraint_name": "photos_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "photos",
+      "constraint_name": "photos_type_check",
+      "type": "c",
+      "definition": "CHECK ((type = ANY (ARRAY['checkout'::text, 'checkin'::text, 'damage'::text, 'vehicle'::text])))"
+    },
+    {
+      "table_name": "pricing",
+      "constraint_name": "pricing_category_check",
+      "type": "c",
+      "definition": "CHECK ((category = ANY (ARRAY['A'::text, 'B'::text, 'C'::text, 'SUV'::text, '7-seater'::text])))"
+    },
+    {
+      "table_name": "pricing",
+      "constraint_name": "pricing_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "pricing",
+      "constraint_name": "pricing_season_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (season_id) REFERENCES seasons(id)"
+    },
+    {
+      "table_name": "reservation_extras",
+      "constraint_name": "reservation_extras_extra_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (extra_id) REFERENCES extras(id)"
+    },
+    {
+      "table_name": "reservation_extras",
+      "constraint_name": "reservation_extras_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "reservation_extras",
+      "constraint_name": "reservation_extras_reservation_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (reservation_id) REFERENCES reservations(id) ON DELETE CASCADE"
+    },
+    {
+      "table_name": "reservations",
+      "constraint_name": "reservations_created_by_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (created_by) REFERENCES users(id)"
+    },
+    {
+      "table_name": "reservations",
+      "constraint_name": "reservations_customer_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (customer_id) REFERENCES customers(id)"
+    },
+    {
+      "table_name": "reservations",
+      "constraint_name": "reservations_pickup_station_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (pickup_station_id) REFERENCES stations(id)"
+    },
+    {
+      "table_name": "reservations",
+      "constraint_name": "reservations_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "reservations",
+      "constraint_name": "reservations_return_station_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (return_station_id) REFERENCES stations(id)"
+    },
+    {
+      "table_name": "reservations",
+      "constraint_name": "reservations_status_check",
+      "type": "c",
+      "definition": "CHECK ((status = ANY (ARRAY['upcoming'::text, 'active'::text, 'completed'::text, 'cancelled'::text])))"
+    },
+    {
+      "table_name": "reservations",
+      "constraint_name": "reservations_vehicle_id_fkey",
+      "type": "f",
+      "definition": "FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)"
+    },
+    {
+      "table_name": "seasons",
+      "constraint_name": "seasons_end_day_chk",
+      "type": "c",
+      "definition": "CHECK (((end_day IS NULL) OR ((end_day >= 1) AND (end_day <= 31))))"
+    },
+    {
+      "table_name": "seasons",
+      "constraint_name": "seasons_end_month_chk",
+      "type": "c",
+      "definition": "CHECK (((end_month IS NULL) OR ((end_month >= 1) AND (end_month <= 12))))"
+    },
+    {
+      "table_name": "seasons",
+      "constraint_name": "seasons_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "seasons",
+      "constraint_name": "seasons_start_day_chk",
+      "type": "c",
+      "definition": "CHECK (((start_day IS NULL) OR ((start_day >= 1) AND (start_day <= 31))))"
+    },
+    {
+      "table_name": "seasons",
+      "constraint_name": "seasons_start_month_chk",
+      "type": "c",
+      "definition": "CHECK (((start_month IS NULL) OR ((start_month >= 1) AND (start_month <= 12))))"
+    },
+    {
+      "table_name": "settings",
+      "constraint_name": "settings_key_key",
+      "type": "u",
+      "definition": "UNIQUE (key)"
+    },
+    {
+      "table_name": "settings",
+      "constraint_name": "settings_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "stations",
+      "constraint_name": "stations_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "users",
+      "constraint_name": "users_email_key",
+      "type": "u",
+      "definition": "UNIQUE (email)"
+    },
+    {
+      "table_name": "users",
+      "constraint_name": "users_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "users",
+      "constraint_name": "users_role_check",
+      "type": "c",
+      "definition": "CHECK ((role = ANY (ARRAY['agent'::text, 'manager'::text, 'admin'::text])))"
+    },
+    {
+      "table_name": "vehicles",
+      "constraint_name": "vehicles_category_check",
+      "type": "c",
+      "definition": "CHECK ((category = ANY (ARRAY['A'::text, 'B'::text, 'C'::text, 'SUV'::text, '7-seater'::text])))"
+    },
+    {
+      "table_name": "vehicles",
+      "constraint_name": "vehicles_fuel_tank_capacity_check",
+      "type": "c",
+      "definition": "CHECK ((fuel_tank_capacity > (0)::numeric))"
+    },
+    {
+      "table_name": "vehicles",
+      "constraint_name": "vehicles_fuel_type_check",
+      "type": "c",
+      "definition": "CHECK ((fuel_type = ANY (ARRAY['petrol'::text, 'diesel'::text])))"
+    },
+    {
+      "table_name": "vehicles",
+      "constraint_name": "vehicles_pkey",
+      "type": "p",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "table_name": "vehicles",
+      "constraint_name": "vehicles_plate_key",
+      "type": "u",
+      "definition": "UNIQUE (plate)"
+    },
+    {
+      "table_name": "vehicles",
+      "constraint_name": "vehicles_status_check",
+      "type": "c",
+      "definition": "CHECK ((status = ANY (ARRAY['available'::text, 'reserved'::text, 'rented'::text, 'service'::text, 'inactive'::text])))"
+    },
+    {
+      "table_name": "vehicles",
+      "constraint_name": "vehicles_transmission_check",
+      "type": "c",
+      "definition": "CHECK ((transmission = ANY (ARRAY['manual'::text, 'automatic'::text])))"
+    }
+  ],
+  "indexes": [
+    {
+      "tablename": "checkins",
+      "indexname": "checkins_pkey",
+      "indexdef": "CREATE UNIQUE INDEX checkins_pkey ON public.checkins USING btree (id)"
+    },
+    {
+      "tablename": "checkouts",
+      "indexname": "checkouts_pkey",
+      "indexdef": "CREATE UNIQUE INDEX checkouts_pkey ON public.checkouts USING btree (id)"
+    },
+    {
+      "tablename": "checkouts",
+      "indexname": "checkouts_reservation_id_unique",
+      "indexdef": "CREATE UNIQUE INDEX checkouts_reservation_id_unique ON public.checkouts USING btree (reservation_id)"
+    },
+    {
+      "tablename": "cron_secrets",
+      "indexname": "cron_secrets_name_key",
+      "indexdef": "CREATE UNIQUE INDEX cron_secrets_name_key ON public.cron_secrets USING btree (name)"
+    },
+    {
+      "tablename": "cron_secrets",
+      "indexname": "cron_secrets_pkey",
+      "indexdef": "CREATE UNIQUE INDEX cron_secrets_pkey ON public.cron_secrets USING btree (id)"
+    },
+    {
+      "tablename": "customers",
+      "indexname": "customers_pkey",
+      "indexdef": "CREATE UNIQUE INDEX customers_pkey ON public.customers USING btree (id)"
+    },
+    {
+      "tablename": "damages",
+      "indexname": "damages_pkey",
+      "indexdef": "CREATE UNIQUE INDEX damages_pkey ON public.damages USING btree (id)"
+    },
+    {
+      "tablename": "extras",
+      "indexname": "extras_pkey",
+      "indexdef": "CREATE UNIQUE INDEX extras_pkey ON public.extras USING btree (id)"
+    },
+    {
+      "tablename": "insurance_types",
+      "indexname": "insurance_types_pkey",
+      "indexdef": "CREATE UNIQUE INDEX insurance_types_pkey ON public.insurance_types USING btree (id)"
+    },
+    {
+      "tablename": "payments",
+      "indexname": "payments_pkey",
+      "indexdef": "CREATE UNIQUE INDEX payments_pkey ON public.payments USING btree (id)"
+    },
+    {
+      "tablename": "photos",
+      "indexname": "photos_pkey",
+      "indexdef": "CREATE UNIQUE INDEX photos_pkey ON public.photos USING btree (id)"
+    },
+    {
+      "tablename": "pricing",
+      "indexname": "pricing_category_season_key",
+      "indexdef": "CREATE UNIQUE INDEX pricing_category_season_key ON public.pricing USING btree (category, season_id)"
+    },
+    {
+      "tablename": "pricing",
+      "indexname": "pricing_pkey",
+      "indexdef": "CREATE UNIQUE INDEX pricing_pkey ON public.pricing USING btree (id)"
+    },
+    {
+      "tablename": "reservation_extras",
+      "indexname": "reservation_extras_pkey",
+      "indexdef": "CREATE UNIQUE INDEX reservation_extras_pkey ON public.reservation_extras USING btree (id)"
+    },
+    {
+      "tablename": "reservations",
+      "indexname": "reservations_pkey",
+      "indexdef": "CREATE UNIQUE INDEX reservations_pkey ON public.reservations USING btree (id)"
+    },
+    {
+      "tablename": "seasons",
+      "indexname": "seasons_pkey",
+      "indexdef": "CREATE UNIQUE INDEX seasons_pkey ON public.seasons USING btree (id)"
+    },
+    {
+      "tablename": "settings",
+      "indexname": "settings_key_key",
+      "indexdef": "CREATE UNIQUE INDEX settings_key_key ON public.settings USING btree (key)"
+    },
+    {
+      "tablename": "settings",
+      "indexname": "settings_pkey",
+      "indexdef": "CREATE UNIQUE INDEX settings_pkey ON public.settings USING btree (id)"
+    },
+    {
+      "tablename": "stations",
+      "indexname": "stations_pkey",
+      "indexdef": "CREATE UNIQUE INDEX stations_pkey ON public.stations USING btree (id)"
+    },
+    {
+      "tablename": "users",
+      "indexname": "users_auth_user_id_key",
+      "indexdef": "CREATE UNIQUE INDEX users_auth_user_id_key ON public.users USING btree (auth_user_id) WHERE (auth_user_id IS NOT NULL)"
+    },
+    {
+      "tablename": "users",
+      "indexname": "users_email_key",
+      "indexdef": "CREATE UNIQUE INDEX users_email_key ON public.users USING btree (email)"
+    },
+    {
+      "tablename": "users",
+      "indexname": "users_pkey",
+      "indexdef": "CREATE UNIQUE INDEX users_pkey ON public.users USING btree (id)"
+    },
+    {
+      "tablename": "vehicles",
+      "indexname": "vehicles_pkey",
+      "indexdef": "CREATE UNIQUE INDEX vehicles_pkey ON public.vehicles USING btree (id)"
+    },
+    {
+      "tablename": "vehicles",
+      "indexname": "vehicles_plate_key",
+      "indexdef": "CREATE UNIQUE INDEX vehicles_plate_key ON public.vehicles USING btree (plate)"
+    }
+  ],
+  "enum_types": [],
+  "sequences": [],
+  "extensions": [
+    {
+      "extname": "pg_cron",
+      "extversion": "1.6.4",
+      "installed_schema": "pg_catalog"
+    },
+    {
+      "extname": "pg_net",
+      "extversion": "0.20.3",
+      "installed_schema": "public"
+    },
+    {
+      "extname": "pg_stat_statements",
+      "extversion": "1.11",
+      "installed_schema": "extensions"
+    },
+    {
+      "extname": "pgcrypto",
+      "extversion": "1.3",
+      "installed_schema": "extensions"
+    },
+    {
+      "extname": "plpgsql",
+      "extversion": "1.0",
+      "installed_schema": "pg_catalog"
+    },
+    {
+      "extname": "supabase_vault",
+      "extversion": "0.3.1",
+      "installed_schema": "vault"
+    },
+    {
+      "extname": "uuid-ossp",
+      "extversion": "1.1",
+      "installed_schema": "extensions"
+    }
+  ],
+  "rls": [
+    {
+      "table_name": "checkins",
+      "enabled": true,
+      "forced": false
+    },
+    {
+      "table_name": "checkouts",
+      "enabled": true,
+      "forced": false
+    },
+    {
+      "table_name": "cron_secrets",
+      "enabled": true,
+      "forced": false
+    },
+    {
+      "table_name": "customers",
+      "enabled": true,
+      "forced": false
+    },
+    {
+      "table_name": "damages",
+      "enabled": true,
+      "forced": false
+    },
+    {
+      "table_name": "extras",
+      "enabled": true,
+      "forced": false
+    },
+    {
+      "table_name": "insurance_types",
+      "enabled": true,
+      "forced": false
+    },
+    {
+      "table_name": "payments",
+      "enabled": true,
+      "forced": false
+    },
+    {
+      "table_name": "photos",
+      "enabled": true,
+      "forced": false
+    },
+    {
+      "table_name": "pricing",
+      "enabled": true,
+      "forced": false
+    },
+    {
+      "table_name": "reservation_extras",
+      "enabled": true,
+      "forced": false
+    },
+    {
+      "table_name": "reservations",
+      "enabled": true,
+      "forced": false
+    },
+    {
+      "table_name": "seasons",
+      "enabled": true,
+      "forced": false
+    },
+    {
+      "table_name": "settings",
+      "enabled": true,
+      "forced": false
+    },
+    {
+      "table_name": "stations",
+      "enabled": true,
+      "forced": false
+    },
+    {
+      "table_name": "users",
+      "enabled": true,
+      "forced": false
+    },
+    {
+      "table_name": "vehicles",
+      "enabled": true,
+      "forced": false
+    }
+  ],
+  "storage_buckets": [
+    {
+      "id": "app-branding",
+      "name": "app-branding",
+      "public": true,
+      "file_size_limit": null,
+      "allowed_mime_types": null
+    },
+    {
+      "id": "rental-photos",
+      "name": "rental-photos",
+      "public": false,
+      "file_size_limit": null,
+      "allowed_mime_types": null
+    }
+  ],
+  "cron_status": [
+    {
+      "jobname": "cleanup-reservation-photos-daily",
+      "schedule": "0 3 * * *",
+      "active": true
+    }
+  ],
+  "migration_history": [
+    {
+      "version": "20250926060701",
+      "name": "foggy_summit"
+    },
+    {
+      "version": "20250926061132",
+      "name": "summer_salad"
+    },
+    {
+      "version": "20250926061208",
+      "name": "bitter_bonus"
+    },
+    {
+      "version": "20260508055627",
+      "name": "add_anon_access_policies"
+    },
+    {
+      "version": "20260509080916",
+      "name": "update_customers_source_check"
+    },
+    {
+      "version": "20260509085841",
+      "name": "add_rented_vehicle_status"
+    },
+    {
+      "version": "20260512055532",
+      "name": "add_excel_updated_to_reservations"
+    },
+    {
+      "version": "20260515082551",
+      "name": "add_inactive_vehicle_status"
+    },
+    {
+      "version": "20260515093843",
+      "name": "make_customer_birth_date_nullable"
+    },
+    {
+      "version": "20260516063515",
+      "name": "change_reservation_dates_to_timestamp"
+    },
+    {
+      "version": "20260606110954",
+      "name": "fix_users_policy_infinite_recursion"
+    },
+    {
+      "version": "20260606111319",
+      "name": "fix_for_all_policy_recursion"
+    },
+    {
+      "version": "20260606111836",
+      "name": "simplify_rls_remove_recursion"
+    },
+    {
+      "version": "20260606113016",
+      "name": "force_plan_cache_invalidation"
+    },
+    {
+      "version": "20260608095035",
+      "name": "nuclear_reset_all_policies"
+    },
+    {
+      "version": "20260608103832",
+      "name": "force_postgrest_hard_reload"
+    },
+    {
+      "version": "20260608114651",
+      "name": "disable_rls_users_table"
+    },
+    {
+      "version": "20260609071719",
+      "name": "disable_rls_all_tables"
+    },
+    {
+      "version": "20261004071354",
+      "name": "create_settings_table"
+    },
+    {
+      "version": "20261004075813",
+      "name": "add_recurring_season_fields"
+    },
+    {
+      "version": "20261006185218",
+      "name": "add_auth_user_id_to_users"
+    },
+    {
+      "version": "20261007064058",
+      "name": "rls_harden_authenticated_only_access"
+    },
+    {
+      "version": "20261007074020",
+      "name": "create_get_current_role_function"
+    },
+    {
+      "version": "20261007075050",
+      "name": "rls_role_based_users_settings_pricing_seasons"
+    },
+    {
+      "version": "20261007080956",
+      "name": "create_agent_auth_user"
+    },
+    {
+      "version": "20261007081207",
+      "name": "fix_users_rls_self_profile_select"
+    },
+    {
+      "version": "20261007085231",
+      "name": "rls_role_based_operational_tables"
+    },
+    {
+      "version": "20261007090044",
+      "name": "create_admin_auth_user"
+    },
+    {
+      "version": "20261007114316",
+      "name": "create_rental_photos_storage_bucket"
+    },
+    {
+      "version": "20261007125117",
+      "name": "create_photos_cleanup_function"
+    },
+    {
+      "version": "20261007125156",
+      "name": "schedule_photo_cleanup_daily"
+    },
+    {
+      "version": "20261007132058",
+      "name": "install_pg_net"
+    },
+    {
+      "version": "20261007132128",
+      "name": "create_cron_schedule_photo_cleanup"
+    },
+    {
+      "version": "20261007132442",
+      "name": "store_cleanup_cron_secret_in_vault"
+    },
+    {
+      "version": "20261007132509",
+      "name": "update_cron_with_secret_header"
+    },
+    {
+      "version": "20261007132612",
+      "name": "create_get_cleanup_cron_secret_function"
+    },
+    {
+      "version": "20261007132658",
+      "name": "create_cron_secrets_table"
+    },
+    {
+      "version": "20261007132739",
+      "name": "update_cron_to_use_get_cron_secret"
+    },
+    {
+      "version": "20261007133107",
+      "name": "lockdown_get_cron_secret"
+    },
+    {
+      "version": "20261008054422",
+      "name": "add_agent_select_pricing_seasons"
+    },
+    {
+      "version": "20261009082558",
+      "name": "lockdown_exposed_security_definer_functions"
+    },
+    {
+      "version": "20261011055159",
+      "name": "add_photo_url_to_vehicles"
+    },
+    {
+      "version": "20261011060353",
+      "name": "add_next_service_fields_to_vehicles"
+    },
+    {
+      "version": "20261011192359",
+      "name": "add_season_periods_2_and_3_columns"
+    },
+    {
+      "version": "20261011200341",
+      "name": "add_unique_constraint_pricing_category_season.sql"
+    },
+    {
+      "version": "20261013103949",
+      "name": "restrict_reservation_delete_to_admin.sql"
+    },
+    {
+      "version": "20261013110438",
+      "name": "restrict_reservation_delete_to_admin_and_status.sql"
+    },
+    {
+      "version": "20261013130955",
+      "name": "create_app_branding_storage_bucket.sql"
+    },
+    {
+      "version": "20261014102840",
+      "name": "add_fuel_tank_capacity_to_vehicles"
+    },
+    {
+      "version": "20261014173539",
+      "name": "unique_checkout_per_reservation"
+    },
+    {
+      "version": "20261014173956",
+      "name": "add_reservation_contract_issued_at"
+    },
+    {
+      "version": "20261015100234",
+      "name": "add_booking_confirmation_issued_at"
+    }
+  ]
+}
