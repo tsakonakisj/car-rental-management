@@ -350,7 +350,17 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
             return (
               <div
                 key={vehicle.id}
-                className={`flex flex-col overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)] ${isInactive ? 'opacity-50' : ''}`}
+                role={!isInactive ? 'button' : undefined}
+                tabIndex={!isInactive ? 0 : undefined}
+                aria-label={!isInactive ? `Επεξεργασία οχήματος ${vehicle.plate}` : undefined}
+                onClick={() => { if (!isInactive) setEditingVehicle(vehicle); }}
+                onKeyDown={(event) => {
+                  if (!isInactive && event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+                    event.preventDefault();
+                    setEditingVehicle(vehicle);
+                  }
+                }}
+                className={`flex flex-col overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)] ${isInactive ? 'opacity-50' : 'cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#55a8ff]'}`}
               >
                 <div className="flex flex-1 flex-col p-5">
                   <div className="mb-4 flex items-center justify-between">
@@ -453,7 +463,7 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
 
                   <div className="mt-auto flex space-x-2 pt-4">
                     <button
-                      onClick={() => setSelectedVehicle(vehicle)}
+                      onClick={(event) => { event.stopPropagation(); setSelectedVehicle(vehicle); }}
                       className="inline-flex min-h-10 flex-1 items-center justify-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
                     >
                       <CalendarDaysIcon className="mr-1 h-4 w-4" />
@@ -462,14 +472,14 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
                     {!isInactive && (
                       <>
                         <button
-                          onClick={() => setEditingVehicle(vehicle)}
+                          onClick={(event) => { event.stopPropagation(); setEditingVehicle(vehicle); }}
                           className="inline-flex min-h-10 items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
                           title="Επεξεργασία"
                         >
                           <PencilIcon className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleDeactivate(vehicle)}
+                          onClick={(event) => { event.stopPropagation(); handleDeactivate(vehicle); }}
                           disabled={togglingId === vehicle.id}
                           className="inline-flex min-h-10 items-center rounded-xl border border-amber-400/40 bg-amber-500/15 px-3 py-2 text-sm font-medium text-amber-300 transition-colors hover:bg-amber-500/25 disabled:opacity-50"
                           title="Απενεργοποίηση"
@@ -480,7 +490,7 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
                     )}
                     {isInactive && (
                       <button
-                        onClick={() => handleReactivate(vehicle)}
+                        onClick={(event) => { event.stopPropagation(); handleReactivate(vehicle); }}
                         disabled={togglingId === vehicle.id}
                         className="inline-flex min-h-10 items-center rounded-xl border border-emerald-400/40 bg-emerald-500/15 px-3 py-2 text-sm font-medium text-emerald-300 transition-colors hover:bg-emerald-500/25 disabled:opacity-50"
                       >
