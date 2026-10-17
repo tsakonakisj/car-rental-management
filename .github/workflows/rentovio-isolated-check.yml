@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feature/atomic-checkout-checkin-2026-10-17
+      - feature/prevent-overlapping-reservations-2026-10-17
     paths:
       - ".github/workflows/rentovio-isolated-check.yml"
       - "src/**"
@@ -67,3 +68,5 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261017120000_enforce_checkout_vehicle_documents.sql
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261017130000_atomic_handover_return.sql
           psql -v ON_ERROR_STOP=1 -f tests/fixtures/isolated-rentovio-transactions.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261017150000_prevent_overlapping_reservations.sql
+          psql -v ON_ERROR_STOP=1 -f tests/fixtures/isolated-rentovio-overlaps.sql
