@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 import { loadCompanyConfig, loadAppLogoLight } from '../../lib/company';
 import {
   HomeIcon,
@@ -37,6 +38,24 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, mobileOpen = false, onCloseMobile, previewRole }) => {
   const { t } = useLanguage();
   const { user } = useAuth();
+  const [allowedTabs, setAllowedTabs] = React.useState<string[]>([]);
+  React.useEffect(() => {
+    if (user?.role !== 'manager') {
+      setAllowedTabs([]);
+      return;
+    }
+    let live = true;
+    setAllowedTabs([]);
+    supabase.from('employee_permissions').select('permissions').eq('user_id', user.id).maybeSingle()
+      .then(({ data, error }) => {
+        if (!live || error) return;
+        const p = data?.permissions as Record<string, { view?: boolean }> | undefined;
+        const next = ['dashboard', ...(['bookings', 'customers', 'fleet', 'pricing', 'reports'] as const)
+          .filter((tab) => p?.[tab]?.view === true)];
+        setAllowedTabs(next);
+      });
+    return () => { live = false; };
+  }, [user?.id, user?.role]);
   const [companyName, setCompanyName] = React.useState('');
   const [logoUrl, setLogoUrl] = React.useState<string | null>(null);
 
@@ -62,7 +81,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, mobileOpen =
     { id: 'settings', label: t('settings'), icon: CogIcon },
   ];
 
-  const menuItems = allMenuItems.filter((item) => isTabAllowed(user?.role === 'admin' ? (previewRole ?? 'admin') : user?.role, item.id));
+  const menuItems = allMenuItems.filter((item) => isTabAllowed(user?.role === 'admin' ? (previewRole ?? 'admin') : user?.role, item.id) && (user?.role !== 'manager' || allowedTabs.includes(item.id)));
 
   useEffect(() => {
     if (!mobileOpen) return;
