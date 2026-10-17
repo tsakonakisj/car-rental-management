@@ -354,7 +354,7 @@ const LoginForm: React.FC = () => {
                     </button>
                   }
                 />
-                {captchaSiteKey && <TurnstileCaptcha siteKey={captchaSiteKey} onToken={setCaptchaToken} resetKey={captchaResetKey} />}
+
                 {errorMsg && <Message tone="error">{errorMsg}</Message>}
                 <button
                   type="submit"
@@ -375,6 +375,7 @@ const LoginForm: React.FC = () => {
                 >
                   {copy.forgot}
                 </button>
+                {captchaSiteKey && <TurnstileCaptcha siteKey={captchaSiteKey} onToken={setCaptchaToken} resetKey={captchaResetKey} />}
               </form>
             )}
           </div>
