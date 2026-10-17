@@ -32,9 +32,10 @@ interface SidebarProps {
   setActiveTab: (tab: string) => void;
   mobileOpen?: boolean;
   onCloseMobile?: () => void;
+  previewRole?: AppRole;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, mobileOpen = false, onCloseMobile }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, mobileOpen = false, onCloseMobile, previewRole }) => {
   const { t } = useLanguage();
   const { user } = useAuth();
   const [companyName, setCompanyName] = React.useState('');
@@ -62,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, mobileOpen =
     { id: 'settings', label: t('settings'), icon: CogIcon },
   ];
 
-  const menuItems = allMenuItems.filter((item) => isTabAllowed(user?.role, item.id));
+  const menuItems = allMenuItems.filter((item) => isTabAllowed(user?.role === 'admin' ? (previewRole ?? 'admin') : user?.role, item.id));
 
   useEffect(() => {
     if (!mobileOpen) return;
