@@ -202,9 +202,6 @@ REVOKE ALL ON FUNCTION public.complete_vehicle_checkin(uuid,integer,integer,json
 GRANT EXECUTE ON FUNCTION public.complete_vehicle_checkout(uuid,integer,integer,text[],jsonb) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.complete_vehicle_checkin(uuid,integer,integer,jsonb,jsonb) TO authenticated;
 
--- After the application switches to the RPC routes, block direct client
--- inserts that could bypass the atomic workflow (RLS alone permits these).
--- Deploy alongside compatible frontend: older clients using direct INSERT
--- will stop working. Service role operations remain available.
-REVOKE INSERT ON TABLE public.checkouts, public.checkins FROM authenticated;
+-- Direct INSERT privileges are deliberately retained until the updated
+-- frontend is published and verified. Revoke in a separate release step.
 
