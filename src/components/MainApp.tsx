@@ -25,6 +25,7 @@ const MainApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showBookingWizard, setShowBookingWizard] = useState(false);
   const [checkOutReservation, setCheckOutReservation] = useState<string | null>(null);
+  const [pendingCheckout, setPendingCheckout] = useState<{ reservationId: string; odometer?: number } | null>(null);
   const [checkOutVehicleOdometer, setCheckOutVehicleOdometer] = useState<number | undefined>(undefined);
   const [checkInReservation, setCheckInReservation] = useState<string | null>(null);
   const [checkInVehicleFuelTankCapacity, setCheckInVehicleFuelTankCapacity] = useState<number | null | undefined>(undefined);
@@ -108,10 +109,10 @@ const MainApp: React.FC = () => {
         return;
       }
       if (!(reservation as any).contract_issued_at) {
-        const proceed = window.confirm('Δεν έχει καταγραφεί έκδοση συμβολαίου για αυτή την κράτηση.\n\nΘέλεις να συνεχίσεις με το Check-Out;');
-        if (!proceed) return;
+        setPendingCheckout({ reservationId, odometer: vehicle.odometer });
+        return;
       }
-      setCheckOutVehicleOdometer((reservation as any).vehicle?.odometer);
+      setCheckOutVehicleOdometer(vehicle.odometer);
       setCheckOutReservation(reservationId);
     } catch {
       setCheckOutError('Αποτυχία φόρτωσης κράτησης.');
@@ -238,6 +239,27 @@ const MainApp: React.FC = () => {
       setCheckInSubmitting(false);
     }
   };
+
+  // Confirm a missing contract inside the application instead of relying on
+  // a native browser confirm, which can be unreliable in embedded previews.
+  if (pendingCheckout) {
+    return (
+      <div className="min-h-screen bg-[#061a35] flex items-center justify-center p-4">
+        <div role="dialog" aria-modal="true" aria-labelledby="checkout-contract-warning-title" className="w-full max-w-lg rounded-2xl border border-amber-500/30 bg-[#0b2949] p-6 shadow-2xl">
+          <h2 id="checkout-contract-warning-title" className="text-xl font-semibold text-white">Δεν έχει καταγραφεί έκδοση συμβολαίου</h2>
+          <p className="mt-3 text-blue-100">Δεν έχει καταγραφεί έκδοση συμβολαίου για αυτή την κράτηση. Θέλεις να συνεχίσεις με το Check-Out;</p>
+          <div className="mt-6 flex justify-end gap-3">
+            <button type="button" onClick={() => setPendingCheckout(null)} className="rounded-xl border border-[#2b5b85] px-5 py-2 font-medium text-white">Ακύρωση</button>
+            <button type="button" onClick={() => {
+              setCheckOutVehicleOdometer(pendingCheckout.odometer);
+              setCheckOutReservation(pendingCheckout.reservationId);
+              setPendingCheckout(null);
+            }} className="rounded-xl bg-blue-600 px-5 py-2 font-semibold text-white">Συνέχεια στο Check-Out</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Show check-out form
   if (checkOutReservation) {
