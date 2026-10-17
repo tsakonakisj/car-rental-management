@@ -103,6 +103,10 @@ const MainApp: React.FC = () => {
         window.alert('Το όχημα της κράτησης δεν βρέθηκε. Το Check-Out δεν επιτρέπεται.');
         return;
       }
+      if (vehicle.current_station_id && vehicle.current_station_id !== reservation.pickup_station_id) {
+        window.alert('Το όχημα βρίσκεται σε διαφορετικό σταθμό από τον σταθμό παραλαβής της κράτησης. Ελέγξτε τον Στόλο.');
+        return;
+      }
       const documentError = checkoutDocumentError(reservation, vehicle);
       if (documentError) {
         window.alert(documentError);
@@ -187,6 +191,8 @@ const MainApp: React.FC = () => {
         setCheckOutError('Η ασφάλεια δεν καλύπτει ολόκληρη την περίοδο ενοικίασης. Το Check-Out δεν επιτρέπεται.');
       } else if (message.includes('CHECKOUT_DOCUMENTS_INVALID:INSPECTION')) {
         setCheckOutError('Το ΚΤΕΟ δεν καλύπτει ολόκληρη την περίοδο ενοικίασης. Το Check-Out δεν επιτρέπεται.');
+      } else if (message.includes('CHECKOUT_DENIED:WRONG_STATION')) {
+        setCheckOutError('Το όχημα βρίσκεται σε διαφορετικό σταθμό από τον σταθμό παραλαβής της κράτησης. Ελέγξτε τον Στόλο.');
       } else if (message.includes('CHECKOUT_DOCUMENTS_INVALID:RESERVATION_OR_VEHICLE')) {
         setCheckOutError('Λείπουν ή δεν είναι έγκυρα τα στοιχεία κράτησης ή οχήματος. Το Check-Out δεν επιτρέπεται.');
       } else {
