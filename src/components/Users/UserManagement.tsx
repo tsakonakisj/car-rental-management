@@ -9,7 +9,7 @@ interface ManagedUser {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'manager' | 'agent';
+  role: 'admin' | 'manager';
   active: boolean | null;
   last_login: string | null;
   created_at: string | null;
@@ -18,7 +18,6 @@ interface ManagedUser {
 const roleLabel: Record<ManagedUser['role'], string> = {
   admin: 'Admin — Ιδιοκτήτης',
   manager: 'Manager — Υπάλληλος',
-  agent: 'Agent — Υπάλληλος',
 };
 
 const UserManagement: React.FC = () => {
@@ -35,6 +34,7 @@ const UserManagement: React.FC = () => {
       const { data, error: requestError } = await supabase
         .from('users')
         .select('id,email,name,role,active,last_login,created_at')
+        .eq('active', true)
         .order('created_at', { ascending: true });
       if (requestError) throw requestError;
       setUsers((data ?? []) as ManagedUser[]);
