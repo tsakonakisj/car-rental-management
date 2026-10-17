@@ -53,7 +53,8 @@ jobs:
         run: |
           grep -q "CREATE OR REPLACE FUNCTION public.complete_vehicle_checkout" supabase/migrations/20261017130000_atomic_handover_return.sql
           grep -q "CREATE OR REPLACE FUNCTION public.complete_vehicle_checkin" supabase/migrations/20261017130000_atomic_handover_return.sql
-          grep -q "REVOKE INSERT ON TABLE public.checkouts, public.checkins FROM authenticated" supabase/migrations/20261017130000_atomic_handover_return.sql
+          # Direct inserts stay available until the existing frontend is replaced.
+          ! grep -q "^REVOKE INSERT ON TABLE public.checkouts, public.checkins" supabase/migrations/20261017130000_atomic_handover_return.sql
           grep -q "rpc('complete_vehicle_checkout'" src/lib/database.ts
           grep -q "rpc('complete_vehicle_checkin'" src/lib/database.ts
           if grep -A 120 'export const checkoutService' src/lib/database.ts | grep -q "from('checkouts').*insert"; then exit 1; fi
