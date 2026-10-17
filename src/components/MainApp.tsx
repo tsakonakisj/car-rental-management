@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 import { useLanguage } from '../contexts/LanguageContext';
 import { reservationService, vehicleService, checkoutService, checkinService } from '../lib/database';
 import { checkoutDocumentError } from '../lib/vehicleDocuments';
@@ -23,6 +24,23 @@ const MainApp: React.FC = () => {
   const { user, loading, isPasswordRecovery } = useAuth();
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [managerTabs, setManagerTabs] = useState<string[]>([]);
+  useEffect(() => {
+    if (user?.role !== 'manager') {
+      setManagerTabs([]);
+      return;
+    }
+    let live = true;
+    setManagerTabs([]);
+    supabase.from('employee_permissions').select('permissions').eq('user_id', user.id).maybeSingle()
+      .then(({ data, error }) => {
+        if (!live || error) return;
+        const permissions = data?.permissions as Record<string, { view?: boolean }> | undefined;
+        setManagerTabs(['dashboard', ...(['bookings', 'customers', 'fleet', 'pricing', 'reports'] as const)
+          .filter((tab) => permissions?.[tab]?.view === true)]);
+      });
+    return () => { live = false; };
+  }, [user?.id, user?.role]);
   const [previewRole, setPreviewRole] = useState<'admin' | 'manager'>('admin');
   const [showBookingWizard, setShowBookingWizard] = useState(false);
   const [checkOutReservation, setCheckOutReservation] = useState<string | null>(null);
@@ -342,7 +360,7 @@ const MainApp: React.FC = () => {
 
   const renderContent = () => {
     const effectiveRole = user?.role === 'admin' ? previewRole : user?.role;
-    const effectiveTab = isTabAllowed(effectiveRole, activeTab) ? activeTab : 'dashboard';
+    const effectiveTab = isTabAllowed(effectiveRole, activeTab) && (user?.role !== 'manager' || managerTabs.includes(activeTab)) ? activeTab : 'dashboard';
     switch (effectiveTab) {
       case 'dashboard':
         return <DashboardPage onNavigateReservations={(f) => { setReservationsInitialFilter(f); setActiveTab('bookings'); }} onNavigateFleet={() => { setFleetInitialFilter('all'); setActiveTab('fleet'); }} onNavigateVehicle={(vehicleId) => { setFleetEditVehicleId(vehicleId); setFleetInitialFilter('all'); setActiveTab('fleet'); }} onNewBooking={() => setShowBookingWizard(true)} />;
