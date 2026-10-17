@@ -3,7 +3,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import TurnstileCaptcha from '../Login/TurnstileCaptcha';
-import { Bars3Icon, ChevronDownIcon, GlobeAltIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, ChevronDownIcon, GlobeAltIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
 interface HeaderProps {
   onToggleSidebar?: () => void;
@@ -17,6 +17,9 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, previewRole = 'admin',
   const [menuOpen, setMenuOpen] = useState(false);
   const [changePassword, setChangePassword] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [password, setPassword] = useState('');
   const captchaSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY?.trim() || '';
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
@@ -48,6 +51,9 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, previewRole = 'admin',
   const openPasswordChange = () => {
     setMenuOpen(false);
     setCurrentPassword('');
+    setShowCurrentPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
     setPassword('');
     setConfirmPassword('');
     setCaptchaToken(null);
@@ -82,7 +88,7 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, previewRole = 'admin',
       // The server verifies it, without a second sign-in or session change.
       const { error } = await supabase.auth.updateUser({
         password,
-        currentPassword,
+        current_password: currentPassword,
       });
       if (error) throw error;
       setPasswordSaved(true);
@@ -153,15 +159,33 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, previewRole = 'admin',
               </div>
             ) : (
               <form onSubmit={submitPassword} className="space-y-4">
-                <label className="block text-sm">Τρέχων κωδικός
-                  <input type="password" autoComplete="current-password" required value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="mt-1 w-full rounded-lg border border-[#2b5b85] bg-[#061a35] p-3 text-white" />
-                </label>
-                <label className="block text-sm">Νέος κωδικός
-                  <input type="password" autoComplete="new-password" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 w-full rounded-lg border border-[#2b5b85] bg-[#061a35] p-3 text-white" />
-                </label>
-                <label className="block text-sm">Επιβεβαίωση νέου κωδικού
-                  <input type="password" autoComplete="new-password" minLength={8} required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="mt-1 w-full rounded-lg border border-[#2b5b85] bg-[#061a35] p-3 text-white" />
-                </label>
+                <div>
+                  <label htmlFor="current-password" className="block text-sm">Τρέχων κωδικός</label>
+                  <div className="relative mt-1">
+                    <input id="current-password" type={showCurrentPassword ? 'text' : 'password'} autoComplete="current-password" required value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="w-full rounded-lg border border-[#2b5b85] bg-[#061a35] p-3 pr-12 text-white" />
+                    <button type="button" onClick={() => setShowCurrentPassword((visible) => !visible)} aria-label={showCurrentPassword ? 'Απόκρυψη τρέχων κωδικός' : 'Εμφάνιση τρέχων κωδικός'} className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-blue-100/75 hover:text-white">
+                      {showCurrentPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="new-password" className="block text-sm">Νέος κωδικός</label>
+                  <div className="relative mt-1">
+                    <input id="new-password" type={showNewPassword ? 'text' : 'password'} autoComplete="new-password" minLength={8} required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded-lg border border-[#2b5b85] bg-[#061a35] p-3 pr-12 text-white" />
+                    <button type="button" onClick={() => setShowNewPassword((visible) => !visible)} aria-label={showNewPassword ? 'Απόκρυψη νέος κωδικός' : 'Εμφάνιση νέος κωδικός'} className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-blue-100/75 hover:text-white">
+                      {showNewPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="confirm-password" className="block text-sm">Επιβεβαίωση νέου κωδικού</label>
+                  <div className="relative mt-1">
+                    <input id="confirm-password" type={showConfirmPassword ? 'text' : 'password'} autoComplete="new-password" minLength={8} required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="w-full rounded-lg border border-[#2b5b85] bg-[#061a35] p-3 pr-12 text-white" />
+                    <button type="button" onClick={() => setShowConfirmPassword((visible) => !visible)} aria-label={showConfirmPassword ? 'Απόκρυψη επιβεβαίωση νέου κωδικού' : 'Εμφάνιση επιβεβαίωση νέου κωδικού'} className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-blue-100/75 hover:text-white">
+                      {showConfirmPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
+                    </button>
+                  </div>
+                </div>
                 {captchaSiteKey && <TurnstileCaptcha siteKey={captchaSiteKey} onToken={setCaptchaToken} resetKey={captchaResetKey} />}
                 {passwordError && <p role="alert" className="text-sm text-red-300">{passwordError}</p>}
                 <div className="flex justify-end gap-3">
