@@ -1,5 +1,6 @@
 
 -- Test-only synthetic schema, NO production database connection or real user data.
+CREATE SCHEMA IF NOT EXISTS extensions;
 CREATE ROLE anon;
 CREATE ROLE authenticated;
 CREATE SCHEMA IF NOT EXISTS auth;
