@@ -28,7 +28,7 @@ DECLARE
   v_damage_ids uuid[] := ARRAY[]::uuid[];
   v_damage_id uuid;
 BEGIN
-  IF (SELECT public.get_current_role()) NOT IN ('admin','manager','agent') THEN
+  IF COALESCE((SELECT public.get_current_role()), '') NOT IN ('admin','manager','agent') THEN
     RAISE EXCEPTION 'CHECKOUT_DENIED:ROLE';
   END IF;
   SELECT id INTO v_actor FROM public.users
@@ -121,7 +121,7 @@ DECLARE
   v_damage_id uuid;
   v_cost numeric;
 BEGIN
-  IF (SELECT public.get_current_role()) NOT IN ('admin','manager','agent') THEN
+  IF COALESCE((SELECT public.get_current_role()), '') NOT IN ('admin','manager','agent') THEN
     RAISE EXCEPTION 'CHECKIN_DENIED:ROLE';
   END IF;
   SELECT id INTO v_actor FROM public.users
@@ -201,3 +201,10 @@ REVOKE ALL ON FUNCTION public.complete_vehicle_checkout(uuid,integer,integer,tex
 REVOKE ALL ON FUNCTION public.complete_vehicle_checkin(uuid,integer,integer,jsonb,jsonb) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.complete_vehicle_checkout(uuid,integer,integer,text[],jsonb) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.complete_vehicle_checkin(uuid,integer,integer,jsonb,jsonb) TO authenticated;
+
+-- After the application switches to the RPC routes, block direct client
+-- inserts that could bypass the atomic workflow (RLS alone permits these).
+-- Deploy alongside compatible frontend: older clients using direct INSERT
+-- will stop working. Service role operations remain available.
+REVOKE INSERT ON TABLE public.checkouts, public.checkins FROM authenticated;
+
