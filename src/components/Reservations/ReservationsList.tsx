@@ -536,7 +536,11 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
       }
     } catch (err) {
       console.error('Save failed:', err);
-      setSaveError('Αποτυχία αποθήκευσης. Δοκιμάστε ξανά.');
+      const bookingConflict = (err as { code?: string; message?: string })?.code === '23P01'
+        || (err instanceof Error && err.message.includes('reservations_no_vehicle_time_overlap'));
+      setSaveError(bookingConflict
+        ? 'Το όχημα έχει ήδη κράτηση για αυτές τις ημερομηνίες και ώρες.'
+        : 'Αποτυχία αποθήκευσης. Δοκιμάστε ξανά.');
     } finally {
       setSaving(false);
     }
