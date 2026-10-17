@@ -1,0 +1,69 @@
+name: Rentovio isolated code verification
+
+on:
+  push:
+    branches:
+      - feature/atomic-checkout-checkin-2026-10-17
+    paths:
+      - ".github/workflows/rentovio-isolated-check.yml"
+      - "src/**"
+      - "supabase/migrations/20261017*"
+      - "tests/fixtures/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: rentovio_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d rentovio_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      CI: "true"
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: rentovio_ci
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Compile and build TypeScript/React
+        run: npm run build
+      - name: Verify security migration and atomic calls exist
+        shell: bash
+        run: |
+          grep -q "CREATE OR REPLACE FUNCTION public.complete_vehicle_checkout" supabase/migrations/20261017130000_atomic_handover_return.sql
+          grep -q "CREATE OR REPLACE FUNCTION public.complete_vehicle_checkin" supabase/migrations/20261017130000_atomic_handover_return.sql
+          # Direct inserts stay available until the existing frontend is replaced.
+          ! grep -q "^REVOKE INSERT ON TABLE public.checkouts, public.checkins" supabase/migrations/20261017130000_atomic_handover_return.sql
+          grep -q "rpc('complete_vehicle_checkout'" src/lib/database.ts
+          grep -q "rpc('complete_vehicle_checkin'" src/lib/database.ts
+          if grep -A 120 'export const checkoutService' src/lib/database.ts | grep -q "from('checkouts').*insert"; then exit 1; fi
+          echo "Code verification passed (no database connections)."
+
+      - name: Verify atomic operations on isolated PostgreSQL
+        shell: bash
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/fixtures/isolated-rentovio-schema.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261017120000_enforce_checkout_vehicle_documents.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261017130000_atomic_handover_return.sql
+          psql -v ON_ERROR_STOP=1 -f tests/fixtures/isolated-rentovio-transactions.sql

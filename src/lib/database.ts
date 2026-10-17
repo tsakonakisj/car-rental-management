@@ -1022,6 +1022,23 @@ export interface CheckoutDetails {
 }
 
 export const checkoutService = {
+  async complete(data: {
+    reservation_id: string;
+    fuel_level: number;
+    odometer: number;
+    accessories_given: string[];
+    damages: Array<{ description: string }>;
+  }): Promise<void> {
+    if (isDemo) return Promise.resolve();
+    const { error } = await supabase!.rpc('complete_vehicle_checkout', {
+      p_reservation_id: data.reservation_id,
+      p_fuel_level: data.fuel_level,
+      p_odometer: data.odometer,
+      p_accessories: data.accessories_given,
+      p_damages: data.damages.map(d => ({ description: d.description })),
+    });
+    if (error) throw error;
+  },
   async getByReservationId(reservationId: string): Promise<CheckoutDetails | null> {
     if (isDemo) return Promise.resolve(null);
 
@@ -1060,43 +1077,7 @@ export const checkoutService = {
     };
   },
 
-  async create(data: {
-    reservation_id: string;
-    fuel_level: number;
-    odometer: number;
-    accessories_given: string[];
-    damages: Array<{ description: string }>;
-    checked_out_by?: string;
-  }): Promise<void> {
-    if (isDemo) return Promise.resolve();
 
-    // 1. Αποθήκευση ζημιών στον πίνακα damages
-    const damageIds: string[] = [];
-    for (const damage of data.damages) {
-      const { data: dmg, error: dmgErr } = await supabase!
-        .from('damages')
-        .insert({ description: damage.description })
-        .select('id')
-        .single();
-      if (dmgErr) throw dmgErr;
-      damageIds.push(dmg.id);
-    }
-
-    // 2. Αποθήκευση checkout
-    const { error } = await supabase!
-      .from('checkouts')
-      .insert({
-        reservation_id: data.reservation_id,
-        fuel_level: data.fuel_level,
-        odometer: data.odometer,
-        accessories_given: data.accessories_given,
-        damage_ids: damageIds,
-        checked_out_by: data.checked_out_by || null,
-        checked_out_at: new Date().toISOString(),
-      });
-
-    if (error) throw error;
-  }
 };
 
 export interface CheckinDetails {
@@ -1109,6 +1090,28 @@ export interface CheckinDetails {
 
 // Checkins
 export const checkinService = {
+  async complete(data: {
+    reservation_id: string;
+    fuel_level: number;
+    odometer: number;
+    new_damages: Array<{ description: string; estimated_cost?: number }>;
+    additional_charges: Array<{ type: string; amount: number; description: string }>;
+  }): Promise<void> {
+    if (isDemo) return Promise.resolve();
+    const { error } = await supabase!.rpc('complete_vehicle_checkin', {
+      p_reservation_id: data.reservation_id,
+      p_fuel_level: data.fuel_level,
+      p_odometer: data.odometer,
+      p_new_damages: data.new_damages.map(d => ({
+        description: d.description,
+        estimated_cost: d.estimated_cost ?? null,
+      })),
+      p_additional_charges: data.additional_charges.map(c => ({
+        type: c.type, amount: c.amount, description: c.description,
+      })),
+    });
+    if (error) throw error;
+  },
   async getByReservationId(reservationId: string): Promise<CheckinDetails | null> {
     if (isDemo) return Promise.resolve(null);
 
@@ -1172,46 +1175,7 @@ export const checkinService = {
     return map;
   },
 
-  async create(data: {
-    reservation_id: string;
-    fuel_level: number;
-    odometer: number;
-    new_damages: Array<{ description: string; estimated_cost?: number }>;
-    additional_charges: Array<{ type: string; amount: number; description: string }>;
-    checked_in_by?: string;
-  }): Promise<void> {
-    if (isDemo) return Promise.resolve();
 
-    // 1. Αποθήκευση νέων ζημιών
-    const damageIds: string[] = [];
-    for (const damage of data.new_damages) {
-      const { data: dmg, error: dmgErr } = await supabase!
-        .from('damages')
-        .insert({
-          description: damage.description,
-          estimated_cost: damage.estimated_cost || null,
-        })
-        .select('id')
-        .single();
-      if (dmgErr) throw dmgErr;
-      damageIds.push(dmg.id);
-    }
-
-    // 2. Αποθήκευση checkin
-    const { error } = await supabase!
-      .from('checkins')
-      .insert({
-        reservation_id: data.reservation_id,
-        fuel_level: data.fuel_level,
-        odometer: data.odometer,
-        new_damage_ids: damageIds,
-        additional_charges: data.additional_charges,
-        checked_in_by: data.checked_in_by || null,
-        checked_in_at: new Date().toISOString(),
-      });
-
-    if (error) throw error;
-  }
 };
 
 // Dashboard stats
