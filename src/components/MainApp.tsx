@@ -23,6 +23,7 @@ const MainApp: React.FC = () => {
   const { user, loading, isPasswordRecovery } = useAuth();
   const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [previewRole, setPreviewRole] = useState<'admin' | 'manager'>('admin');
   const [showBookingWizard, setShowBookingWizard] = useState(false);
   const [checkOutReservation, setCheckOutReservation] = useState<string | null>(null);
   const [pendingCheckout, setPendingCheckout] = useState<{ reservationId: string; odometer?: number } | null>(null);
@@ -340,7 +341,8 @@ const MainApp: React.FC = () => {
   }
 
   const renderContent = () => {
-    const effectiveTab = isTabAllowed(user?.role, activeTab) ? activeTab : 'dashboard';
+    const effectiveRole = user?.role === 'admin' ? previewRole : user?.role;
+    const effectiveTab = isTabAllowed(effectiveRole, activeTab) ? activeTab : 'dashboard';
     switch (effectiveTab) {
       case 'dashboard':
         return <DashboardPage onNavigateReservations={(f) => { setReservationsInitialFilter(f); setActiveTab('bookings'); }} onNavigateFleet={() => { setFleetInitialFilter('all'); setActiveTab('fleet'); }} onNavigateVehicle={(vehicleId) => { setFleetEditVehicleId(vehicleId); setFleetInitialFilter('all'); setActiveTab('fleet'); }} onNewBooking={() => setShowBookingWizard(true)} />;
@@ -384,13 +386,14 @@ const MainApp: React.FC = () => {
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-[#061a35]">
-      <Header onToggleSidebar={toggleMobileSidebar} />
+      <Header onToggleSidebar={toggleMobileSidebar} previewRole={previewRole} onPreviewRoleChange={(role) => { setPreviewRole(role); setActiveTab('dashboard'); }} />
       <div className="flex flex-1 overflow-hidden">
         <Sidebar
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           mobileOpen={mobileSidebarOpen}
           onCloseMobile={closeMobileSidebar}
+          previewRole={user?.role === 'admin' ? previewRole : undefined}
         />
         <main className="min-w-0 flex-1 overflow-y-auto bg-[radial-gradient(circle_at_top_right,rgba(22,104,243,0.09),transparent_36%),#061a35] p-4 sm:p-8">
           {renderContent()}
