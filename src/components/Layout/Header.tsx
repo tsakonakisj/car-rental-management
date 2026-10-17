@@ -78,21 +78,12 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, previewRole = 'admin',
     }
     setSaving(true);
     try {
-      // Verify the current Supabase Auth password before changing it.
-      // The signed-in identity is taken from Supabase, never from a form field.
-      const { data: identity, error: identityError } = await supabase.auth.getUser();
-      if (identityError || !identity.user?.email) throw new Error('Δεν ήταν δυνατή η επιβεβαίωση του λογαριασμού.');
-      const originalUserId = identity.user.id;
-      const { data: verified, error: verifyError } = await supabase.auth.signInWithPassword({
-        email: identity.user.email,
-        password: currentPassword,
-        options: captchaToken ? { captchaToken } : undefined,
+      // Supabase requires the old password in the same update request.
+      // The server verifies it, without a second sign-in or session change.
+      const { error } = await supabase.auth.updateUser({
+        password,
+        currentPassword,
       });
-      if (verifyError || verified.user?.id !== originalUserId) {
-        throw new Error('Ο τρέχων κωδικός είναι λανθασμένος ή ο έλεγχος ασφαλείας απέτυχε.');
-      }
-
-      const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
       setPasswordSaved(true);
       setCurrentPassword('');
