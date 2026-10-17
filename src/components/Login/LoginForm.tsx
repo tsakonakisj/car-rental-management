@@ -3,6 +3,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { getCompanyConfig, loadCompanyConfig, loadAppLogoLight } from '../../lib/company';
 import { supabase } from '../../lib/supabase';
+import TurnstileCaptcha from './TurnstileCaptcha';
 import {
   ArrowPathIcon,
   ArrowRightIcon,
@@ -17,6 +18,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 const backgroundImage = '/assets/login_background_car_left.jpg';
+const captchaSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY?.trim() || '';
 
 const LoginForm: React.FC = () => {
   const { language } = useLanguage();
@@ -25,6 +27,8 @@ const LoginForm: React.FC = () => {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -171,10 +175,18 @@ const LoginForm: React.FC = () => {
     setLoading(true);
     setErrorMsg('');
     try {
-      await login(email, password);
+      if (captchaSiteKey && !captchaToken) {
+        setErrorMsg(isEnglish ? 'Complete the security check first.' : 'Ολοκληρώστε πρώτα τον έλεγχο ασφαλείας.');
+        return;
+      }
+      await login(email, password, captchaToken || undefined);
     } catch {
       setErrorMsg(copy.invalidLogin);
     } finally {
+      if (captchaSiteKey) {
+        setCaptchaToken(null);
+        setCaptchaResetKey((value) => value + 1);
+      }
       setLoading(false);
     }
   };
@@ -193,7 +205,12 @@ const LoginForm: React.FC = () => {
     }
 
     try {
+      if (captchaSiteKey && !captchaToken) {
+        setForgotError(isEnglish ? 'Complete the security check first.' : 'Ολοκληρώστε πρώτα τον έλεγχο ασφαλείας.');
+        return;
+      }
       const { error } = await supabase.auth.resetPasswordForEmail(emailToUse, {
+        captchaToken: captchaToken || undefined,
         redirectTo: 'https://tsakonakisj-earnwise-uvvy.bolt.host/update-password',
       });
       if (error) throw error;
@@ -202,11 +219,17 @@ const LoginForm: React.FC = () => {
       const message = err instanceof Error ? err.message : copy.recoveryFailed;
       setForgotError(message || copy.recoveryFailed);
     } finally {
+      if (captchaSiteKey) {
+        setCaptchaToken(null);
+        setCaptchaResetKey((value) => value + 1);
+      }
       setForgotLoading(false);
     }
   };
 
   const switchToLogin = () => {
+    setCaptchaToken(null);
+    setCaptchaResetKey((value) => value + 1);
     setShowForgot(false);
     setForgotMsg('');
     setForgotError('');
@@ -279,6 +302,7 @@ const LoginForm: React.FC = () => {
                   icon={EnvelopeIcon}
                   autoComplete="email"
                 />
+                {captchaSiteKey && <TurnstileCaptcha siteKey={captchaSiteKey} onToken={setCaptchaToken} resetKey={captchaResetKey} />}
                 {forgotError && <Message tone="error">{forgotError}</Message>}
                 {forgotMsg && (
                   <Message tone="success" icon={CheckCircleIcon}>
@@ -330,6 +354,7 @@ const LoginForm: React.FC = () => {
                     </button>
                   }
                 />
+                {captchaSiteKey && <TurnstileCaptcha siteKey={captchaSiteKey} onToken={setCaptchaToken} resetKey={captchaResetKey} />}
                 {errorMsg && <Message tone="error">{errorMsg}</Message>}
                 <button
                   type="submit"
@@ -342,6 +367,8 @@ const LoginForm: React.FC = () => {
                   type="button"
                   onClick={() => {
                     setForgotEmail(email);
+                    setCaptchaToken(null);
+                    setCaptchaResetKey((value) => value + 1);
                     setShowForgot(true);
                   }}
                   className="mx-auto block text-sm font-medium text-[#55a8ff] underline decoration-[#55a8ff]/50 underline-offset-4 transition-colors hover:text-white"
