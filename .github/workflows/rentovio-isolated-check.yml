@@ -8,6 +8,7 @@ on:
       - ".github/workflows/rentovio-isolated-check.yml"
       - "src/**"
       - "supabase/migrations/20261017*"
+      - "tests/fixtures/**"
   workflow_dispatch:
 
 permissions:
@@ -17,8 +18,26 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: rentovio_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d rentovio_ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       CI: "true"
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGDATABASE: rentovio_ci
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -39,3 +58,11 @@ jobs:
           grep -q "rpc('complete_vehicle_checkin'" src/lib/database.ts
           if grep -A 120 'export const checkoutService' src/lib/database.ts | grep -q "from('checkouts').*insert"; then exit 1; fi
           echo "Code verification passed (no database connections)."
+
+      - name: Verify atomic operations on isolated PostgreSQL
+        shell: bash
+        run: |
+          psql -v ON_ERROR_STOP=1 -f tests/fixtures/isolated-rentovio-schema.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261017120000_enforce_checkout_vehicle_documents.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261017130000_atomic_handover_return.sql
+          psql -v ON_ERROR_STOP=1 -f tests/fixtures/isolated-rentovio-transactions.sql
