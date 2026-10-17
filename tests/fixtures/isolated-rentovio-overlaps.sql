@@ -7,6 +7,9 @@ v_original uuid := '66666666-6666-4666-8666-666666666666';
 v_adjacent uuid := '99999999-9999-4999-8999-999999999999';
 v_conflict uuid := 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 BEGIN
+  -- Prior transaction fixture completed this booking. Reopen it in the
+  -- disposable fixture only, to exercise the partial exclusion index.
+  UPDATE public.reservations SET status='upcoming' WHERE id=v_original;
   -- Existing upcoming booking is [today, today+4).
   BEGIN
     INSERT INTO public.reservations(id, vehicle_id,status,pickup_date,return_date)
