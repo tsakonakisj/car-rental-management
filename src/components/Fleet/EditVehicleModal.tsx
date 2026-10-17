@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import type { Vehicle } from '../../types';
-import { vehicleService, photoService } from '../../lib/database';
+import type { Vehicle, Station } from '../../types';
+import { vehicleService, photoService, stationService } from '../../lib/database';
 import { compressImage } from '../../lib/imageUtils';
 import { supabase } from '../../lib/supabase';
 import {
@@ -26,6 +26,7 @@ const DEFAULT_FORM = {
   year: new Date().getFullYear(),
   transmission: 'manual' as Vehicle['transmission'],
   fuel_type: 'petrol' as Vehicle['fuel_type'],
+  current_station_id: '',
   insurance_expiry: '',
   inspection_expiry: '',
   odometer: 0,
@@ -47,6 +48,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
           year: vehicle.year,
           transmission: vehicle.transmission,
           fuel_type: vehicle.fuel_type,
+          current_station_id: vehicle.current_station_id || '',
           insurance_expiry: vehicle.insurance_expiry || '',
           inspection_expiry: vehicle.inspection_expiry || '',
           odometer: vehicle.odometer ?? 0,
@@ -57,8 +59,13 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
         }
       : DEFAULT_FORM
   );
+  const [stations, setStations] = useState<Station[]>([]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    stationService.getAll().then(setStations).catch(() => setError('Αποτυχία φόρτωσης σταθμών.'));
+  }, []);
 
   const [photoPaths, setPhotoPaths] = useState<string[]>([]);
   const [mainPhotoPath, setMainPhotoPath] = useState<string | null>(null);
@@ -161,6 +168,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
         transmission: form.transmission,
         fuel_type: form.fuel_type,
         status: 'available' as Vehicle['status'],
+        current_station_id: form.current_station_id || null,
         insurance_expiry: form.insurance_expiry || null,
         inspection_expiry: form.inspection_expiry || null,
         odometer: Number(form.odometer) || 0,
@@ -353,6 +361,19 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
               >
                 <option value="petrol">Βενζίνη</option>
                 <option value="diesel">Πετρέλαιο</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-blue-100/65">Τρέχων Σταθμός Οχήματος</label>
+              <select
+                value={form.current_station_id}
+                onChange={(e) => setForm((p) => ({ ...p, current_station_id: e.target.value }))}
+                className={inputClass}
+              >
+                <option value="">Δεν έχει οριστεί</option>
+                {stations.map((station) => (
+                  <option key={station.id} value={station.id}>{station.name}</option>
+                ))}
               </select>
             </div>
             <div>
