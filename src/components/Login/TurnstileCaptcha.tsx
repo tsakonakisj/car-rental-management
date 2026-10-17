@@ -41,7 +41,7 @@ const TurnstileCaptcha: React.FC<Props> = ({ siteKey, onToken, resetKey }) => {
       widgetIdRef.current = window.turnstile.render(containerRef.current, {
         sitekey: siteKey,
         theme: 'dark',
-        size: 'compact',
+        size: 'normal',
         callback: (token) => onTokenRef.current(token),
         'expired-callback': () => onTokenRef.current(null),
         'error-callback': () => onTokenRef.current(null),
@@ -81,7 +81,15 @@ const TurnstileCaptcha: React.FC<Props> = ({ siteKey, onToken, resetKey }) => {
     }
   }, [resetKey]);
 
-  return <div className="flex w-full min-w-0 justify-center overflow-hidden"><div ref={containerRef} className="min-h-[140px] max-w-full" aria-label="Έλεγχος ασφαλείας CAPTCHA" /></div>;
+  // Cloudflare's normal widget is 300x65px. Scale it to fit the 258px-wide
+  // login form without the tall, narrow compact widget.
+  return (
+    <div className="flex h-[52px] w-full min-w-0 justify-center overflow-hidden">
+      <div className="h-[65px] w-[300px] shrink-0 origin-top scale-[0.78]">
+        <div ref={containerRef} aria-label="Έλεγχος ασφαλείας CAPTCHA" />
+      </div>
+    </div>
+  );
 };
 
 export default TurnstileCaptcha;
