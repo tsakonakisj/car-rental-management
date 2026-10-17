@@ -1,5 +1,7 @@
 
 -- Test-only synthetic schema, NO production database connection or real user data.
+CREATE ROLE anon;
+CREATE ROLE authenticated;
 CREATE SCHEMA IF NOT EXISTS auth;
 CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS
 $$ SELECT '11111111-1111-4111-8111-111111111111'::uuid $$;
