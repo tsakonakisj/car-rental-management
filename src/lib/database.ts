@@ -1022,6 +1022,23 @@ export interface CheckoutDetails {
 }
 
 export const checkoutService = {
+  async complete(data: {
+    reservation_id: string;
+    fuel_level: number;
+    odometer: number;
+    accessories_given: string[];
+    damages: Array<{ description: string }>;
+  }): Promise<void> {
+    if (isDemo) return Promise.resolve();
+    const { error } = await supabase!.rpc('complete_vehicle_checkout', {
+      p_reservation_id: data.reservation_id,
+      p_fuel_level: data.fuel_level,
+      p_odometer: data.odometer,
+      p_accessories: data.accessories_given,
+      p_damages: data.damages.map(d => ({ description: d.description })),
+    });
+    if (error) throw error;
+  },
   async getByReservationId(reservationId: string): Promise<CheckoutDetails | null> {
     if (isDemo) return Promise.resolve(null);
 
@@ -1109,6 +1126,28 @@ export interface CheckinDetails {
 
 // Checkins
 export const checkinService = {
+  async complete(data: {
+    reservation_id: string;
+    fuel_level: number;
+    odometer: number;
+    new_damages: Array<{ description: string; estimated_cost?: number }>;
+    additional_charges: Array<{ type: string; amount: number; description: string }>;
+  }): Promise<void> {
+    if (isDemo) return Promise.resolve();
+    const { error } = await supabase!.rpc('complete_vehicle_checkin', {
+      p_reservation_id: data.reservation_id,
+      p_fuel_level: data.fuel_level,
+      p_odometer: data.odometer,
+      p_new_damages: data.new_damages.map(d => ({
+        description: d.description,
+        estimated_cost: d.estimated_cost ?? null,
+      })),
+      p_additional_charges: data.additional_charges.map(c => ({
+        type: c.type, amount: c.amount, description: c.description,
+      })),
+    });
+    if (error) throw error;
+  },
   async getByReservationId(reservationId: string): Promise<CheckinDetails | null> {
     if (isDemo) return Promise.resolve(null);
 
