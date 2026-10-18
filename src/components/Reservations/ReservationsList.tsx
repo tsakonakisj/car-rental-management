@@ -1187,6 +1187,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                     <PaymentPanel
                       reservationId={viewReservation.id}
                       totalAmount={Number(viewReservation.total_amount) || 0}
+                      reservationStatus={viewReservation.status}
                     />
 
                     {/* Checkout & Checkin Details */}
