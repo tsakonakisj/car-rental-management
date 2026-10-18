@@ -45,6 +45,7 @@ const MainApp: React.FC = () => {
   const [previewRole, setPreviewRole] = useState<'admin' | 'manager'>('admin');
   const [showBookingWizard, setShowBookingWizard] = useState(false);
   const [checkOutReservation, setCheckOutReservation] = useState<string | null>(null);
+  const [checkoutAlert, setCheckoutAlert] = useState<string | null>(null);
   const [pendingCheckout, setPendingCheckout] = useState<{ reservationId: string; odometer?: number } | null>(null);
   const [serviceWarning, setServiceWarning] = useState<{ reservationId: string; vehicle: Vehicle; contractMissing: boolean; reasons: string[] } | null>(null);
   const [serviceNewDate, setServiceNewDate] = useState('');
@@ -154,29 +155,32 @@ const MainApp: React.FC = () => {
     try {
       const existingCheckout = await checkoutService.getByReservationId(reservationId);
       if (existingCheckout) {
-        setCheckOutError('Έχει ήδη γίνει check-out για αυτή την κράτηση.');
+        setCheckoutAlert('Έχει ήδη γίνει Check-Out για αυτή την κράτηση.');
         return;
       }
       const allReservations = await reservationService.getAll();
       const reservation = allReservations.find((r: any) => r.id === reservationId);
-      if (!reservation) return;
+      if (!reservation) {
+        setCheckoutAlert('Η κράτηση δεν βρέθηκε. Ανανεώστε τη λίστα και δοκιμάστε ξανά.');
+        return;
+      }
       if (!(reservation as any).vehicle_id) {
-        window.alert('Δεν έχει επιλεγεί όχημα για αυτή την κράτηση.');
+        setCheckoutAlert('Δεν έχει επιλεγεί όχημα για αυτή την κράτηση.');
         return;
       }
       const vehicles = await vehicleService.getAll();
       const vehicle = vehicles.find(v => v.id === reservation.vehicle_id);
       if (!vehicle) {
-        window.alert('Το όχημα της κράτησης δεν βρέθηκε. Το Check-Out δεν επιτρέπεται.');
+        setCheckoutAlert('Το όχημα της κράτησης δεν βρέθηκε. Το Check-Out δεν επιτρέπεται.');
         return;
       }
       if (vehicle.current_station_id && vehicle.current_station_id !== reservation.pickup_station_id) {
-        window.alert('Το όχημα βρίσκεται σε διαφορετικό σταθμό από τον σταθμό παραλαβής της κράτησης. Ελέγξτε τον Στόλο.');
+        setCheckoutAlert('Το όχημα βρίσκεται σε διαφορετικό σταθμό από τον σταθμό παραλαβής της κράτησης. Ελέγξτε τον Στόλο.');
         return;
       }
       const documentError = checkoutDocumentError(reservation, vehicle);
       if (documentError) {
-        window.alert(documentError);
+        setCheckoutAlert(documentError);
         return;
       }
       // Service is a non-blocking reminder; insurance and KTEO remain mandatory.
@@ -204,7 +208,7 @@ const MainApp: React.FC = () => {
       setCheckOutVehicleOdometer(vehicle.odometer);
       setCheckOutReservation(reservationId);
     } catch {
-      setCheckOutError('Αποτυχία φόρτωσης κράτησης.');
+      setCheckoutAlert('Αποτυχία φόρτωσης κράτησης. Δοκιμάστε ξανά.');
     }
   };
 
@@ -330,6 +334,28 @@ const MainApp: React.FC = () => {
       setCheckInSubmitting(false);
     }
   };
+
+  if (checkoutAlert) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#020b18]/85 p-4 backdrop-blur-sm"
+        onMouseDown={(event) => { if (event.target === event.currentTarget) setCheckoutAlert(null); }}>
+        <section role="alertdialog" aria-modal="true" aria-labelledby="checkout-alert-title" aria-describedby="checkout-alert-message"
+          className="w-full max-w-md rounded-2xl border border-amber-400/30 bg-[#0b2949] p-6 text-white shadow-[0_20px_65px_rgba(0,0,0,0.5)]">
+          <div className="mb-4 flex items-center gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-500/10 text-xl font-bold text-amber-200">!</span>
+            <h2 id="checkout-alert-title" className="text-lg font-semibold">Το Check-Out δεν επιτρέπεται</h2>
+          </div>
+          <p id="checkout-alert-message" className="mb-5 text-sm leading-6 text-blue-100/85">{checkoutAlert}</p>
+          <div className="flex justify-end">
+            <button type="button" autoFocus onClick={() => setCheckoutAlert(null)}
+              className="rounded-xl bg-[#1268f3] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#2478ff]">
+              Κατάλαβα
+            </button>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   if (serviceWarning) {
     return (
