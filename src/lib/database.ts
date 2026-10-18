@@ -856,6 +856,41 @@ export const reservationExtrasService = {
   }
 };
 
+// Refunds are separate, immutable financial records; they never erase receipts.
+export interface PaymentRefund {
+  id: string;
+  payment_id: string;
+  reservation_id: string;
+  amount: number;
+  method: 'cash' | 'card' | 'transfer';
+  reason: string;
+  created_at: string;
+  created_by: string;
+}
+
+export const paymentRefundService = {
+  async getByReservationId(reservationId: string): Promise<PaymentRefund[]> {
+    if (isDemo) return [];
+    const { data, error } = await supabase!
+      .from('payment_refunds')
+      .select('*')
+      .eq('reservation_id', reservationId)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    return (data || []).map(row => ({ ...row, amount: Number(row.amount) || 0 }));
+  },
+  async create(input: { payment_id: string; amount: number; method: string; reason: string }): Promise<void> {
+    if (isDemo) return;
+    const { error } = await supabase!.rpc('record_payment_refund', {
+      p_payment_id: input.payment_id,
+      p_amount: input.amount,
+      p_method: input.method,
+      p_reason: input.reason.trim(),
+    });
+    if (error) throw error;
+  },
+};
+
 // Payments
 export const paymentService = {
   async getByReservationId(reservationId: string): Promise<Payment[]> {
