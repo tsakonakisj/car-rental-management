@@ -20,7 +20,6 @@ import {
 import ContractGenerator, { type ContractGeneratorRef } from '../PDF/ContractGenerator';
 import BookingConfirmation from '../PDF/BookingConfirmation';
 import PaymentPanel from '../Payments/PaymentPanel';
-import CheckInCorrection from '../CheckIn/CheckInCorrection';
 import PageHero from '../Layout/PageHero';
 import type { Station, Vehicle, Pricing, Season, Reservation, Insurance, Extra } from '../../types';
 
@@ -134,7 +133,6 @@ function calcDaysBetween(startDate: string, endDate: string): number {
 const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheckIn, refreshTrigger, initialFilter, initialViewReservationId }) => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
-  const [correctionReservationId, setCorrectionReservationId] = useState<string | null>(null);
   const [reservations, setReservations] = useState<ReservationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -485,7 +483,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
       const totalAmount = editForm.finalPriceOverride != null ? editForm.finalPriceOverride : calculatedTotal;
 
       // Overlap check: prevent double-booking when editing
-      if (editForm.vehicleId) {
+      if (editForm.vehicleId && (viewReservation.status === 'upcoming' || viewReservation.status === 'active')) {
         const startISO = `${editForm.pickupDate}T${editForm.pickupTime || '00:00'}:00`;
         const endISO = `${editForm.returnDate}T${editForm.returnTime || '00:00'}:00`;
         const allReservations = await reservationService.getAll();
@@ -856,6 +854,14 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                       <>
                         <div className="fixed inset-0 z-30" onClick={() => setActionsMenuId(null)} />
                         <div className="absolute right-0 top-full z-40 mt-2 w-48 overflow-hidden rounded-xl border border-[#1e4e7d]/80 bg-[#0b2949] shadow-[0_16px_36px_rgba(0,0,0,0.35)]">
+                          <button
+                            type="button"
+                            className="flex w-full items-center px-3 py-2.5 text-left text-xs font-medium text-blue-100 transition-colors hover:bg-[#12375d]"
+                            onClick={() => { setActionsMenuId(null); setViewReservation(reservation); startEditing(reservation); }}
+                          >
+                            <PencilSquareIcon className="mr-2 h-4 w-4" />
+                            Επεξεργασία κράτησης
+                          </button>
                           {reservation.status !== 'cancelled' && reservation.status !== 'completed' && (
                             <button
                               className="flex w-full items-center px-3 py-2.5 text-left text-xs font-medium text-red-300 transition-colors hover:bg-red-900/40"
@@ -974,9 +980,6 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                 </div>
               )}
 
-              {isAdmin && reservation.status === 'completed' && (
-                <button type="button" onClick={e => { e.stopPropagation(); setCorrectionReservationId(reservation.id); }} className="mt-3 w-full rounded-xl border border-[#2b5b85] px-4 py-2 text-sm font-semibold text-blue-100 hover:bg-[#12375d]">Διόρθωση Check-In</button>
-              )}
               {(reservation.status === 'upcoming' || reservation.status === 'active') && (
                 <div className="flex items-stretch gap-2 border-t border-[#1e4e7d]/70 pt-4" onClick={(e) => e.stopPropagation()}>
                   {reservation.status === 'upcoming' && (
@@ -1495,7 +1498,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                             <option value="">-- Επιλέξτε όχημα --</option>
                             {editVehicles.map(v => {
                               const isCurrentVehicle = v.id === viewReservation.vehicle_id;
-                              const hasOverlap = !isCurrentVehicle && (() => {
+                              const hasOverlap = (viewReservation.status === 'upcoming' || viewReservation.status === 'active') && !isCurrentVehicle && (() => {
                                 if (!editForm.pickupDate || !editForm.returnDate) return false;
                                 const newStart = new Date(editForm.pickupDate).getTime();
                                 const newEnd = new Date(editForm.returnDate).getTime();
@@ -1508,7 +1511,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                                   return newStart < rEnd && newEnd > rStart;
                                 });
                               })();
-                              const isUnavailable = (v.status !== 'available' && !isCurrentVehicle) || hasOverlap;
+                              const isUnavailable = (viewReservation.status === 'upcoming' || viewReservation.status === 'active') && ((v.status !== 'available' && !isCurrentVehicle) || hasOverlap);
                               const { rate: vRate } = resolveDailyRate(
                                 editForm.pickupDate || '',
                                 v.category,
@@ -1777,7 +1780,6 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
       )}
 
       {/* Photo Lightbox */}
-      {correctionReservationId && <CheckInCorrection reservationId={correctionReservationId} onClose={() => setCorrectionReservationId(null)} onSaved={() => { setCorrectionReservationId(null); fetchReservations(); }} />}
       {lightboxPhoto && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-[#020b18]/90"

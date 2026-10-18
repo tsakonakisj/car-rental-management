@@ -1121,33 +1121,6 @@ export interface CheckinDetails {
   checked_in_at: string;
 }
 
-export interface CheckinCorrectionSnapshot {
-  id: string; fuel_level: number; odometer: number; correction_revision: number;
-  additional_charges: Array<{ type: string; amount: number; description: string }>;
-}
-export interface CheckinCorrectionContext {
-  checkin: CheckinCorrectionSnapshot; checkout_fuel: number; checkout_odometer: number; tank_capacity: number | null;
-  waiver: { status: 'pending' | 'approved' | 'rejected' } | null;
-  history: Array<{ id: string; actor_name: string; corrected_at: string; reason: string; before_data: CheckinCorrectionSnapshot; after_data: CheckinCorrectionSnapshot }>;
-}
-export const checkinCorrectionService = {
-  async load(reservationId: string): Promise<CheckinCorrectionContext> {
-    if (isDemo) throw new Error('Απαιτείται σύνδεση βάσης δεδομένων.');
-    const { data, error } = await supabase!.rpc('get_checkin_correction_context', { p_reservation_id: reservationId });
-    if (error) throw error;
-    return data as CheckinCorrectionContext;
-  },
-  async correct(input: { reservation_id: string; expected_revision: number; fuel_level: number; odometer: number; fuel_price: number | null; non_fuel_charges: Array<{ type: string; amount: number; description: string }>; reason: string }): Promise<void> {
-    if (isDemo) throw new Error('Απαιτείται σύνδεση βάσης δεδομένων.');
-    const { error } = await supabase!.rpc('correct_vehicle_checkin', {
-      p_reservation_id: input.reservation_id, p_expected_revision: input.expected_revision,
-      p_fuel_level: input.fuel_level, p_odometer: input.odometer, p_fuel_price: input.fuel_price,
-      p_non_fuel_charges: input.non_fuel_charges, p_reason: input.reason.trim(),
-    });
-    if (error) throw error;
-  },
-};
-
 export interface FuelWaiverRequest {
   id: string;
   reservation_id: string;
