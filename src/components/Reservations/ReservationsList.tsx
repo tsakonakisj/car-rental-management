@@ -20,6 +20,8 @@ import {
 import ContractGenerator, { type ContractGeneratorRef } from '../PDF/ContractGenerator';
 import BookingConfirmation from '../PDF/BookingConfirmation';
 import PaymentPanel from '../Payments/PaymentPanel';
+import ReturnEditSection from '../CheckIn/ReturnEditSection';
+import { returnLifecycleService, rentalActionError, type ReturnContext } from '../../lib/database';
 import PageHero from '../Layout/PageHero';
 import type { Station, Vehicle, Pricing, Season, Reservation, Insurance, Extra } from '../../types';
 
@@ -158,6 +160,13 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
 
   // Edit mode
   const [editing, setEditing] = useState(false);
+  const [editSection, setEditSection] = useState<'booking' | 'return'>('booking');
+  const [statusTarget, setStatusTarget] = useState<ReservationRow | null>(null);
+  const [nextStatus, setNextStatus] = useState<ReservationRow['status']>('upcoming');
+  const [statusReason, setStatusReason] = useState('');
+  const [statusContext, setStatusContext] = useState<ReturnContext | null>(null);
+  const [statusError, setStatusError] = useState('');
+  const [statusLoading, setStatusLoading] = useState(false);
   const [editForm, setEditForm] = useState<EditFormData | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -285,30 +294,55 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
   }, [viewReservation]);
 
   const handleStatusChange = async (id: string, newStatus: string) => {
-    setChangingStatus(id);
-    setActionError('');
-    try {
-      await reservationService.update(id, { status: newStatus as ReservationRow['status'] });
-
-      if (newStatus === 'cancelled') {
-        const reservation = reservations.find(r => r.id === id);
-        if (reservation?.vehicle_id) {
-          await vehicleService.update(reservation.vehicle_id, { status: 'available' });
-        }
-      }
-
-      setReservations(prev =>
-        prev.map(r => (r.id === id ? { ...r, status: newStatus as ReservationRow['status'] } : r))
-      );
-      if (viewReservation?.id === id) {
-        setViewReservation(prev => prev ? { ...prev, status: newStatus as ReservationRow['status'] } : null);
-      }
-    } catch (err) {
-      console.error('Status change failed:', err);
-      setActionError('Αποτυχία αλλαγής κατάστασης.');
-    } finally {
-      setChangingStatus(null);
+    const target = reservations.find(r => r.id === id);
+    if (!target) return;
+    setActionsMenuId(null);
+    setStatusTarget(target);
+    setNextStatus(newStatus as ReservationRow['status']);
+    setStatusReason(''); setStatusError(''); setStatusContext(null);
+    if (target.status === 'completed' && isAdmin) {
+      setStatusLoading(true);
+      try { setStatusContext(await returnLifecycleService.load(id)); }
+      catch (err) { setStatusError(rentalActionError(err)); }
+      finally { setStatusLoading(false); }
     }
+  };
+
+  const statusHint = (target: ReservationRow, next: string): string => {
+    if (next === target.status) return 'Επιλέξτε τη νέα κατάσταση.';
+    if (target.status === 'completed' && next === 'active') return isAdmin
+      ? 'Θα αναιρεθεί η επιστροφή. Η κράτηση θα γίνει Ενεργή και το όχημα Νοικιασμένο. Οι χρεώσεις της αναιρεμένης επιστροφής δεν θα προσμετρώνται. Οι πληρωμές διατηρούνται.'
+      : 'Η αναίρεση επιστροφής επιτρέπεται μόνο σε Admin.';
+    if (target.status === 'active' && next === 'completed') return 'Θα ανοίξει το Check-In για να καταγραφεί κανονικά η επιστροφή.';
+    if (target.status === 'upcoming' && next === 'active') return 'Θα ανοίξει το Check-Out για να καταγραφεί κανονικά η παράδοση.';
+    if (['upcoming','cancelled'].includes(target.status) && ['upcoming','cancelled'].includes(next)) return 'Θα ενημερωθεί η κατάσταση της κράτησης πριν την παράδοση.';
+    return 'Δεν επιτρέπεται αυτή η μετάβαση όταν έχει γίνει παράδοση. Χρησιμοποιήστε το κανονικό Check-Out, Check-In ή την επαναφορά σε Ενεργή.';
+  };
+  const transitionAllowed = (target: ReservationRow, next: string): boolean =>
+    (target.status === 'completed' && next === 'active' && isAdmin)
+    || (target.status === 'active' && next === 'completed')
+    || (target.status === 'upcoming' && next === 'active')
+    || (['upcoming','cancelled'].includes(target.status) && ['upcoming','cancelled'].includes(next) && next !== target.status);
+
+  const confirmStatusChange = async () => {
+    if (!statusTarget || changingStatus || !transitionAllowed(statusTarget,nextStatus)) return;
+    const target = statusTarget;
+    if (target.status === 'completed' && (!statusContext || statusReason.trim().length < 5)) return;
+    setChangingStatus(target.id); setStatusError('');
+    try {
+      if (target.status === 'completed') {
+        await returnLifecycleService.reopen(target.id, statusContext!, statusReason);
+      } else if (nextStatus === 'active') {
+        setStatusTarget(null); setViewReservation(null); cancelEditing(); onCheckOut?.(target.id); return;
+      } else if (nextStatus === 'completed') {
+        setStatusTarget(null); setViewReservation(null); cancelEditing(); onCheckIn?.(target.id); return;
+      } else {
+        await returnLifecycleService.changeUnstarted(target.id, nextStatus as 'upcoming' | 'cancelled');
+      }
+      setStatusTarget(null); setViewReservation(null); cancelEditing();
+      await fetchReservations();
+    } catch (err) { setStatusError(rentalActionError(err)); }
+    finally { setChangingStatus(null); }
   };
 
   const handleCheckInClick = (reservation: ReservationRow) => {
@@ -356,6 +390,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
   };
 
   const startEditing = async (reservation: ReservationRow) => {
+    setEditSection('booking');
     const pickup = splitDateTime(reservation.pickup_date);
     const ret = splitDateTime(reservation.return_date);
     try {
@@ -862,16 +897,16 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                             <PencilSquareIcon className="mr-2 h-4 w-4" />
                             Επεξεργασία κράτησης
                           </button>
-                          {reservation.status !== 'cancelled' && reservation.status !== 'completed' && (
+                          <>
                             <button
                               className="flex w-full items-center px-3 py-2.5 text-left text-xs font-medium text-red-300 transition-colors hover:bg-red-900/40"
-                              onClick={() => { setActionsMenuId(null); handleStatusChange(reservation.id, 'cancelled'); }}
+                              onClick={() => handleStatusChange(reservation.id, reservation.status)}
                               disabled={changingStatus === reservation.id}
                             >
-                              <TrashIcon className="mr-2 h-4 w-4" />
-                              {changingStatus === reservation.id ? '...' : 'Ακύρωση Κράτησης'}
+                              <ArrowPathIcon className="mr-2 h-4 w-4" />
+                              Αλλαγή κατάστασης
                             </button>
-                          )}
+                          </>
                           {isAdmin && (reservation.status === 'upcoming' || reservation.status === 'cancelled') && (
                             <button
                               className="flex w-full items-center px-3 py-2.5 text-left text-xs font-medium text-red-300 transition-colors hover:bg-red-900/40"
@@ -1333,7 +1368,16 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                 ) : (
                   <>
                     {/* Edit Mode */}
-                    {editForm && (
+                    {isAdmin && viewReservation.status === 'completed' && (
+                      <nav className="mb-4 flex gap-2" aria-label="Ενότητα επεξεργασίας">
+                        <button type="button" onClick={() => setEditSection('booking')} className={`rounded-lg border border-[#2b5b85] px-3 py-2 text-sm ${editSection === 'booking' ? 'bg-[#1268f3] text-white' : 'text-blue-100'}`}>Κράτηση</button>
+                        <button type="button" onClick={() => setEditSection('return')} className={`rounded-lg border border-[#2b5b85] px-3 py-2 text-sm ${editSection === 'return' ? 'bg-[#1268f3] text-white' : 'text-blue-100'}`}>Επιστροφή</button>
+                      </nav>
+                    )}
+                    {editSection === 'return' && isAdmin && viewReservation.status === 'completed' && (
+                      <ReturnEditSection reservationId={viewReservation.id} onCancel={() => setEditSection('booking')} onSaved={() => { setEditSection('booking'); setViewReservation({ ...viewReservation }); }} />
+                    )}
+                    {editForm && editSection === 'booking' && (
                       <div className="space-y-5">
                         <div>
                           <h3 className="text-sm font-medium text-blue-100/85 mb-3">Στοιχεία Πελάτη</h3>
@@ -1711,6 +1755,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                     </button>
                     <button
                       onClick={handleSaveEdit}
+                      hidden={editSection !== 'booking'}
                       disabled={saving}
                       className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-[#1268f3] hover:bg-[#2478ff] disabled:opacity-50 transition-colors"
                     >
@@ -1725,6 +1770,27 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
       )}
 
       {/* Delete Confirmation Modal */}
+      {statusTarget && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#020b18]/90 p-4">
+          <section role="dialog" aria-modal="true" aria-labelledby="status-change-title" className="w-full max-w-lg rounded-2xl border border-[#2b5b85] bg-[#0b2949] p-6 text-white">
+            <h2 id="status-change-title" className="text-xl font-semibold">Αλλαγή κατάστασης</h2>
+            <p className="mt-2 text-sm text-blue-100/70">Κράτηση #{statusTarget.id.slice(0,8).toUpperCase()} · Τώρα: {getStatusLabel(statusTarget.status)}</p>
+            <label className="mt-4 block text-sm">Νέα κατάσταση
+              <select value={nextStatus} disabled={!!changingStatus} onChange={e => setNextStatus(e.target.value as ReservationRow['status'])} className="mt-2 w-full rounded-lg border border-[#2b5b85] bg-[#071d38] p-3 text-white">
+                {statusOptions.map(option => <option key={option.value} value={option.value}>{option.labelEl}</option>)}
+              </select>
+            </label>
+            <p className="mt-4 rounded-lg bg-amber-500/15 p-3 text-sm text-amber-100">{statusHint(statusTarget,nextStatus)}</p>
+            {statusTarget.status === 'completed' && nextStatus === 'active' && isAdmin && <label className="mt-4 block text-sm">Αιτιολογία αναίρεσης (υποχρεωτική)<textarea rows={3} maxLength={2000} value={statusReason} disabled={!!changingStatus} onChange={e => setStatusReason(e.target.value)} className="mt-2 w-full rounded-lg border border-[#2b5b85] bg-[#071d38] p-3 text-white" /></label>}
+            {statusLoading && <p className="mt-2 text-sm">Φόρτωση επιστροφής...</p>}
+            {statusError && <p role="alert" className="mt-3 text-sm text-red-300">{statusError}</p>}
+            <div className="mt-5 flex justify-end gap-3">
+              <button autoFocus type="button" disabled={!!changingStatus} onClick={() => setStatusTarget(null)} className="rounded-lg border border-[#2b5b85] px-4 py-2">Ακύρωση</button>
+              <button type="button" disabled={!!changingStatus || statusLoading || !transitionAllowed(statusTarget,nextStatus) || (statusTarget.status === 'completed' && (!statusContext || statusReason.trim().length < 5))} onClick={confirmStatusChange} className="rounded-lg bg-[#1268f3] px-4 py-2 disabled:opacity-40">{changingStatus ? 'Αποθήκευση...' : 'Συνέχεια'}</button>
+            </div>
+          </section>
+        </div>
+      )}
       {deleteConfirmOpen && deleteTarget && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#020b18]/90">
           <div className="w-full max-w-md mx-4 rounded-2xl border border-red-400/30 bg-[#0b2949] shadow-[0_18px_45px_rgba(0,0,0,0.35)] p-6">

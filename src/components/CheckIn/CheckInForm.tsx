@@ -12,7 +12,7 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 
-interface CheckInData {
+export interface CheckInData {
   fuel_level: number;
   odometer: number;
   photos: string[];
@@ -38,20 +38,23 @@ interface CheckInFormProps {
   onComplete: (data: CheckInData) => void;
   onCancel: () => void;
   submitting?: boolean;
+  initialData?: CheckInData;
+  initialFuelPrice?: number;
+  correctionReason?: string;
 }
 
-const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTankCapacity, onComplete, onCancel, submitting = false }) => {
+const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTankCapacity, onComplete, onCancel, submitting = false, initialData, initialFuelPrice, correctionReason }) => {
   const { t } = useLanguage();
   const [checkOutOdometer, setCheckOutOdometer] = useState<number | null>(null);
   const [checkOutFuelLevel, setCheckOutFuelLevel] = useState<number | null>(null);
   const [odometerError, setOdometerError] = useState('');
   const [fuelWarningDismissed, setFuelWarningDismissed] = useState(false);
-  const [fuelPricePerLiter, setFuelPricePerLiter] = useState<string>('');
-  const [fuelSettlement, setFuelSettlement] = useState<'charge' | 'waiver'>('charge');
-  const [fuelWaiverReason, setFuelWaiverReason] = useState('');
+  const [fuelPricePerLiter, setFuelPricePerLiter] = useState<string>(initialFuelPrice ? String(initialFuelPrice) : '');
+  const [fuelSettlement, setFuelSettlement] = useState<'charge' | 'waiver'>(initialData?.fuel_waiver_reason ? 'waiver' : 'charge');
+  const [fuelWaiverReason, setFuelWaiverReason] = useState(initialData?.fuel_waiver_reason || '');
   const [fuelSettlementError, setFuelSettlementError] = useState('');
   const [confirmation, setConfirmation] = useState<CheckInData | null>(null);
-  const [checkInData, setCheckInData] = useState<CheckInData>({
+  const [checkInData, setCheckInData] = useState<CheckInData>(initialData || {
     fuel_level: 100,
     odometer: 0,
     photos: [],
@@ -80,11 +83,11 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
         if (checkout) {
           if (typeof checkout.odometer === 'number') {
             setCheckOutOdometer(checkout.odometer);
-            setCheckInData(prev => ({ ...prev, odometer: checkout.odometer }));
+            if (!initialData) setCheckInData(prev => ({ ...prev, odometer: checkout.odometer }));
           }
           if (typeof checkout.fuel_level === 'number') {
             setCheckOutFuelLevel(checkout.fuel_level);
-            setCheckInData(prev => ({ ...prev, fuel_level: checkout.fuel_level }));
+            if (!initialData) setCheckInData(prev => ({ ...prev, fuel_level: checkout.fuel_level }));
           }
         }
       } catch (err) {
@@ -92,7 +95,7 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
       }
     })();
     return () => { cancelled = true; };
-  }, [reservationId]);
+  }, [reservationId, initialData]);
 
   const refreshSignedUrls = useCallback(async (paths: string[]) => {
     if (paths.length === 0) return;
@@ -141,6 +144,7 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
   };
 
   const removePhoto = async (path: string) => {
+    if (initialData?.photos.includes(path)) return;
     try {
       await photoService.deletePhoto(path);
     } catch (err) {
@@ -236,6 +240,10 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
 
   const handleSubmit = () => {
     setFuelSettlementError('');
+    if (initialData && (!correctionReason || correctionReason.trim().length < 5)) {
+      setFuelSettlementError('Γράψτε αιτιολογία τουλάχιστον 5 χαρακτήρων για την αλλαγή της επιστροφής.');
+      return;
+    }
     if (fuelDiffPercent > 0) {
       if (vehicleFuelTankCapacity == null || vehicleFuelTankCapacity <= 0 ||
           !Number.isFinite(pricePerLiter) || pricePerLiter <= 0 ||
@@ -278,17 +286,17 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
       {confirmation && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#020b18]/90 p-4">
           <section role="dialog" aria-modal="true" aria-labelledby="checkin-confirm-title" className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-[#2b5b85] bg-[#0b2949] p-6 text-white">
-            <h2 id="checkin-confirm-title" className="text-xl font-semibold">Επιβεβαίωση επιστροφής</h2>
+            <h2 id="checkin-confirm-title" className="text-xl font-semibold">{initialData ? 'Επιβεβαίωση αλλαγών επιστροφής' : 'Επιβεβαίωση επιστροφής'}</h2>
             <p className="mt-3">Καύσιμο επιστροφής: {confirmation.fuel_level}% · Χιλιόμετρα: {confirmation.odometer}</p>
             <p className="mt-2">Νέες ζημιές: {confirmation.new_damages.length}</p>
             {confirmation.new_damages.map(d => <p key={d.id} className="mt-1 text-sm">{d.description} · Εκτίμηση €{(d.estimated_cost || 0).toFixed(2)}</p>)}
             {confirmation.additional_charges.map(c => <p key={c.id} className="mt-2 text-sm">{c.type}: €{c.amount.toFixed(2)} {c.description}</p>)}
             <p className="mt-3 font-semibold">Σύνολο επιπλέον χρεώσεων: €{confirmation.additional_charges.reduce((sum, c) => sum + c.amount, 0).toFixed(2)}</p>
             {confirmation.fuel_waiver_reason && <p className="mt-3 rounded-lg bg-amber-500/15 p-3 text-amber-100">Εκκρεμεί έγκριση Admin για εξαίρεση €{proposedFuelCharge.toFixed(2)}. Αιτιολογία: {confirmation.fuel_waiver_reason}</p>}
-            <p className="mt-4 text-sm text-blue-100/80">Με την επιβεβαίωση καταγράφεται η επιστροφή και ολοκληρώνεται το Check-In.</p>
+            <p className="mt-4 text-sm text-blue-100/80">{initialData ? `Η κράτηση παραμένει ολοκληρωμένη. Αιτιολογία: ${correctionReason}` : 'Με την επιβεβαίωση καταγράφεται η επιστροφή και ολοκληρώνεται το Check-In.'}</p>
             <div className="mt-5 flex flex-wrap justify-end gap-3">
               <button autoFocus type="button" disabled={submitting} onClick={() => setConfirmation(null)} className="rounded-lg border border-[#2b5b85] px-4 py-2">Επιστροφή για αλλαγές</button>
-              <button type="button" disabled={submitting} onClick={() => { if (!submitting) { onComplete(confirmation); setConfirmation(null); } }} className="rounded-lg bg-emerald-600 px-4 py-2 disabled:opacity-40">Επιβεβαίωση επιστροφής</button>
+              <button type="button" disabled={submitting} onClick={() => { if (!submitting) { onComplete(confirmation); setConfirmation(null); } }} className="rounded-lg bg-emerald-600 px-4 py-2 disabled:opacity-40">{initialData ? 'Αποθήκευση αλλαγών' : 'Επιβεβαίωση επιστροφής'}</button>
             </div>
           </section>
         </div>
@@ -296,7 +304,7 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
       <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)]">
         <div className="px-6 py-4 border-b border-[#1e4e7d]/70">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-white tracking-[-0.02em]">Check-in Οχήματος</h2>
+            <h2 className="text-xl font-semibold text-white tracking-[-0.02em]">{initialData ? 'Στοιχεία επιστροφής' : 'Check-in Οχήματος'}</h2>
             <button
               onClick={onCancel}
               className="text-blue-100/55 hover:text-white"
@@ -703,7 +711,7 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
             disabled={submitting}
             className="rounded-xl border border-transparent bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(16,185,129,0.22)] transition-colors hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitting ? 'Επεξεργασία...' : 'Ολοκλήρωση Check-in'}
+            {submitting ? 'Αποθήκευση...' : initialData ? 'Έλεγχος αλλαγών επιστροφής' : 'Ολοκλήρωση Check-in'}
           </button>
         </div>
       </div>

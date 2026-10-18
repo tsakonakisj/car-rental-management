@@ -1135,6 +1135,7 @@ export const fuelWaiverService = {
     if (isDemo) return [];
     const { data, error } = await supabase!.from('fuel_waiver_requests')
       .select('id,reservation_id,requested_at,reason,fuel_liters,proposed_charge,status')
+      .is('voided_at', null)
       .eq('status','pending').order('requested_at',{ascending:true});
     if (error) throw error;
     return (data || []).map(x => ({...x,fuel_liters:Number(x.fuel_liters),proposed_charge:Number(x.proposed_charge)}));
@@ -1149,6 +1150,60 @@ export const fuelWaiverService = {
 };
 
 // Checkins
+export interface ReturnContext {
+  checkin: { id: string; fuel_level: number; odometer: number; correction_revision: number;
+    additional_charges: Array<{ type: string; amount: number; description: string }> };
+  checkout_fuel: number; checkout_odometer: number; tank_capacity: number | null;
+  waiver: { status: string; reason: string; fuel_price_per_liter: number } | null;
+  damages: Array<{ id: string; description: string; estimated_cost: number | null }>;
+  history: Array<{ id: string; actor_name: string; reason: string; corrected_at: string }>;
+  status_history: Array<{ id: string; actor_name: string; reason: string; created_at: string }>;
+}
+export function rentalActionError(error: unknown): string {
+  const message = (error as { message?: string })?.message || '';
+  if (message.includes('ADMIN_ONLY')) return 'Αυτή η ενέργεια επιτρέπεται μόνο σε Admin.';
+  if (message.includes('STALE')) return 'Τα στοιχεία άλλαξαν. Κλείστε και ανοίξτε ξανά την κράτηση.';
+  if (message.includes('LATER_MOVEMENT')) return 'Το όχημα έχει μεταγενέστερη κίνηση. Δεν επιτρέπεται αναίρεση ή αλλαγή παλιών χιλιομέτρων.';
+  if (message.includes('CONFLICT') || message.includes('reservations_no_vehicle_time_overlap') || (error as { code?: string })?.code === '23P01') return 'Υπάρχει άλλη κράτηση για το όχημα σε αυτές τις ημερομηνίες. Η αλλαγή δεν αποθηκεύτηκε.';
+  if (message.includes('HAS_CHECKOUT')) return 'Έχει γίνει παράδοση του οχήματος. Δεν επιτρέπεται απλή επαναφορά σε Επερχόμενη ή ακύρωση.';
+  if (message.includes('VEHICLE')) return 'Το όχημα δεν είναι διαθέσιμο για επαναφορά σε Νοικιασμένο. Ελέγξτε τον Στόλο και τις επόμενες παραδόσεις.';
+  if (message.includes('FUEL')) return 'Ελέγξτε την τιμή καυσίμου και τη χρέωση ή την αιτιολογία εξαίρεσης.';
+  if (message.includes('REASON')) return 'Απαιτείται αιτιολογία από 5 έως 2000 χαρακτήρες.';
+  if (message.includes('HANDOVER_REQUIRED')) return 'Η κατάσταση αλλάζει μέσω κανονικού Check-Out ή Check-In.';
+  return 'Η αλλαγή δεν αποθηκεύτηκε. Ελέγξτε τα στοιχεία και τα δικαιώματά σας.';
+}
+export const returnLifecycleService = {
+  async load(reservationId: string): Promise<ReturnContext> {
+    if (isDemo) throw new Error('Απαιτείται σύνδεση βάσης.');
+    const { data, error } = await supabase!.rpc('get_checkin_correction_context', { p_reservation_id: reservationId });
+    if (error) throw error;
+    return data as ReturnContext;
+  },
+  async reopen(reservationId: string, context: ReturnContext, reason: string): Promise<void> {
+    if (isDemo) throw new Error('Απαιτείται σύνδεση βάσης.');
+    const { error } = await supabase!.rpc('reopen_vehicle_return', { p_reservation_id: reservationId,
+      p_checkin_id: context.checkin.id, p_revision: context.checkin.correction_revision, p_reason: reason.trim() });
+    if (error) throw error;
+  },
+  async changeUnstarted(reservationId: string, status: 'upcoming' | 'cancelled'): Promise<void> {
+    if (isDemo) throw new Error('Απαιτείται σύνδεση βάσης.');
+    const { error } = await supabase!.rpc('change_unstarted_reservation_status', { p_reservation_id: reservationId, p_status: status });
+    if (error) throw error;
+  },
+  async edit(reservationId: string, context: ReturnContext, data: { fuel_level: number; odometer: number;
+    fuel_price: number | null; fuel_waiver_reason: string | null;
+    additional_charges: Array<{ type: string; amount: number; description: string }>;
+    new_damages: Array<{ description: string; estimated_cost?: number }> }, reason: string): Promise<void> {
+    if (isDemo) throw new Error('Απαιτείται σύνδεση βάσης.');
+    const { error } = await supabase!.rpc('edit_vehicle_return', { p_reservation_id: reservationId,
+      p_checkin_id: context.checkin.id, p_revision: context.checkin.correction_revision,
+      p_fuel_level: data.fuel_level, p_odometer: data.odometer, p_fuel_price: data.fuel_price,
+      p_charges: data.additional_charges.map(c => ({ type: c.type, amount: c.amount, description: c.description })),
+      p_damages: data.new_damages.map(d => ({ description: d.description, estimated_cost: d.estimated_cost ?? null })),
+      p_waiver_reason: data.fuel_waiver_reason, p_reason: reason.trim() });
+    if (error) throw error;
+  },
+};
 export const checkinService = {
   async complete(data: {
     reservation_id: string;
@@ -1182,6 +1237,7 @@ export const checkinService = {
     const { data, error } = await supabase!
       .from('checkins')
       .select('fuel_level, odometer, additional_charges, new_damage_ids, checked_in_at')
+      .is('voided_at', null)
       .eq('reservation_id', reservationId)
       .order('checked_in_at', { ascending: false })
       .limit(1)
@@ -1224,6 +1280,7 @@ export const checkinService = {
     const { data, error } = await supabase!
       .from('checkins')
       .select('reservation_id, additional_charges')
+      .is('voided_at', null)
       .in('reservation_id', reservationIds);
 
     if (error) throw error;
@@ -1276,6 +1333,7 @@ export const dashboardService = {
     const { data: checkins } = await supabase!
       .from('checkins')
       .select('id')
+      .is('voided_at', null)
       .gte('checked_in_at', `${today}T00:00:00`)
       .lt('checked_in_at', `${today}T23:59:59`);
 

@@ -7,6 +7,7 @@ on:
       - feature/atomic-checkout-checkin-2026-10-17
       - feature/prevent-overlapping-reservations-2026-10-17
       - feature/checkin-corrections
+      - feature/reservation-return-lifecycle
     paths:
       - ".github/workflows/rentovio-isolated-check.yml"
       - "src/**"
@@ -79,3 +80,6 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261018152106_checkin_corrections.sql
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261018180000_fuel_waiver_checkin_admin_approval.sql
           psql -v ON_ERROR_STOP=1 -f tests/fixtures/isolated-checkin-corrections.sql
+          psql -v ON_ERROR_STOP=1 -f tests/fixtures/isolated-return-lifecycle-support.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261018180001_reservation_return_lifecycle.sql
+          psql -v ON_ERROR_STOP=1 -f tests/fixtures/isolated-return-lifecycle.sql
