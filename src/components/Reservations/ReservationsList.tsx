@@ -1227,6 +1227,9 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                       </div>
                     </div>
 
+                    {checkinDetails?.unpaid_reason && <p className="mb-3 rounded-lg border border-amber-400/30 bg-amber-500/10 p-3 text-sm text-amber-100">
+                      Κατά την επιστροφή έμειναν ανεξόφλητα €{(checkinDetails.unpaid_amount || 0).toFixed(2)}. Αιτιολογία: {checkinDetails.unpaid_reason}. Το σημερινό υπόλοιπο εμφανίζεται παρακάτω.
+                    </p>}
                     <PaymentPanel
                       reservationId={viewReservation.id}
                       totalAmount={Number(viewReservation.total_amount) || 0}

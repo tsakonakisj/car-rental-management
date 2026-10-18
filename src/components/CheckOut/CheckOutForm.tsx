@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { photoService } from '../../lib/database';
+import HandoverPayments from '../Payments/HandoverPayments';
 import { compressImage } from '../../lib/imageUtils';
 import {
   CameraIcon,
@@ -41,6 +42,7 @@ const CheckOutForm: React.FC<CheckOutFormProps> = ({ reservationId, vehicleOdome
   });
 
   const [odometerError, setOdometerError] = useState('');
+  const [remaining, setRemaining] = useState<number | null>(null);
 
   const [newDamage, setNewDamage] = useState('');
   const [showDamageForm, setShowDamageForm] = useState(false);
@@ -146,6 +148,7 @@ const CheckOutForm: React.FC<CheckOutFormProps> = ({ reservationId, vehicleOdome
   };
 
   const handleSubmit = () => {
+    if (remaining === null || remaining > 0 || submitting) return;
     if (vehicleOdometer != null && checkOutData.odometer < vehicleOdometer) {
       setOdometerError(`Τα χιλιόμετρα δεν μπορούν να είναι μικρότερα από ${vehicleOdometer}.`);
       return;
@@ -170,6 +173,8 @@ const CheckOutForm: React.FC<CheckOutFormProps> = ({ reservationId, vehicleOdome
         </div>
 
         <div className="p-6 space-y-8">
+          <HandoverPayments reservationId={reservationId} onBalanceChange={setRemaining} />
+          {remaining !== null && remaining > 0 && <p className="text-amber-200">Πριν παραδώσετε το όχημα, εισπράξτε και καταχωρίστε το υπόλοιπο €{remaining.toFixed(2)}.</p>}
           {/* Fuel and Odometer */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -366,7 +371,7 @@ const CheckOutForm: React.FC<CheckOutFormProps> = ({ reservationId, vehicleOdome
           </button>
           <button
             onClick={handleSubmit}
-            disabled={submitting}
+            disabled={submitting || remaining === null || remaining > 0}
             className="rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? 'Επεξεργασία...' : 'Ολοκλήρωση Check-out'}

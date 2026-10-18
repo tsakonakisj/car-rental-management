@@ -12,6 +12,7 @@ interface PaymentPanelProps {
   chargesLoading?: boolean;
   reservationStatus?: string;
   onPaymentsChanged?: () => void;
+  onBalanceChange?: (remaining: number | null) => void;
 }
 
 const methodLabels: Record<string, string> = {
@@ -20,7 +21,7 @@ const methodLabels: Record<string, string> = {
   transfer: 'Μεταφορά',
 };
 
-const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount, additionalCharges = 0, chargesLoading = false, reservationStatus, onPaymentsChanged }) => {
+const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount, additionalCharges = 0, chargesLoading = false, reservationStatus, onPaymentsChanged, onBalanceChange }) => {
   const { user } = useAuth();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [refunds, setRefunds] = useState<PaymentRefund[]>([]);
@@ -35,6 +36,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
   const [voidSubmitting, setVoidSubmitting] = useState(false);
   const [voidError, setVoidError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [amount, setAmount] = useState('');
   const [method, setMethod] = useState('cash');
@@ -45,6 +47,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
 
   const fetchPayments = useCallback(async () => {
     setLoading(true);
+    setLoadFailed(false);
     try {
       const [paymentData, refundData] = await Promise.all([
         paymentService.getByReservationId(reservationId),
@@ -53,6 +56,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
       setPayments(paymentData);
       setRefunds(refundData);
     } catch (err) {
+      setLoadFailed(true);
       console.error('Failed to load payments:', err);
     } finally {
       setLoading(false);
@@ -77,8 +81,12 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
   const willOverpay = !chargesLoading && Number.isFinite(enteredCents) && enteredCents > balanceCents;
   const projectedCredit = Math.max(0, enteredCents - balanceCents) / 100;
 
+  useEffect(() => {
+    onBalanceChange?.(loading || loadFailed || submitting || voidSubmitting || refundSubmitting || chargesLoading ? null : remaining);
+  }, [remaining, loading, loadFailed, submitting, voidSubmitting, refundSubmitting, chargesLoading, onBalanceChange]);
+
   const handleSubmit = async (overpaymentConfirmed = false) => {
-    if (chargesLoading) return;
+    if (chargesLoading || loading || loadFailed || submitting) return;
     const numAmount = Number(amount);
     if (!Number.isFinite(numAmount) || numAmount <= 0 || Math.abs(numAmount * 100 - Math.round(numAmount * 100)) > 1e-6) {
       setError('Εισάγετε έγκυρο θετικό ποσό με έως δύο δεκαδικά ψηφία.');
@@ -169,6 +177,8 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
   return (
     <div>
       <h3 className="text-sm font-semibold text-blue-100/55 mb-2">Πληρωμές</h3>
+      <p className="mb-3 text-xs text-blue-100/75">Καταχωρίστε πληρωμή μόνο αφού παραλάβετε τα χρήματα ή επιβεβαιωθεί η συναλλαγή.</p>
+      {loadFailed && <p role="alert" className="text-red-300">Αποτυχία φόρτωσης πληρωμών. <button onClick={fetchPayments}>Επανάληψη</button></p>}
       <div className="bg-[#0b2949]/70 rounded-lg p-4 space-y-3">
         {chargesLoading && <p className="text-xs text-amber-200">Φόρτωση χρεώσεων Check-In… Περιμένετε πριν την καταχώριση πληρωμής.</p>}
         {/* Summary row */}

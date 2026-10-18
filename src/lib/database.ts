@@ -1116,6 +1116,8 @@ export const checkoutService = {
 export interface CheckinDetails {
   fuel_level: number;
   odometer: number;
+  unpaid_reason?: string | null;
+  unpaid_amount?: number | null;
   additional_charges: Array<{ type: string; amount: number; description: string }>;
   new_damages: Array<{ id: string; description: string; estimated_cost: number | null }>;
   checked_in_at: string;
@@ -1213,9 +1215,10 @@ export const checkinService = {
     additional_charges: Array<{ type: string; amount: number; description: string }>;
     fuel_price: number | null;
     fuel_waiver_reason: string | null;
+    unpaid_reason?: string | null;
   }): Promise<void> {
     if (isDemo) return Promise.resolve();
-    const { error } = await supabase!.rpc('complete_vehicle_checkin_v2', {
+    const { error } = await supabase!.rpc('complete_vehicle_checkin_v3', {
       p_reservation_id: data.reservation_id,
       p_fuel_level: data.fuel_level,
       p_odometer: data.odometer,
@@ -1228,6 +1231,7 @@ export const checkinService = {
       })),
       p_fuel_price: data.fuel_price,
       p_fuel_waiver_reason: data.fuel_waiver_reason,
+      p_unpaid_reason: data.unpaid_reason || null,
     });
     if (error) throw error;
   },
@@ -1236,7 +1240,7 @@ export const checkinService = {
 
     const { data, error } = await supabase!
       .from('checkins')
-      .select('fuel_level, odometer, additional_charges, new_damage_ids, checked_in_at')
+      .select('fuel_level, odometer, additional_charges, new_damage_ids, checked_in_at, unpaid_reason, unpaid_amount')
       .is('voided_at', null)
       .eq('reservation_id', reservationId)
       .order('checked_in_at', { ascending: false })
@@ -1264,6 +1268,8 @@ export const checkinService = {
     return {
       fuel_level: data.fuel_level,
       odometer: data.odometer,
+      unpaid_reason: data.unpaid_reason,
+      unpaid_amount: data.unpaid_amount == null ? null : Number(data.unpaid_amount),
       additional_charges: (data.additional_charges || []).map((c: any) => ({
         type: c.type,
         amount: Number(c.amount) || 0,

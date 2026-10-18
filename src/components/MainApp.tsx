@@ -275,8 +275,10 @@ const MainApp: React.FC = () => {
       setReservationRefresh(prev => prev + 1);
     } catch (err) {
       console.error('Check-out save failed:', err);
-      const message = err instanceof Error ? err.message : '';
-      if (message.includes('CHECKOUT_DOCUMENTS_INVALID:INSURANCE')) {
+      const message = (err as { message?: string })?.message || '';
+      if (message.includes('CHECKOUT_UNPAID')) {
+        setCheckOutError('Υπάρχει ανεξόφλητο υπόλοιπο. Καταχωρίστε την είσπραξη πριν την παράδοση.');
+      } else if (message.includes('CHECKOUT_DOCUMENTS_INVALID:INSURANCE')) {
         setCheckOutError('Η ασφάλεια δεν καλύπτει ολόκληρη την περίοδο ενοικίασης. Το Check-Out δεν επιτρέπεται.');
       } else if (message.includes('CHECKOUT_DOCUMENTS_INVALID:INSPECTION')) {
         setCheckOutError('Το ΚΤΕΟ δεν καλύπτει ολόκληρη την περίοδο ενοικίασης. Το Check-Out δεν επιτρέπεται.');
@@ -314,14 +316,17 @@ const MainApp: React.FC = () => {
         additional_charges: data.additional_charges,
         fuel_price: data.fuel_price,
         fuel_waiver_reason: data.fuel_waiver_reason,
+        unpaid_reason: data.unpaid_reason,
       });
 
       setCheckInReservation(null);
       setReservationRefresh(prev => prev + 1);
     } catch (err) {
       console.error('Check-in save failed:', err);
-      const message = err instanceof Error ? err.message : '';
-      if (message.includes('CHECKIN_DENIED:ALREADY_DONE')) {
+      const message = (err as { message?: string })?.message || '';
+      if (message.includes('CHECKIN_UNPAID_REASON_REQUIRED')) {
+        setCheckInError('Υπάρχει ανεξόφλητο υπόλοιπο. Καταχωρίστε την πληρωμή ή αιτιολογήστε την ανεξόφλητη επιστροφή.');
+      } else if (message.includes('CHECKIN_DENIED:ALREADY_DONE')) {
         setCheckInError('Έχει ήδη πραγματοποιηθεί Check-In για αυτή την κράτηση.');
       } else if (message.includes('CHECKIN_DENIED:NO_CHECKOUT')) {
         setCheckInError('Δεν μπορεί να γίνει Check-In χωρίς προηγούμενο Check-Out.');

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { photoService, checkoutService } from '../../lib/database';
+import HandoverPayments from '../Payments/HandoverPayments';
 import { compressImage } from '../../lib/imageUtils';
 import {
   CameraIcon,
@@ -13,6 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 export interface CheckInData {
+  unpaid_reason?: string | null;
   fuel_level: number;
   odometer: number;
   photos: string[];
@@ -53,6 +55,9 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
   const [fuelSettlement, setFuelSettlement] = useState<'charge' | 'waiver'>(initialData?.fuel_waiver_reason ? 'waiver' : 'charge');
   const [fuelWaiverReason, setFuelWaiverReason] = useState(initialData?.fuel_waiver_reason || '');
   const [fuelSettlementError, setFuelSettlementError] = useState('');
+  const [remaining, setRemaining] = useState<number | null>(null);
+  const [allowUnpaid, setAllowUnpaid] = useState(false);
+  const [unpaidReason, setUnpaidReason] = useState('');
   const [confirmation, setConfirmation] = useState<CheckInData | null>(null);
   const [checkInData, setCheckInData] = useState<CheckInData>(initialData || {
     fuel_level: 100,
@@ -240,6 +245,10 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
 
   const handleSubmit = () => {
     setFuelSettlementError('');
+    if (!initialData && (remaining === null || (remaining > 0 && (!allowUnpaid || unpaidReason.trim().length < 5)))) {
+      setFuelSettlementError('Καταχωρίστε την είσπραξη ή επιλέξτε επιστροφή με ανεξόφλητο υπόλοιπο και αιτιολογία.');
+      return;
+    }
     if (initialData && (!correctionReason || correctionReason.trim().length < 5)) {
       setFuelSettlementError('Γράψτε αιτιολογία τουλάχιστον 5 χαρακτήρων για την αλλαγή της επιστροφής.');
       return;
@@ -276,6 +285,7 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
     setOdometerError('');
     setConfirmation({
       ...checkInData,
+      unpaid_reason: !initialData && remaining !== null && remaining > 0 && allowUnpaid ? unpaidReason.trim() : null,
       fuel_price: fuelDiffPercent > 0 ? pricePerLiter : null,
       fuel_waiver_reason: fuelDiffPercent > 0 && fuelSettlement === 'waiver' ? fuelWaiverReason.trim() : null,
     });
@@ -293,6 +303,7 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
             {confirmation.additional_charges.map(c => <p key={c.id} className="mt-2 text-sm">{c.type}: €{c.amount.toFixed(2)} {c.description}</p>)}
             <p className="mt-3 font-semibold">Σύνολο επιπλέον χρεώσεων: €{confirmation.additional_charges.reduce((sum, c) => sum + c.amount, 0).toFixed(2)}</p>
             {confirmation.fuel_waiver_reason && <p className="mt-3 rounded-lg bg-amber-500/15 p-3 text-amber-100">Εκκρεμεί έγκριση Admin για εξαίρεση €{proposedFuelCharge.toFixed(2)}. Αιτιολογία: {confirmation.fuel_waiver_reason}</p>}
+            {!initialData && <p className="mt-3 font-semibold">{remaining === 0 ? 'Δεν υπάρχει ανεξόφλητο υπόλοιπο.' : `Ανεξόφλητο υπόλοιπο: €${remaining?.toFixed(2)} · ${confirmation.unpaid_reason || ''}`}</p>}
             <p className="mt-4 text-sm text-blue-100/80">{initialData ? `Η κράτηση παραμένει ολοκληρωμένη. Αιτιολογία: ${correctionReason}` : 'Με την επιβεβαίωση καταγράφεται η επιστροφή και ολοκληρώνεται το Check-In.'}</p>
             <div className="mt-5 flex flex-wrap justify-end gap-3">
               <button autoFocus type="button" disabled={submitting} onClick={() => setConfirmation(null)} className="rounded-lg border border-[#2b5b85] px-4 py-2">Επιστροφή για αλλαγές</button>
@@ -699,6 +710,17 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
           })()}
         </div>
 
+        {!initialData && <div className="px-6 pb-6 space-y-3">
+          <HandoverPayments reservationId={reservationId}
+            additionalCharges={checkInData.additional_charges.reduce((sum,c) => sum + c.amount,0)}
+            onBalanceChange={setRemaining} />
+          {remaining !== null && remaining > 0 && <div className="rounded-lg border border-amber-400/40 p-3 text-amber-100">
+            <label><input type="checkbox" checked={allowUnpaid} onChange={e => setAllowUnpaid(e.target.checked)} /> Επιστροφή με ανεξόφλητο υπόλοιπο (εξαιρετική περίπτωση)</label>
+            {allowUnpaid && <textarea aria-label="Αιτιολογία ανεξόφλητης επιστροφής" maxLength={2000} value={unpaidReason}
+              onChange={e => setUnpaidReason(e.target.value)} placeholder="Υποχρεωτική αιτιολογία"
+              className="mt-2 w-full rounded bg-[#071d38] p-3 text-white" />}
+          </div>}
+        </div>}
         <div className="px-6 py-4 border-t border-[#1e4e7d]/70 flex justify-end space-x-3">
           <button
             onClick={onCancel}

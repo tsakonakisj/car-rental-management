@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - feature/handover-settlement
       - feature/atomic-checkout-checkin-2026-10-17
       - feature/prevent-overlapping-reservations-2026-10-17
       - feature/checkin-corrections
@@ -61,7 +62,7 @@ jobs:
           # Direct inserts stay available until the existing frontend is replaced.
           ! grep -q "^REVOKE INSERT ON TABLE public.checkouts, public.checkins" supabase/migrations/20261017130000_atomic_handover_return.sql
           grep -q "rpc('complete_vehicle_checkout'" src/lib/database.ts
-          grep -q "rpc('complete_vehicle_checkin_v2'" src/lib/database.ts
+          grep -q "rpc('complete_vehicle_checkin_v3'" src/lib/database.ts
           grep -q "fuel_waiver_requests" supabase/migrations/20261018180000_fuel_waiver_checkin_admin_approval.sql
           grep -q "REVOKE ALL ON FUNCTION public.complete_vehicle_checkin(uuid,integer,integer,jsonb,jsonb)" supabase/migrations/20261018180000_fuel_waiver_checkin_admin_approval.sql
           if grep -A 120 'export const checkoutService' src/lib/database.ts | grep -q "from('checkouts').*insert"; then exit 1; fi
@@ -83,3 +84,6 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f tests/fixtures/isolated-return-lifecycle-support.sql
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261018180001_reservation_return_lifecycle.sql
           psql -v ON_ERROR_STOP=1 -f tests/fixtures/isolated-return-lifecycle.sql
+          psql -v ON_ERROR_STOP=1 -f tests/fixtures/isolated-settlement-support.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261018180002_handover_settlement.sql
+          psql -v ON_ERROR_STOP=1 -f tests/fixtures/isolated-settlement.sql
