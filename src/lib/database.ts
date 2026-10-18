@@ -905,14 +905,12 @@ export const paymentService = {
     };
   },
 
-  async delete(id: string): Promise<void> {
+  async void(id: string, reason: string): Promise<void> {
     if (isDemo) return Promise.resolve();
-
-    const { error } = await supabase!
-      .from('payments')
-      .delete()
-      .eq('id', id);
-
+    const { error } = await supabase!.rpc('void_reservation_payment', {
+      p_payment_id: id,
+      p_reason: reason.trim(),
+    });
     if (error) throw error;
   }
 };
