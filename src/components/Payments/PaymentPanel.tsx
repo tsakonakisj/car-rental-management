@@ -22,6 +22,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
   const [voidTarget, setVoidTarget] = useState<Payment | null>(null);
   const [voidReason, setVoidReason] = useState('');
   const [voidSubmitting, setVoidSubmitting] = useState(false);
+  const [voidError, setVoidError] = useState('');
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [amount, setAmount] = useState('');
@@ -81,7 +82,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
   const handleVoid = async () => {
     if (!voidTarget || voidReason.trim().length < 5 || voidSubmitting) return;
     setVoidSubmitting(true);
-    setError('');
+    setVoidError('');
     try {
       await paymentService.void(voidTarget.id, voidReason);
       setVoidTarget(null);
@@ -90,7 +91,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
       onPaymentsChanged?.();
     } catch (err) {
       console.error('Failed to void payment:', err);
-      setError('Η ακύρωση δεν ολοκληρώθηκε. Ελέγξτε τα δικαιώματα και δοκιμάστε ξανά.');
+      setVoidError('Η ακύρωση δεν ολοκληρώθηκε. Ελέγξτε τα δικαιώματα και δοκιμάστε ξανά.');
     } finally {
       setVoidSubmitting(false);
     }
@@ -152,7 +153,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
                 {!p.voided_at && user?.role === 'admin' && (
                   <button
                     type="button"
-                    onClick={() => { setVoidTarget(p); setVoidReason(''); setError(''); }}
+                    onClick={() => { setVoidTarget(p); setVoidReason(''); setVoidError(''); }}
                     className="text-blue-100/50 hover:text-amber-300 transition-colors p-1"
                     title="Ακύρωση πληρωμής με ιστορικό"
                     aria-label="Ακύρωση πληρωμής"
@@ -268,6 +269,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
             <textarea id="payment-void-reason" rows={3} value={voidReason} onChange={e => setVoidReason(e.target.value)}
               placeholder="Π.χ. Λανθασμένη καταχώριση ποσού" disabled={voidSubmitting}
               className="mt-2 w-full rounded-xl border border-[#2b5b85] bg-[#071d38] p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50" />
+            {voidError && <p role="alert" className="mt-2 text-sm text-red-300">{voidError}</p>}
             <div className="mt-5 flex justify-end gap-3">
               <button type="button" disabled={voidSubmitting} onClick={() => setVoidTarget(null)}
                 className="rounded-xl border border-[#2b5b85] px-4 py-2 text-sm font-medium text-blue-100">Επιστροφή</button>
