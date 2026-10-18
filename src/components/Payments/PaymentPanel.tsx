@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { paymentService } from '../../lib/database';
+import { useAuth } from '../../contexts/AuthContext';
 import type { Payment } from '../../types';
 import { CurrencyEuroIcon, PlusIcon, TrashIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
@@ -16,7 +17,11 @@ const methodLabels: Record<string, string> = {
 };
 
 const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount, onPaymentsChanged }) => {
+  const { user } = useAuth();
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [voidTarget, setVoidTarget] = useState<Payment | null>(null);
+  const [voidReason, setVoidReason] = useState('');
+  const [voidSubmitting, setVoidSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [amount, setAmount] = useState('');
@@ -41,7 +46,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
     fetchPayments();
   }, [fetchPayments]);
 
-  const amountPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+  const amountPaid = payments.filter(p => !p.voided_at).reduce((sum, p) => sum + p.amount, 0);
   const remaining = Math.max(0, totalAmount - amountPaid);
 
   const handleSubmit = async () => {
@@ -73,13 +78,21 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleVoid = async () => {
+    if (!voidTarget || voidReason.trim().length < 5 || voidSubmitting) return;
+    setVoidSubmitting(true);
+    setError('');
     try {
-      await paymentService.delete(id);
+      await paymentService.void(voidTarget.id, voidReason);
+      setVoidTarget(null);
+      setVoidReason('');
       await fetchPayments();
       onPaymentsChanged?.();
     } catch (err) {
-      console.error('Failed to delete payment:', err);
+      console.error('Failed to void payment:', err);
+      setError('Η ακύρωση δεν ολοκληρώθηκε. Ελέγξτε τα δικαιώματα και δοκιμάστε ξανά.');
+    } finally {
+      setVoidSubmitting(false);
     }
   };
 
@@ -116,28 +129,37 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
         ) : payments.length > 0 ? (
           <div className="space-y-2">
             {payments.map((p, i) => (
-              <div key={p.id} className="flex items-center justify-between rounded-lg bg-[#071d38]/60 border border-[#1e4e7d]/50 px-3 py-2">
+              <div key={p.id} className={`flex items-center justify-between rounded-lg bg-[#071d38]/60 border border-[#1e4e7d]/50 px-3 py-2 ${p.voided_at ? "opacity-65" : ""}`}>
                 <div className="flex items-center gap-3">
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/15 text-xs font-medium text-emerald-300">
                     {i + 1}
                   </span>
                   <div>
-                    <p className="text-sm font-medium text-white">€{p.amount.toFixed(2)}</p>
+                    <p className={`text-sm font-medium ${p.voided_at ? "text-blue-100/50 line-through" : "text-white"}`}>€{p.amount.toFixed(2)} {p.voided_at ? "· Ακυρώθηκε" : ""}</p>
                     <p className="text-xs text-blue-100/55">
                       {methodLabels[p.method] || p.method}
                       {p.notes ? ` · ${p.notes}` : ''}
                       {' · '}
                       {new Date(p.created_at).toLocaleDateString('el-GR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                     </p>
+                    {p.voided_at && (
+                      <p className="text-xs text-amber-200/80">
+                        Ακύρωση: {new Date(p.voided_at).toLocaleString('el-GR')} · {p.void_reason || '-'}
+                      </p>
+                    )}
                   </div>
                 </div>
-                <button
-                  onClick={() => handleDelete(p.id)}
-                  className="text-blue-100/35 hover:text-red-400 transition-colors p-1"
-                  title="Διαγραφή πληρωμής"
-                >
-                  <TrashIcon className="h-4 w-4" />
-                </button>
+                {!p.voided_at && user?.role === 'admin' && (
+                  <button
+                    type="button"
+                    onClick={() => { setVoidTarget(p); setVoidReason(''); setError(''); }}
+                    className="text-blue-100/50 hover:text-amber-300 transition-colors p-1"
+                    title="Ακύρωση πληρωμής με ιστορικό"
+                    aria-label="Ακύρωση πληρωμής"
+                  >
+                    <TrashIcon className="h-4 w-4" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -234,6 +256,29 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
           </button>
         )}
       </div>
+      {voidTarget && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#020b18]/85 p-4 backdrop-blur-sm"
+          onMouseDown={e => { if (e.target === e.currentTarget && !voidSubmitting) setVoidTarget(null); }}>
+          <section role="dialog" aria-modal="true" aria-labelledby="payment-void-title" className="w-full max-w-md rounded-2xl border border-amber-400/30 bg-[#0b2949] p-6 text-white shadow-2xl">
+            <h2 id="payment-void-title" className="text-lg font-semibold">Ακύρωση καταχωρισμένης πληρωμής</h2>
+            <p className="mt-3 text-sm text-blue-100/80">
+              Πληρωμή €{voidTarget.amount.toFixed(2)}. Η κίνηση θα παραμείνει στο ιστορικό, αλλά δεν θα μετρά πλέον στο εισπραχθέν ποσό.
+            </p>
+            <label className="mt-4 block text-sm font-medium text-white" htmlFor="payment-void-reason">Αιτιολογία ακύρωσης (υποχρεωτική)</label>
+            <textarea id="payment-void-reason" rows={3} value={voidReason} onChange={e => setVoidReason(e.target.value)}
+              placeholder="Π.χ. Λανθασμένη καταχώριση ποσού" disabled={voidSubmitting}
+              className="mt-2 w-full rounded-xl border border-[#2b5b85] bg-[#071d38] p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50" />
+            <div className="mt-5 flex justify-end gap-3">
+              <button type="button" disabled={voidSubmitting} onClick={() => setVoidTarget(null)}
+                className="rounded-xl border border-[#2b5b85] px-4 py-2 text-sm font-medium text-blue-100">Επιστροφή</button>
+              <button type="button" disabled={voidSubmitting || voidReason.trim().length < 5} onClick={handleVoid}
+                className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40">
+                {voidSubmitting ? 'Ακύρωση...' : 'Επιβεβαίωση ακύρωσης'}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </div>
   );
 };
