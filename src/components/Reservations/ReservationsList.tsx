@@ -576,8 +576,19 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
     return found ? found.labelEl : status;
   };
 
+  // A missed pickup remains 'upcoming' in the database until the real checkout/cancellation.
+  const isOverduePickup = (reservation: ReservationRow): boolean => {
+    if (reservation.status !== 'upcoming' || !reservation.pickup_date) return false;
+    const pickup = new Date(reservation.pickup_date.replace(' ', 'T'));
+    return !Number.isNaN(pickup.getTime()) && pickup.getTime() < Date.now();
+  };
+
   const filteredReservations = reservations.filter(reservation => {
-    if (filter !== 'all' && reservation.status !== filter) return false;
+    if (filter === 'overdue') {
+      if (!isOverduePickup(reservation)) return false;
+    } else if (filter === 'upcoming') {
+      if (reservation.status !== 'upcoming' || isOverduePickup(reservation)) return false;
+    } else if (filter !== 'all' && reservation.status !== filter) return false;
     if (excelFilter === 'pending' && reservation.excel_updated !== false) return false;
     if (excelFilter === 'done' && reservation.excel_updated !== true) return false;
     if (dateFilter && !reservation.pickup_date.startsWith(dateFilter)) return false;
@@ -698,6 +709,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
               {statusOptions.map(s => (
                 <option key={s.value} value={s.value}>{s.labelEl}</option>
               ))}
+              <option value="overdue">Εκπρόθεσμες παραλαβές</option>
             </select>
           </div>
           <div>
@@ -785,8 +797,8 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                     <span className={`mr-1.5 h-2.5 w-2.5 rounded-full ${reservation.excel_updated ? 'bg-emerald-300' : 'bg-amber-300'}`} />
                     {reservation.excel_updated ? 'Excel ενημερώθηκε' : 'Excel εκκρεμεί'}
                   </span>
-                  <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${getStatusColor(reservation.status)}`}>
-                    {getStatusLabel(reservation.status)}
+                  <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${isOverduePickup(reservation) ? 'bg-amber-500/15 text-amber-200 ring-1 ring-inset ring-amber-400/50' : getStatusColor(reservation.status)}`}>
+                    {isOverduePickup(reservation) ? 'Εκκρεμεί Check-Out' : getStatusLabel(reservation.status)}
                   </span>
                   <button
                     onClick={() => setViewReservation(reservation)}
