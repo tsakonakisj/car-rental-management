@@ -22,6 +22,8 @@ interface CheckInData {
     photo?: string;
     estimated_cost?: number;
   }>;
+  fuel_price: number | null;
+  fuel_waiver_reason: string | null;
   additional_charges: Array<{
     id: string;
     type: string;
@@ -45,6 +47,9 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
   const [odometerError, setOdometerError] = useState('');
   const [fuelWarningDismissed, setFuelWarningDismissed] = useState(false);
   const [fuelPricePerLiter, setFuelPricePerLiter] = useState<string>('');
+  const [fuelSettlement, setFuelSettlement] = useState<'charge' | 'waiver'>('charge');
+  const [fuelWaiverReason, setFuelWaiverReason] = useState('');
+  const [fuelSettlementError, setFuelSettlementError] = useState('');
   const [checkInData, setCheckInData] = useState<CheckInData>({
     fuel_level: 100,
     odometer: 0,
@@ -183,7 +188,7 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
       };
       setCheckInData(prev => ({
         ...prev,
-        additional_charges: [...prev.additional_charges, charge]
+        additional_charges: [...prev.additional_charges.filter(c => c.type !== 'Καύσιμο'), charge]
       }));
       setNewCharge({ type: '', amount: 0, description: '' });
       setShowChargeForm(false);
@@ -228,12 +233,42 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
   };
 
   const handleSubmit = () => {
+    setFuelSettlementError('');
+    if (fuelDiffPercent > 0) {
+      if (vehicleFuelTankCapacity == null || vehicleFuelTankCapacity <= 0 ||
+          !Number.isFinite(pricePerLiter) || pricePerLiter <= 0 ||
+          Math.abs(pricePerLiter * 100 - Math.round(pricePerLiter * 100)) > 1e-6) {
+        setFuelSettlementError('Για έλλειμμα καυσίμου απαιτούνται χωρητικότητα ρεζερβουάρ και τιμή ανά λίτρο.');
+        return;
+      }
+      if (fuelSettlement === 'waiver') {
+        if (fuelWaiverReason.trim().length < 5) {
+          setFuelSettlementError('Γράψτε αιτιολογία τουλάχιστον 5 χαρακτήρων για έγκριση από Admin.');
+          return;
+        }
+        if (checkInData.additional_charges.some(c => c.type === 'Καύσιμο')) {
+          setFuelSettlementError('Αφαιρέστε τη χρέωση καυσίμου πριν ζητήσετε εξαίρεση.');
+          return;
+        }
+      } else {
+        const fuelCharges = checkInData.additional_charges.filter(c => c.type === 'Καύσιμο');
+        if (fuelCharges.length !== 1 ||
+            Math.round(fuelCharges[0].amount * 100) !== Math.round(proposedFuelCharge * 100)) {
+          setFuelSettlementError('Καταχωρίστε την προτεινόμενη χρέωση καυσίμου πριν ολοκληρώσετε το Check-In.');
+          return;
+        }
+      }
+    }
     if (checkOutOdometer != null && checkInData.odometer < checkOutOdometer) {
       setOdometerError(`Τα χιλιόμετρα επιστροφής δεν μπορούν να είναι μικρότερα από τα χιλιόμετρα check-out (${checkOutOdometer}).`);
       return;
     }
     setOdometerError('');
-    onComplete(checkInData);
+    onComplete({
+      ...checkInData,
+      fuel_price: fuelDiffPercent > 0 ? pricePerLiter : null,
+      fuel_waiver_reason: fuelDiffPercent > 0 && fuelSettlement === 'waiver' ? fuelWaiverReason.trim() : null,
+    });
   };
 
   return (
@@ -331,6 +366,29 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
                       </button>
                     </>
                   )}
+                </div>
+              )}
+              {fuelDiffPercent > 0 && (
+                <div className="mt-3 rounded-xl border border-amber-400/40 bg-amber-500/10 p-3 text-sm text-amber-100">
+                  <p className="font-semibold">Υποχρεωτική τακτοποίηση ελλείμματος καυσίμου</p>
+                  <label className="mt-2 flex items-center gap-2">
+                    <input type="radio" checked={fuelSettlement === 'charge'} onChange={() => setFuelSettlement('charge')} />
+                    Καταχώριση υπολογισμένης χρέωσης
+                  </label>
+                  <label className="mt-2 flex items-center gap-2">
+                    <input type="radio" checked={fuelSettlement === 'waiver'} onChange={() => setFuelSettlement('waiver')} />
+                    Αίτημα εξαίρεσης — έγκριση από Admin αργότερα
+                  </label>
+                  {fuelSettlement === 'waiver' && (
+                    <label className="mt-3 block">
+                      Αιτιολογία εξαίρεσης
+                      <textarea rows={2} value={fuelWaiverReason} onChange={e => setFuelWaiverReason(e.target.value)}
+                        placeholder="Γιατί δεν θα χρεωθεί ο πελάτης;"
+                        className="mt-1 w-full rounded-lg border border-amber-300/40 bg-[#071d38] p-2 text-white" />
+                      <span className="mt-1 block text-xs">Το Check-In ολοκληρώνεται και δημιουργείται εκκρεμής οικονομική έγκριση.</span>
+                    </label>
+                  )}
+                  {fuelSettlementError && <p role="alert" className="mt-2 text-red-300">{fuelSettlementError}</p>}
                 </div>
               )}
               {checkOutFuelLevel != null && checkInData.fuel_level < checkOutFuelLevel && vehicleFuelTankCapacity == null && (
@@ -582,6 +640,9 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
             </div>
           )}
 
+          {fuelSettlementError && fuelDiffPercent <= 0 && (
+            <p role="alert" className="text-sm text-red-300">{fuelSettlementError}</p>
+          )}
           {/* Fuel charge warning */}
           {(() => {
             const hasFuelCharge = checkInData.additional_charges.some(c => c.type === 'Καύσιμο');
