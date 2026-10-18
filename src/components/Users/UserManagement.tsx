@@ -128,8 +128,8 @@ const UserManagement: React.FC = () => {
   const manageEmployee = async (event: React.FormEvent) => {
     event.preventDefault();
     if (saving) return;
-    if (employeePassword.length < 12) {
-      setError('Ο κωδικός πρέπει να έχει τουλάχιστον 12 χαρακτήρες.');
+    if (employeePassword.length < 8) {
+      setError('Ο κωδικός πρέπει να έχει τουλάχιστον 8 χαρακτήρες.');
       return;
     }
     if (employeeDialog === 'create' && !/^[a-z][a-z0-9._-]{2,31}$/.test(employeeUsername.trim().toLowerCase())) {
@@ -212,7 +212,7 @@ const UserManagement: React.FC = () => {
           </>}
           <label className="block text-sm">{employeeDialog === 'create' ? 'Κωδικός πρόσβασης' : 'Νέος κωδικός'}
             <div className="mt-1 flex overflow-hidden rounded-lg border border-[#2b5b85] bg-[#061a35]">
-              <input type={showEmployeePassword ? 'text' : 'password'} autoComplete="new-password" required minLength={12} maxLength={128} value={employeePassword} onChange={(event) => setEmployeePassword(event.target.value)} className="min-w-0 flex-1 bg-transparent p-3 text-white" />
+              <input type={showEmployeePassword ? 'text' : 'password'} autoComplete="new-password" required minLength={8} maxLength={128} value={employeePassword} onChange={(event) => setEmployeePassword(event.target.value)} className="min-w-0 flex-1 bg-transparent p-3 text-white" />
               <button type="button" onClick={() => setShowEmployeePassword(!showEmployeePassword)} className="px-3 text-sm text-blue-100/75">{showEmployeePassword ? 'Απόκρυψη' : 'Εμφάνιση'}</button>
             </div>
           </label>
