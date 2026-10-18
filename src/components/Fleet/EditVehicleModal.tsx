@@ -197,7 +197,7 @@ const VehicleFormModal: React.FC<VehicleFormModalProps> = ({ vehicle, onClose, o
   const maxDateStr = maxDate.toISOString().split('T')[0];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#020b18]/80 p-4 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#020b18]/80 p-4 backdrop-blur-sm" onMouseDown={(event) => { if (event.target === event.currentTarget && !saving) onClose(); }}>
       <div
         className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-[#1e4e7d]/70 bg-[#071d38] shadow-xl"
         onClick={(e) => e.stopPropagation()}
