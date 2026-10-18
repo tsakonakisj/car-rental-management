@@ -167,4 +167,7 @@ export interface Payment {
   notes?: string;
   created_at: string;
   created_by: string;
+  voided_at?: string | null;
+  voided_by?: string | null;
+  void_reason?: string | null;
 }
