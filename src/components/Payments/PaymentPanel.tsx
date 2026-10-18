@@ -8,6 +8,8 @@ import { CurrencyEuroIcon, PlusIcon, TrashIcon, ArrowPathIcon } from '@heroicons
 interface PaymentPanelProps {
   reservationId: string;
   totalAmount: number;
+  additionalCharges?: number;
+  chargesLoading?: boolean;
   reservationStatus?: string;
   onPaymentsChanged?: () => void;
 }
@@ -18,7 +20,7 @@ const methodLabels: Record<string, string> = {
   transfer: 'Μεταφορά',
 };
 
-const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount, reservationStatus, onPaymentsChanged }) => {
+const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount, additionalCharges = 0, chargesLoading = false, reservationStatus, onPaymentsChanged }) => {
   const { user } = useAuth();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [refunds, setRefunds] = useState<PaymentRefund[]>([]);
@@ -61,20 +63,22 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
     fetchPayments();
   }, [fetchPayments]);
 
+  const finalTotal = (Math.round(totalAmount * 100) + Math.round(additionalCharges * 100)) / 100;
   const grossPaid = payments.filter(p => !p.voided_at).reduce((sum, p) => sum + p.amount, 0);
   const totalRefunded = refunds.reduce((sum, refund) => sum + refund.amount, 0);
   const amountPaid = grossPaid - totalRefunded;
   const getRefundableAmount = (payment: Payment) =>
     Math.max(0, Math.round(payment.amount * 100) - refunds.filter(r => r.payment_id === payment.id)
       .reduce((sum, r) => sum + Math.round(r.amount * 100), 0)) / 100;
-  const balanceCents = Math.round(totalAmount * 100) - Math.round(amountPaid * 100);
+  const balanceCents = Math.round(finalTotal * 100) - Math.round(amountPaid * 100);
   const remaining = Math.max(0, balanceCents) / 100;
   const credit = Math.max(0, -balanceCents) / 100;
   const enteredCents = Math.round(Number(amount) * 100);
-  const willOverpay = Number.isFinite(enteredCents) && enteredCents > balanceCents;
+  const willOverpay = !chargesLoading && Number.isFinite(enteredCents) && enteredCents > balanceCents;
   const projectedCredit = Math.max(0, enteredCents - balanceCents) / 100;
 
   const handleSubmit = async (overpaymentConfirmed = false) => {
+    if (chargesLoading) return;
     const numAmount = Number(amount);
     if (!Number.isFinite(numAmount) || numAmount <= 0 || Math.abs(numAmount * 100 - Math.round(numAmount * 100)) > 1e-6) {
       setError('Εισάγετε έγκυρο θετικό ποσό με έως δύο δεκαδικά ψηφία.');
@@ -166,11 +170,12 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
     <div>
       <h3 className="text-sm font-semibold text-blue-100/55 mb-2">Πληρωμές</h3>
       <div className="bg-[#0b2949]/70 rounded-lg p-4 space-y-3">
+        {chargesLoading && <p className="text-xs text-amber-200">Φόρτωση χρεώσεων Check-In… Περιμένετε πριν την καταχώριση πληρωμής.</p>}
         {/* Summary row */}
         <div className="grid grid-cols-3 gap-3 text-center">
           <div className="rounded-lg bg-[#071d38]/80 border border-[#1e4e7d]/60 px-2 py-3">
             <p className="text-xs text-blue-100/55 mb-1">Σύνολο</p>
-            <p className="text-sm font-semibold text-white">€{totalAmount.toFixed(2)}</p>
+            <p className="text-sm font-semibold text-white">€{finalTotal.toFixed(2)}</p>
           </div>
           <div className="rounded-lg bg-emerald-500/10 border border-emerald-400/30 px-2 py-3">
             <p className="text-xs text-emerald-300/70 mb-1">Καθαρά εισπραχθέντα</p>
@@ -194,6 +199,16 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
         )}
         {credit > 0 && <p className="text-xs leading-5 text-sky-200/85">Έχουν εισπραχθεί €{credit.toFixed(2)} περισσότερα από την αξία της κράτησης. Δεν έχει καταχωριστεί αυτόματα επιστροφή χρημάτων.</p>}
 
+        {additionalCharges > 0 && (
+          <div className="rounded-lg border border-[#2b5b85]/60 bg-[#071d38]/60 p-3 text-xs text-blue-100/80">
+            <div className="flex justify-between gap-2"><span>Αξία κράτησης</span><span>€{totalAmount.toFixed(2)}</span></div>
+            <div className="mt-1 flex justify-between gap-2"><span>Χρεώσεις Check-In</span><span>€{additionalCharges.toFixed(2)}</span></div>
+            <div className="mt-2 flex justify-between gap-2 border-t border-[#2b5b85]/60 pt-2 font-semibold text-white">
+              <span>Συνολική οφειλή</span><span>€{finalTotal.toFixed(2)}</span>
+            </div>
+            <p className="mt-2 text-blue-100/55">Οι εκτιμήσεις κόστους ζημιών δεν προστίθενται αυτόματα.</p>
+          </div>
+        )}
         {/* Payment history */}
         {loading ? (
           <div className="flex items-center justify-center py-3">
@@ -303,13 +318,13 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
                   Πλήρες Υπόλοιπο
                 </button>
                 <button
-                  onClick={() => setQuickAmount(totalAmount / 2)}
+                  onClick={() => setQuickAmount(finalTotal / 2)}
                   className="rounded-lg border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-1 text-xs font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d]"
                 >
                   50% Προκαταβολή
                 </button>
                 <button
-                  onClick={() => setQuickAmount(totalAmount * 0.3)}
+                  onClick={() => setQuickAmount(finalTotal * 0.3)}
                   className="rounded-lg border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-1 text-xs font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d]"
                 >
                   30% Προκαταβολή
@@ -351,7 +366,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
               </button>
               <button
                 onClick={() => handleSubmit()}
-                disabled={submitting || !amount}
+                disabled={submitting || chargesLoading || !amount}
                 className="inline-flex items-center rounded-lg border border-transparent bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {submitting ? 'Αποθήκευση...' : 'Καταχώρηση'}
