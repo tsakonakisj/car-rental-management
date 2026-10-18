@@ -91,6 +91,38 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
     return () => { mounted = false; };
   }, [user?.id, user?.role]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [dragVehicleId, setDragVehicleId] = useState<string | null>(null);
+  const [savingVehicleOrder, setSavingVehicleOrder] = useState(false);
+  const [vehicleOrderError, setVehicleOrderError] = useState('');
+  const skipCardClick = React.useRef(false);
+  const canReorder = user?.role === 'admin';
+
+  const reorderVehicles = async (sourceId: string, targetId: string) => {
+    if (!canReorder || savingVehicleOrder || sourceId === targetId) return;
+    const original = [...vehicles];
+    // Reorder within the currently selected filter, retaining hidden vehicles in the full list.
+    const visible = original.filter(v => filter === 'all' || (filter === 'active' ? v.status !== 'inactive' : v.status === 'inactive'));
+    const from = visible.findIndex(v => v.id === sourceId);
+    const to = visible.findIndex(v => v.id === targetId);
+    if (from === -1 || to === -1) return;
+    visible.splice(to, 0, visible.splice(from, 1)[0]);
+    const movedIds = visible.map(v => v.id);
+    let index = 0;
+    const next = original.map(v => movedIds.includes(v.id) ? visible[index++] : v);
+    setVehicles(next);
+    setVehicleOrderError('');
+    setSavingVehicleOrder(true);
+    try {
+      const { error } = await supabase.rpc('reorder_vehicle_cards', { p_ids: next.map(v => v.id) });
+      if (error) throw error;
+    } catch (error) {
+      console.error('Failed to reorder vehicle cards', error);
+      setVehicles(original);
+      setVehicleOrderError('Η νέα σειρά δεν αποθηκεύτηκε. Κάντε ανανέωση και δοκιμάστε ξανά.');
+    } finally {
+      setSavingVehicleOrder(false);
+    }
+  };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
@@ -106,7 +138,14 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
     try {
       const data = await vehicleService.getAll();
       const synced = await recalculateStatuses(data);
-      setVehicles(synced);
+      setVehicles([...synced].sort((a, b) => {
+        const x = (a as Vehicle & { display_order?: number | null }).display_order;
+        const y = (b as Vehicle & { display_order?: number | null }).display_order;
+        if (x == null && y == null) return a.plate.localeCompare(b.plate);
+        if (x == null) return 1;
+        if (y == null) return -1;
+        return x - y;
+      }));
     } catch (err) {
       console.error('Failed to load vehicles:', err);
       setError('Αποτυχία φόρτωσης οχημάτων.');
@@ -250,11 +289,7 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
       if (filter === 'inactive') return v.status === 'inactive';
       return true;
     })
-    .sort((a, b) => {
-      const aInactive = a.status === 'inactive' ? 1 : 0;
-      const bInactive = b.status === 'inactive' ? 1 : 0;
-      return aInactive - bInactive;
-    });
+;
 
   if (loading && vehicles.length === 0) {
     return (
@@ -363,6 +398,12 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
       )}
 
       {/* Fleet Grid */}
+      {vehicleOrderError && <p role="alert" className="text-sm text-red-300">{vehicleOrderError}</p>}
+      {canReorder && filteredVehicles.length > 0 && (
+        <p className="text-xs text-blue-100/55">
+          {savingVehicleOrder ? 'Αποθήκευση σειράς οχημάτων...' : 'Σύρετε μια κάρτα για να αλλάξετε τη σειρά εμφάνισης σε όλους τους χρήστες.'}
+        </p>
+      )}
       {filteredVehicles.length > 0 && (
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
           {filteredVehicles.map((vehicle) => {
@@ -371,17 +412,42 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
             return (
               <div
                 key={vehicle.id}
+                draggable={canReorder && !savingVehicleOrder}
+                onDragStart={event => {
+                  if (!canReorder) { event.preventDefault(); return; }
+                  skipCardClick.current = true;
+                  setDragVehicleId(vehicle.id);
+                  event.dataTransfer.effectAllowed = 'move';
+                  event.dataTransfer.setData('text/plain', vehicle.id);
+                }}
+                onDragOver={event => {
+                  if (canReorder && dragVehicleId && dragVehicleId !== vehicle.id) {
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = 'move';
+                  }
+                }}
+                onDrop={event => {
+                  event.preventDefault();
+                  const source = dragVehicleId || event.dataTransfer.getData('text/plain');
+                  setDragVehicleId(null);
+                  void reorderVehicles(source, vehicle.id);
+                }}
+                onDragEnd={() => { setDragVehicleId(null); window.setTimeout(() => { skipCardClick.current = false; }, 150); }}
                 role={!isInactive && canEdit ? 'button' : undefined}
                 tabIndex={!isInactive && canEdit ? 0 : undefined}
                 aria-label={!isInactive && canEdit ? `Επεξεργασία οχήματος ${vehicle.plate}` : undefined}
-                onClick={() => { if (!isInactive && canEdit) setEditingVehicle(vehicle); }}
+                onClick={event => {
+                  if (skipCardClick.current) { skipCardClick.current = false; return; }
+                  if ((event.target as HTMLElement).closest('button, a, input, select, textarea')) return;
+                  if (!isInactive && canEdit) setEditingVehicle(vehicle);
+                }}
                 onKeyDown={(event) => {
                   if (!isInactive && canEdit && event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
                     event.preventDefault();
                     setEditingVehicle(vehicle);
                   }
                 }}
-                className={`flex flex-col overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)] ${isInactive ? 'opacity-50' : canEdit ? 'cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#55a8ff]' : ''}`}
+                className={`flex flex-col overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)] ${isInactive ? 'opacity-50' : canReorder ? 'cursor-grab active:cursor-grabbing focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#55a8ff]' : canEdit ? 'cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#55a8ff]' : ''} ${dragVehicleId === vehicle.id ? 'opacity-40' : ''}`}
               >
                 <div className="flex flex-1 flex-col p-5">
                   <div className="mb-4 flex items-center justify-between">
