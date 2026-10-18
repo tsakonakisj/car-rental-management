@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { pricingService, vehicleService, insuranceService } from '../../lib/database';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 import type { Season, Pricing, Extra as ExtraType, Insurance as InsuranceType } from '../../types';
 import PageHero from '../Layout/PageHero';
 import {
@@ -36,6 +38,31 @@ const parseDateParts = (dateStr: string): { month: number; day: number } | null 
 
 const PricingManagement: React.FC = () => {
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const [pricingRights, setPricingRights] = useState({ create: false, edit: false, delete: false });
+  const canCreate = user?.role === 'admin' || (user?.role === 'manager' && pricingRights.create);
+  const canEdit = user?.role === 'admin' || (user?.role === 'manager' && pricingRights.edit);
+  const canDelete = user?.role === 'admin' || (user?.role === 'manager' && pricingRights.delete);
+
+  useEffect(() => {
+    if (user?.role !== 'manager') {
+      setPricingRights({ create: false, edit: false, delete: false });
+      return;
+    }
+    let active = true;
+    setPricingRights({ create: false, edit: false, delete: false });
+    supabase.from('employee_permissions').select('permissions').eq('user_id', user.id).maybeSingle()
+      .then(({ data, error }) => {
+        if (!active || error) return;
+        const p = data?.permissions as { pricing?: { create?: boolean; edit?: boolean; delete?: boolean } } | undefined;
+        setPricingRights({
+          create: p?.pricing?.create === true,
+          edit: p?.pricing?.edit === true,
+          delete: p?.pricing?.delete === true,
+        });
+      });
+    return () => { active = false; };
+  }, [user?.id, user?.role]);
 
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [pricing, setPricing] = useState<Pricing[]>([]);
@@ -100,6 +127,7 @@ const PricingManagement: React.FC = () => {
   };
 
   const startEdit = (category: string, seasonId: string) => {
+    if (getRate(category, seasonId) === null ? !canCreate : !canEdit) return;
     const current = getRate(category, seasonId);
     setEditCell({ category, seasonId });
     setEditValue(current !== null ? String(current) : '');
@@ -113,7 +141,7 @@ const PricingManagement: React.FC = () => {
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const saveEdit = async () => {
-    if (!editCell) return;
+    if (!editCell || (getRate(editCell.category, editCell.seasonId) === null ? !canCreate : !canEdit)) return;
     const rate = parseFloat(editValue);
     if (isNaN(rate) || rate < 0) {
       setSaveError('Μη έγκυρη τιμή.');
@@ -139,6 +167,7 @@ const PricingManagement: React.FC = () => {
   };
 
   const saveExtraEdit = async () => {
+    if (!canEdit) return;
     if (!editingExtraId || !editExtraForm) return;
     const price = parseFloat(String(editExtraForm.price));
     if (isNaN(price) || price < 0) return;
@@ -195,6 +224,7 @@ const PricingManagement: React.FC = () => {
   const [savingNewExtra, setSavingNewExtra] = useState(false);
 
   const handleDeleteSeason = async () => {
+    if (!canDelete) return;
     if (!seasonToDelete) return;
     setDeletingSeason(true);
     setSeasonDeleteError(null);
@@ -210,6 +240,7 @@ const PricingManagement: React.FC = () => {
   };
 
   const handleDeleteInsurance = async () => {
+    if (!canDelete) return;
     if (!insuranceToDelete) return;
     setDeletingInsurance(true);
     setInsuranceDeleteError(null);
@@ -225,6 +256,7 @@ const PricingManagement: React.FC = () => {
   };
 
   const handleDeleteExtra = async () => {
+    if (!canDelete) return;
     if (!extraToDelete) return;
     setDeletingExtra(true);
     setExtraDeleteError(null);
@@ -240,6 +272,7 @@ const PricingManagement: React.FC = () => {
   };
 
   const saveNewInsurance = async () => {
+    if (!canCreate) return;
     if (!newInsuranceForm) return;
     if (!newInsuranceForm.name?.trim()) {
       setNewInsuranceError('Το όνομα είναι υποχρεωτικό.');
@@ -268,6 +301,7 @@ const PricingManagement: React.FC = () => {
   };
 
   const saveNewExtra = async () => {
+    if (!canCreate) return;
     if (!newExtraForm) return;
     if (!newExtraForm.name?.trim()) {
       setNewExtraError('Το όνομα είναι υποχρεωτικό.');
@@ -297,6 +331,7 @@ const PricingManagement: React.FC = () => {
   };
 
   const startSeasonEdit = (season: Season) => {
+    if (!canEdit) return;
     setEditingSeasonId(season.id);
     setSeasonEditError(null);
     const periods: Array<{ start_date: string; end_date: string }> = [
@@ -327,6 +362,7 @@ const PricingManagement: React.FC = () => {
   };
 
   const saveNewSeason = async () => {
+    if (!canCreate) return;
     if (!newSeasonForm) return;
     if (!newSeasonForm.name?.trim()) {
       setNewSeasonError('Το όνομα είναι υποχρεωτικό.');
@@ -389,6 +425,7 @@ const PricingManagement: React.FC = () => {
   };
 
   const saveSeasonEdit = async () => {
+    if (!canEdit) return;
     if (!editingSeasonId || !editSeasonForm) return;
     if (!editSeasonForm.name?.trim()) {
       setSeasonEditError('Το όνομα είναι υποχρεωτικό.');
@@ -465,6 +502,7 @@ const PricingManagement: React.FC = () => {
   };
 
   const startInsuranceEdit = (insurance: InsuranceType) => {
+    if (!canEdit) return;
     setEditingInsuranceId(insurance.id);
     setEditInsuranceForm({
       name: insurance.name,
@@ -479,6 +517,7 @@ const PricingManagement: React.FC = () => {
   };
 
   const saveInsuranceEdit = async () => {
+    if (!canEdit) return;
     if (!editingInsuranceId || !editInsuranceForm) return;
     const rate = parseFloat(String(editInsuranceForm.daily_rate));
     if (isNaN(rate) || rate < 0) return;
@@ -559,7 +598,7 @@ const PricingManagement: React.FC = () => {
         <div className="px-6 py-4 border-b border-[#1e4e7d]/70">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-white">Σεζόν</h2>
-            <button
+            {canCreate && <button
               onClick={() => {
                 setShowNewSeasonForm(true);
                 setNewSeasonForm({ name: '', priority: 0, periods: [{ start_date: '', end_date: '' }] });
@@ -569,7 +608,7 @@ const PricingManagement: React.FC = () => {
             >
               <PlusIcon className="h-4 w-4 mr-1" />
               Νέα Σεζόν
-            </button>
+            </button>}
           </div>
         </div>
         <div className="p-6">
@@ -684,14 +723,14 @@ const PricingManagement: React.FC = () => {
                     {formatSeasonRange(season)}
                   </div>
                   <div className="flex space-x-2">
-                    <button
+                    {canEdit && <button
                       onClick={() => startSeasonEdit(season)}
                       className="flex-1 inline-flex items-center justify-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-2 py-1 text-xs font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
                     >
                       <PencilIcon className="h-3 w-3 mr-1" />
                       Επεξεργασία
-                    </button>
-                    <button
+                    </button>}
+                    {canDelete && <button
                       onClick={() => {
                         setSeasonDeleteError(null);
                         setSeasonToDelete(season);
@@ -699,7 +738,7 @@ const PricingManagement: React.FC = () => {
                       className="inline-flex items-center rounded-xl border border-red-400/40 bg-red-500/15 px-2 py-1 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/25"
                     >
                       <TrashIcon className="h-3 w-3" />
-                    </button>
+                    </button>}
                   </div>
                 </>
                 )}
@@ -783,8 +822,9 @@ const PricingManagement: React.FC = () => {
                             </div>
                           ) : (
                             <button
+                              disabled={rate === null ? !canCreate : !canEdit}
                               onClick={() => startEdit(category, season.id)}
-                              className="inline-flex items-center group"
+                              className="inline-flex items-center group disabled:cursor-default"
                             >
                               {rate !== null ? (
                                 <>
@@ -822,7 +862,7 @@ const PricingManagement: React.FC = () => {
         <div className="px-6 py-4 border-b border-[#1e4e7d]/70">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-white">Ασφάλεια</h2>
-            <button
+            {canCreate && <button
               onClick={() => {
                 setShowNewInsuranceForm(true);
                 setNewInsuranceForm({ name: '', name_en: '', daily_rate: 0 });
@@ -832,7 +872,7 @@ const PricingManagement: React.FC = () => {
             >
               <PlusIcon className="h-4 w-4 mr-1" />
               Νέα Ασφάλεια
-            </button>
+            </button>}
           </div>
         </div>
         <div className="p-6">
@@ -900,14 +940,14 @@ const PricingManagement: React.FC = () => {
                       €{Number(insurance.daily_rate || 0).toFixed(0)}/ημέρα
                     </div>
                     <div className="flex space-x-2">
-                      <button
+                      {canEdit && <button
                         onClick={() => startInsuranceEdit(insurance)}
                         className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-2 py-1 text-xs font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
                       >
                         <PencilIcon className="h-3 w-3 mr-1" />
                         Επεξεργασία
-                      </button>
-                      <button
+                      </button>}
+                      {canDelete && <button
                         onClick={() => {
                           setInsuranceDeleteError(null);
                           setInsuranceToDelete(insurance);
@@ -915,7 +955,7 @@ const PricingManagement: React.FC = () => {
                         className="inline-flex items-center rounded-xl border border-red-400/40 bg-red-500/15 px-2 py-1 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/25"
                       >
                         <TrashIcon className="h-3 w-3" />
-                      </button>
+                      </button>}
                     </div>
                   </div>
                 </>
@@ -932,7 +972,7 @@ const PricingManagement: React.FC = () => {
         <div className="px-6 py-4 border-b border-[#1e4e7d]/70">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold text-white">Έξτρα</h2>
-            <button
+            {canCreate && <button
               onClick={() => {
                 setShowNewExtraForm(true);
                 setNewExtraForm({ name: '', name_en: '', type: 'daily', price: 0 });
@@ -942,7 +982,7 @@ const PricingManagement: React.FC = () => {
             >
               <PlusIcon className="h-4 w-4 mr-1" />
               Νέο Έξτρα
-            </button>
+            </button>}
           </div>
         </div>
         <div className="p-6">
@@ -1032,7 +1072,7 @@ const PricingManagement: React.FC = () => {
                         €{extra.price}/{extra.type === 'daily' ? 'ημέρα' : 'εφάπαξ'}
                       </div>
                       <div className="flex space-x-2">
-                        <button
+                        {canEdit && <button
                           onClick={() => {
                             setEditingExtraId(extra.id);
                             setEditExtraForm({ name: extra.name, name_en: extra.name_en, type: extra.type, price: extra.price });
@@ -1041,8 +1081,8 @@ const PricingManagement: React.FC = () => {
                         >
                           <PencilIcon className="h-3 w-3 mr-1" />
                           Επεξεργασία
-                        </button>
-                        <button
+                        </button>}
+                        {canDelete && <button
                           onClick={() => {
                             setExtraDeleteError(null);
                             setExtraToDelete(extra);
@@ -1050,7 +1090,7 @@ const PricingManagement: React.FC = () => {
                           className="inline-flex items-center rounded-xl border border-red-400/40 bg-red-500/15 px-2 py-1 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/25"
                         >
                           <TrashIcon className="h-3 w-3" />
-                        </button>
+                        </button>}
                       </div>
                     </div>
                   </>
@@ -1062,7 +1102,7 @@ const PricingManagement: React.FC = () => {
         </div>
       </div>
 
-      {showNewSeasonForm && newSeasonForm && (
+      {canCreate && showNewSeasonForm && newSeasonForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="w-full max-w-lg rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.98),rgba(5,24,48,0.99))] shadow-[0_18px_45px_rgba(0,0,0,0.4)] p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-base font-semibold text-white mb-4">Νέα Σεζόν</h3>
@@ -1164,7 +1204,7 @@ const PricingManagement: React.FC = () => {
         </div>
       )}
 
-      {showNewInsuranceForm && newInsuranceForm && (
+      {canCreate && showNewInsuranceForm && newInsuranceForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.98),rgba(5,24,48,0.99))] shadow-[0_18px_45px_rgba(0,0,0,0.4)] p-6">
             <h3 className="text-base font-semibold text-white mb-4">Νέα Ασφάλεια</h3>
@@ -1226,7 +1266,7 @@ const PricingManagement: React.FC = () => {
         </div>
       )}
 
-      {showNewExtraForm && newExtraForm && (
+      {canCreate && showNewExtraForm && newExtraForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.98),rgba(5,24,48,0.99))] shadow-[0_18px_45px_rgba(0,0,0,0.4)] p-6">
             <h3 className="text-base font-semibold text-white mb-4">Νέο Έξτρα</h3>
@@ -1301,7 +1341,7 @@ const PricingManagement: React.FC = () => {
         </div>
       )}
 
-      {seasonToDelete && (
+      {canDelete && seasonToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.98),rgba(5,24,48,0.99))] shadow-[0_18px_45px_rgba(0,0,0,0.4)] p-6">
             <div className="flex items-start gap-3 mb-4">
@@ -1344,7 +1384,7 @@ const PricingManagement: React.FC = () => {
         </div>
       )}
 
-      {insuranceToDelete && (
+      {canDelete && insuranceToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.98),rgba(5,24,48,0.99))] shadow-[0_18px_45px_rgba(0,0,0,0.4)] p-6">
             <div className="flex items-start gap-3 mb-4">
@@ -1387,7 +1427,7 @@ const PricingManagement: React.FC = () => {
         </div>
       )}
 
-      {extraToDelete && (
+      {canDelete && extraToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.98),rgba(5,24,48,0.99))] shadow-[0_18px_45px_rgba(0,0,0,0.4)] p-6">
             <div className="flex items-start gap-3 mb-4">
