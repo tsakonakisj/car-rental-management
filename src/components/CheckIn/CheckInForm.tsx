@@ -50,12 +50,14 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
   const [fuelSettlement, setFuelSettlement] = useState<'charge' | 'waiver'>('charge');
   const [fuelWaiverReason, setFuelWaiverReason] = useState('');
   const [fuelSettlementError, setFuelSettlementError] = useState('');
+  const [confirmation, setConfirmation] = useState<CheckInData | null>(null);
   const [checkInData, setCheckInData] = useState<CheckInData>({
     fuel_level: 100,
     odometer: 0,
     photos: [],
     new_damages: [],
-    additional_charges: []
+    additional_charges: [],
+    fuel_price: null, fuel_waiver_reason: null
   });
 
   const [showDamageForm, setShowDamageForm] = useState(false);
@@ -264,7 +266,7 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
       return;
     }
     setOdometerError('');
-    onComplete({
+    setConfirmation({
       ...checkInData,
       fuel_price: fuelDiffPercent > 0 ? pricePerLiter : null,
       fuel_waiver_reason: fuelDiffPercent > 0 && fuelSettlement === 'waiver' ? fuelWaiverReason.trim() : null,
@@ -273,6 +275,24 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
 
   return (
     <div className="max-w-4xl mx-auto">
+      {confirmation && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#020b18]/90 p-4">
+          <section role="dialog" aria-modal="true" aria-labelledby="checkin-confirm-title" className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-[#2b5b85] bg-[#0b2949] p-6 text-white">
+            <h2 id="checkin-confirm-title" className="text-xl font-semibold">Επιβεβαίωση επιστροφής</h2>
+            <p className="mt-3">Καύσιμο επιστροφής: {confirmation.fuel_level}% · Χιλιόμετρα: {confirmation.odometer}</p>
+            <p className="mt-2">Νέες ζημιές: {confirmation.new_damages.length}</p>
+            {confirmation.new_damages.map(d => <p key={d.id} className="mt-1 text-sm">{d.description} · Εκτίμηση €{(d.estimated_cost || 0).toFixed(2)}</p>)}
+            {confirmation.additional_charges.map(c => <p key={c.id} className="mt-2 text-sm">{c.type}: €{c.amount.toFixed(2)} {c.description}</p>)}
+            <p className="mt-3 font-semibold">Σύνολο επιπλέον χρεώσεων: €{confirmation.additional_charges.reduce((sum, c) => sum + c.amount, 0).toFixed(2)}</p>
+            {confirmation.fuel_waiver_reason && <p className="mt-3 rounded-lg bg-amber-500/15 p-3 text-amber-100">Εκκρεμεί έγκριση Admin για εξαίρεση €{proposedFuelCharge.toFixed(2)}. Αιτιολογία: {confirmation.fuel_waiver_reason}</p>}
+            <p className="mt-4 text-sm text-blue-100/80">Με την επιβεβαίωση καταγράφεται η επιστροφή και ολοκληρώνεται το Check-In.</p>
+            <div className="mt-5 flex flex-wrap justify-end gap-3">
+              <button autoFocus type="button" disabled={submitting} onClick={() => setConfirmation(null)} className="rounded-lg border border-[#2b5b85] px-4 py-2">Επιστροφή για αλλαγές</button>
+              <button type="button" disabled={submitting} onClick={() => { if (!submitting) { onComplete(confirmation); setConfirmation(null); } }} className="rounded-lg bg-emerald-600 px-4 py-2 disabled:opacity-40">Επιβεβαίωση επιστροφής</button>
+            </div>
+          </section>
+        </div>
+      )}
       <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)]">
         <div className="px-6 py-4 border-b border-[#1e4e7d]/70">
           <div className="flex items-center justify-between">

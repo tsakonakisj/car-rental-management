@@ -6,6 +6,7 @@ on:
       - main
       - feature/atomic-checkout-checkin-2026-10-17
       - feature/prevent-overlapping-reservations-2026-10-17
+      - feature/checkin-corrections
     paths:
       - ".github/workflows/rentovio-isolated-check.yml"
       - "src/**"
@@ -45,7 +46,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
       - name: Install dependencies
         run: npm ci
@@ -74,3 +75,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f tests/fixtures/isolated-rentovio-transactions.sql
           psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261017150000_prevent_overlapping_reservations.sql
           psql -v ON_ERROR_STOP=1 -f tests/fixtures/isolated-rentovio-overlaps.sql
+          psql -v ON_ERROR_STOP=1 -f tests/fixtures/isolated-checkin-correction-support.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261018152106_checkin_corrections.sql
+          psql -v ON_ERROR_STOP=1 -f supabase/migrations/20261018180000_fuel_waiver_checkin_admin_approval.sql
+          psql -v ON_ERROR_STOP=1 -f tests/fixtures/isolated-checkin-corrections.sql

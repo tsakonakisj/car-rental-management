@@ -20,6 +20,7 @@ import {
 import ContractGenerator, { type ContractGeneratorRef } from '../PDF/ContractGenerator';
 import BookingConfirmation from '../PDF/BookingConfirmation';
 import PaymentPanel from '../Payments/PaymentPanel';
+import CheckInCorrection from '../CheckIn/CheckInCorrection';
 import PageHero from '../Layout/PageHero';
 import type { Station, Vehicle, Pricing, Season, Reservation, Insurance, Extra } from '../../types';
 
@@ -133,6 +134,7 @@ function calcDaysBetween(startDate: string, endDate: string): number {
 const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheckIn, refreshTrigger, initialFilter, initialViewReservationId }) => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
+  const [correctionReservationId, setCorrectionReservationId] = useState<string | null>(null);
   const [reservations, setReservations] = useState<ReservationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -972,6 +974,9 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                 </div>
               )}
 
+              {isAdmin && reservation.status === 'completed' && (
+                <button type="button" onClick={e => { e.stopPropagation(); setCorrectionReservationId(reservation.id); }} className="mt-3 w-full rounded-xl border border-[#2b5b85] px-4 py-2 text-sm font-semibold text-blue-100 hover:bg-[#12375d]">Διόρθωση Check-In</button>
+              )}
               {(reservation.status === 'upcoming' || reservation.status === 'active') && (
                 <div className="flex items-stretch gap-2 border-t border-[#1e4e7d]/70 pt-4" onClick={(e) => e.stopPropagation()}>
                   {reservation.status === 'upcoming' && (
@@ -1772,6 +1777,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
       )}
 
       {/* Photo Lightbox */}
+      {correctionReservationId && <CheckInCorrection reservationId={correctionReservationId} onClose={() => setCorrectionReservationId(null)} onSaved={() => { setCorrectionReservationId(null); fetchReservations(); }} />}
       {lightboxPhoto && (
         <div
           className="fixed inset-0 z-[60] flex items-center justify-center bg-[#020b18]/90"
