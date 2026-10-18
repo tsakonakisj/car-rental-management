@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { customerService } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 import PageHero from '../Layout/PageHero';
 import type { Customer } from '../../types';
 import {
@@ -31,6 +32,24 @@ interface CustomerManagementProps {
 
 const CustomerManagement: React.FC<CustomerManagementProps> = ({ onViewReservation }) => {
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const [mayDeleteCustomer, setMayDeleteCustomer] = useState(false);
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      setMayDeleteCustomer(true);
+      return;
+    }
+    setMayDeleteCustomer(false);
+    if (user?.role !== 'manager') return;
+    let active = true;
+    supabase.from('employee_permissions').select('permissions').eq('user_id', user.id).maybeSingle()
+      .then(({ data, error }) => {
+        if (!active || error) return;
+        const rights = data?.permissions as { customers?: { delete?: boolean } } | undefined;
+        setMayDeleteCustomer(rights?.customers?.delete === true);
+      });
+    return () => { active = false; };
+  }, [user?.id, user?.role]);
   const [searchTerm, setSearchTerm] = useState('');
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,6 +89,7 @@ const CustomerManagement: React.FC<CustomerManagementProps> = ({ onViewReservati
   );
 
   const openDeleteConfirm = async (customer: Customer) => {
+    if (!mayDeleteCustomer) return;
     setDeleteTarget(customer);
     setDeleteConfirmText('');
     setDeleteReservationCount(null);
@@ -84,7 +104,7 @@ const CustomerManagement: React.FC<CustomerManagementProps> = ({ onViewReservati
   };
 
   const handleDelete = async () => {
-    if (!deleteTarget || deleteReservationCount !== 0) return;
+    if (!mayDeleteCustomer || !deleteTarget || deleteReservationCount !== 0) return;
     setDeleting(true);
     setDeleteError('');
     try {
@@ -268,14 +288,14 @@ const CustomerManagement: React.FC<CustomerManagementProps> = ({ onViewReservati
                     <EyeIcon className="mr-1 h-4 w-4" />
                     Προβολή
                   </button>
-                  <button
+                  {mayDeleteCustomer && <button
                     onClick={() => openDeleteConfirm(customer)}
                     disabled={deleting && deleteTarget?.id === customer.id}
                     className="inline-flex min-h-10 items-center justify-center rounded-xl border border-red-400/50 bg-[#071d38] px-3 py-2 text-sm font-medium text-red-100 transition-colors hover:bg-red-900/60 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <TrashIcon className="mr-1 h-4 w-4" />
                     Διαγραφή
-                  </button>
+                  </button>}
                 </div>
               </div>
             </div>
@@ -382,7 +402,7 @@ const CustomerManagement: React.FC<CustomerManagementProps> = ({ onViewReservati
         </div>
       )}
 
-      {deleteConfirmOpen && deleteTarget && (
+      {mayDeleteCustomer && deleteConfirmOpen && deleteTarget && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#020b18]/90">
           <div className="mx-4 w-full max-w-md rounded-2xl border border-red-400/30 bg-[#0b2949] p-6 shadow-[0_18px_45px_rgba(0,0,0,0.35)]">
             <div className="mb-4 flex items-center">
