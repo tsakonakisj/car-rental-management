@@ -46,6 +46,10 @@ const normalize = (raw: unknown): PermissionSet => {
   }
   // Deleting bookings is currently reserved for Admin by a separate DB policy.
   defaults.bookings.delete = false;
+  // Pricing configuration changes are always restricted to Admin.
+  defaults.pricing.create = false;
+  defaults.pricing.edit = false;
+  defaults.pricing.delete = false;
   return defaults;
 };
 
@@ -238,7 +242,7 @@ const UserManagement: React.FC = () => {
             <tbody>{categories.map((cat) => <tr key={cat.key} className="border-b border-[#2b5b85]/50">
               <th className="py-3 text-left font-medium">{cat.title}</th>
               {actions.map((action) => {
-                const disabled = (cat.key === 'bookings' && action.key === 'delete') || (cat.key === 'reports' && action.key !== 'view');
+                const disabled = (cat.key === 'bookings' && action.key === 'delete') || (cat.key === 'reports' && action.key !== 'view') || (cat.key === 'pricing' && action.key !== 'view');
                 return <td key={action.key} className="px-2 text-center">
                   <input type="checkbox" aria-label={cat.title + ' ' + action.title} disabled={disabled} checked={!disabled && draft[cat.key][action.key]}
                     onChange={(event) => setDraft((old) => ({ ...old, [cat.key]: { ...old[cat.key], [action.key]: event.target.checked } }))}
