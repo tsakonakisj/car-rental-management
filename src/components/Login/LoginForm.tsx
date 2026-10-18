@@ -50,7 +50,7 @@ const LoginForm: React.FC = () => {
         fleet: 'Monitor your fleet',
         growth: 'Grow your business',
         subtitle: 'Reservation Management System',
-        email: 'Email address',
+        email: 'Email (Admin) or username (employee)',
         password: 'Password',
         signIn: 'Sign in',
         signingIn: 'Signing in...',
@@ -60,10 +60,10 @@ const LoginForm: React.FC = () => {
         send: 'Send recovery email',
         sending: 'Sending...',
         back: 'Back to sign in',
-        requiredEmail: 'Please enter your email address.',
+        requiredEmail: 'Please enter the Admin email.',
         recoverySent: 'A recovery email was sent. Check your inbox and follow the link to set a new password.',
         recoveryFailed: 'Unable to send recovery email.',
-        invalidLogin: 'Incorrect email or password.',
+        invalidLogin: 'Incorrect login or password.',
       }
     : {
         tagline: 'Ελευθερία σε κάθε διαδρομή',
@@ -73,7 +73,7 @@ const LoginForm: React.FC = () => {
         fleet: 'Παρακολουθήστε τον στόλο σας',
         growth: 'Αναπτύξτε την επιχείρησή σας',
         subtitle: 'Σύστημα Διαχείρισης Κρατήσεων',
-        email: 'Email address',
+        email: 'Email Admin ή username υπαλλήλου',
         password: 'Κωδικός πρόσβασης',
         signIn: 'Σύνδεση',
         signingIn: 'Σύνδεση...',
@@ -83,10 +83,10 @@ const LoginForm: React.FC = () => {
         send: 'Αποστολή email ανάκτησης',
         sending: 'Αποστολή...',
         back: 'Επιστροφή στη σύνδεση',
-        requiredEmail: 'Παρακαλώ εισάγετε το email σας.',
+        requiredEmail: 'Παρακαλώ εισάγετε το email του Admin.',
         recoverySent: 'Στάλθηκε email ανάκτησης. Ελέγξτε τα εισερχόμενά σας και ακολουθήστε τον σύνδεσμο για νέο κωδικό.',
         recoveryFailed: 'Αποτυχία αποστολής email ανάκτησης.',
-        invalidLogin: 'Λανθασμένο email ή κωδικός πρόσβασης.',
+        invalidLogin: 'Λανθασμένο email/username ή κωδικός πρόσβασης.',
       };
 
   useEffect(() => {
@@ -329,11 +329,11 @@ const LoginForm: React.FC = () => {
                 <Field
                   id="email"
                   label={copy.email}
-                  type="email"
+                  type="text"
                   value={email}
                   onChange={setEmail}
                   icon={EnvelopeIcon}
-                  autoComplete="email"
+                  autoComplete="username"
                 />
                 <Field
                   id="password"
