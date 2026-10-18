@@ -9,7 +9,7 @@ type PermissionAction = 'view' | 'create' | 'edit' | 'delete';
 type PermissionResource = 'bookings' | 'customers' | 'fleet' | 'pricing' | 'payments' | 'reports';
 type PermissionSet = Record<PermissionResource, Record<PermissionAction, boolean>>;
 interface ManagedUser {
-  id: string; email: string; name: string; role: 'admin' | 'manager';
+  id: string; email: string; username?: string | null; name: string; role: 'admin' | 'manager';
   active: boolean | null; created_at: string | null;
 }
 
@@ -60,6 +60,12 @@ const UserManagement: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [employeeDialog, setEmployeeDialog] = useState<'create' | 'reset' | null>(null);
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
+  const [employeeName, setEmployeeName] = useState('');
+  const [employeeUsername, setEmployeeUsername] = useState('');
+  const [employeePassword, setEmployeePassword] = useState('');
+  const [showEmployeePassword, setShowEmployeePassword] = useState(false);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -67,7 +73,7 @@ const UserManagement: React.FC = () => {
     setNotice('');
     try {
       const { data: users, error: userError } = await supabase
-        .from('users').select('id,email,name,role,active,created_at')
+        .from('users').select('id,email,username,name,role,active,created_at')
         .eq('active', true).order('created_at', { ascending: true });
       if (userError) throw userError;
       const { data: saved, error: permissionError } = await supabase
@@ -108,15 +114,60 @@ const UserManagement: React.FC = () => {
     }
   };
 
+  const openEmployeeDialog = (mode: 'create' | 'reset', account?: ManagedUser) => {
+    setEmployeeDialog(mode);
+    setEmployeeId(account?.id ?? null);
+    setEmployeeName('');
+    setEmployeeUsername('');
+    setEmployeePassword('');
+    setShowEmployeePassword(false);
+    setError('');
+    setNotice('');
+  };
+
+  const manageEmployee = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (saving) return;
+    if (employeePassword.length < 12) {
+      setError('Ο κωδικός πρέπει να έχει τουλάχιστον 12 χαρακτήρες.');
+      return;
+    }
+    if (employeeDialog === 'create' && !/^[a-z][a-z0-9._-]{2,31}$/.test(employeeUsername.trim().toLowerCase())) {
+      setError('Το username πρέπει να έχει 3–32 λατινικούς χαρακτήρες, αριθμούς, τελεία, παύλα ή κάτω παύλα και να αρχίζει από γράμμα.');
+      return;
+    }
+    setSaving(true);
+    setError('');
+    try {
+      const { data, error: requestError } = await supabase.functions.invoke('manage-employees', {
+        body: employeeDialog === 'create'
+          ? { operation: 'create', name: employeeName, username: employeeUsername, password: employeePassword }
+          : { operation: 'reset_password', user_id: employeeId, password: employeePassword },
+      });
+      if (requestError || data?.error) throw new Error(data?.error || 'Αποτυχία επικοινωνίας με το Supabase');
+      setEmployeeDialog(null);
+      setEmployeePassword('');
+      await reload();
+      setNotice(employeeDialog === 'create' ? 'Ο υπάλληλος δημιουργήθηκε. Δώστε του το username και τον κωδικό που ορίσατε.' : 'Ο κωδικός του υπαλλήλου άλλαξε.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Η ενέργεια απέτυχε.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (user?.role !== 'admin') {
     return <p role="alert" className="text-red-200">Μόνο ο Admin μπορεί να διαχειριστεί δικαιώματα.</p>;
   }
 
   return <div className="space-y-6">
     <PageHero title={t('users')} subtitle="Πραγματικοί λογαριασμοί και δικαιώματα ανά υπάλληλο" actions={
-      <button type="button" onClick={() => void reload()} disabled={loading} className="rounded-xl border border-[#2b5b85] bg-[#0b2949] px-4 py-2 text-sm text-white">
-        <ArrowPathIcon className="mr-2 inline h-4 w-4" />Ανανέωση
-      </button>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={() => openEmployeeDialog('create')} className="rounded-xl bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white">+ Νέος υπάλληλος</button>
+        <button type="button" onClick={() => void reload()} disabled={loading} className="rounded-xl border border-[#2b5b85] bg-[#0b2949] px-4 py-2 text-sm text-white">
+          <ArrowPathIcon className="mr-2 inline h-4 w-4" />Ανανέωση
+        </button>
+      </div>
     } />
     {error && <p role="alert" className="rounded-xl border border-red-400/40 bg-red-500/10 p-4 text-red-200">{error}</p>}
     {notice && <p role="status" className="rounded-xl border border-green-400/40 bg-green-500/10 p-4 text-green-200">{notice}</p>}
@@ -127,21 +178,53 @@ const UserManagement: React.FC = () => {
             <UserGroupIcon className="h-7 w-7 shrink-0 text-[#8ec7ff]" />
             <div className="min-w-0 flex-1">
               <h3 className="font-semibold text-white">{account.name}</h3>
-              <p className="break-all text-sm text-blue-100/65">{account.email}</p>
+              <p className="break-all text-sm text-blue-100/65">{account.role === 'admin' ? account.email : account.username ? `Username: ${account.username}` : 'Παλαιός λογαριασμός (χωρίς username)'}</p>
             </div>
           </div>
           <div className="mt-4 flex items-center gap-2 text-sm text-blue-100/85">
             <ShieldCheckIcon className="h-5 w-5 text-[#8ec7ff]" />
             {account.role === 'admin' ? 'Admin — Διαχειριστής' : 'Manager — Υπάλληλος'}
           </div>
-          {account.role === 'manager' ? <button type="button" onClick={() => {
-            setDraft(normalize(permissions[account.id]));
-            setEditingId(account.id); setError(''); setNotice('');
-          }} className="mt-4 rounded-xl bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white hover:bg-[#2478ff]">
-            Διαχείριση δικαιωμάτων
-          </button> : <p className="mt-3 text-xs text-blue-100/55">Ο Admin έχει όλα τα δικαιώματα.</p>}
+          {account.role === 'manager' ? <div className="mt-4 flex flex-wrap gap-2">
+            <button type="button" onClick={() => {
+              setDraft(normalize(permissions[account.id]));
+              setEditingId(account.id); setError(''); setNotice('');
+            }} className="rounded-xl bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white hover:bg-[#2478ff]">
+              Διαχείριση δικαιωμάτων
+            </button>
+            <button type="button" onClick={() => openEmployeeDialog('reset', account)} className="rounded-xl border border-[#2b5b85] px-4 py-2 text-sm text-white">
+              Νέος κωδικός
+            </button>
+          </div> : <p className="mt-3 text-xs text-blue-100/55">Ο Admin έχει όλα τα δικαιώματα.</p>}
         </section>)}
       </div>}
+    {employeeDialog && <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/75 p-3">
+      <section role="dialog" aria-modal="true" aria-labelledby="staff-title" className="w-full max-w-md rounded-2xl border border-[#2b5b85] bg-[#0b2949] p-6 text-white shadow-2xl">
+        <h2 id="staff-title" className="mb-4 text-xl font-semibold">{employeeDialog === 'create' ? 'Νέος υπάλληλος' : 'Αλλαγή κωδικού υπαλλήλου'}</h2>
+        <form onSubmit={(event) => void manageEmployee(event)} className="space-y-4">
+          {employeeDialog === 'create' && <>
+            <label className="block text-sm">Ονοματεπώνυμο
+              <input type="text" required minLength={2} maxLength={120} autoComplete="off" value={employeeName} onChange={(event) => setEmployeeName(event.target.value)} className="mt-1 w-full rounded-lg border border-[#2b5b85] bg-[#061a35] p-3 text-white" />
+            </label>
+            <label className="block text-sm">Username
+              <input type="text" required minLength={3} maxLength={32} autoComplete="off" value={employeeUsername} onChange={(event) => setEmployeeUsername(event.target.value.toLowerCase())} className="mt-1 w-full rounded-lg border border-[#2b5b85] bg-[#061a35] p-3 text-white" />
+            </label>
+          </>}
+          <label className="block text-sm">{employeeDialog === 'create' ? 'Κωδικός πρόσβασης' : 'Νέος κωδικός'}
+            <div className="mt-1 flex overflow-hidden rounded-lg border border-[#2b5b85] bg-[#061a35]">
+              <input type={showEmployeePassword ? 'text' : 'password'} autoComplete="new-password" required minLength={12} maxLength={128} value={employeePassword} onChange={(event) => setEmployeePassword(event.target.value)} className="min-w-0 flex-1 bg-transparent p-3 text-white" />
+              <button type="button" onClick={() => setShowEmployeePassword(!showEmployeePassword)} className="px-3 text-sm text-blue-100/75">{showEmployeePassword ? 'Απόκρυψη' : 'Εμφάνιση'}</button>
+            </div>
+          </label>
+          <p className="text-xs text-blue-100/60">Ο κωδικός ορίζεται από τον Admin. Δεν αποστέλλεται email και ο υπάλληλος δεν χρειάζεται εγγραφή.</p>
+          {error && <p role="alert" className="text-sm text-red-300">{error}</p>}
+          <div className="flex justify-end gap-3">
+            <button type="button" disabled={saving} onClick={() => { setEmployeeDialog(null); setEmployeePassword(''); setError(''); }} className="rounded-xl border border-[#2b5b85] px-4 py-2">Ακύρωση</button>
+            <button type="submit" disabled={saving} className="rounded-xl bg-[#1268f3] px-4 py-2 font-semibold disabled:opacity-50">{saving ? 'Αποθήκευση...' : employeeDialog === 'create' ? 'Δημιουργία' : 'Αλλαγή κωδικού'}</button>
+          </div>
+        </form>
+      </section>
+    </div>}
     {editingId && <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-3">
       <section role="dialog" aria-modal="true" aria-labelledby="permissions-title" className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-[#2b5b85] bg-[#0b2949] p-4 text-white shadow-2xl sm:p-6">
         <h2 id="permissions-title" className="text-xl font-semibold">Δικαιώματα υπαλλήλου</h2>
