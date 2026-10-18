@@ -15,7 +15,8 @@ import {
   ArrowPathIcon,
   CalendarDaysIcon,
   NoSymbolIcon,
-  XMarkIcon
+  XMarkIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
 import VehicleReservationsModal from './VehicleReservationsModal';
 import EditVehicleModal from './EditVehicleModal';
@@ -131,6 +132,68 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [deactivateTarget, setDeactivateTarget] = useState<Vehicle | null>(null);
   const [deactivateError, setDeactivateError] = useState('');
+  const [deleteTarget, setDeleteTarget] = useState<Vehicle | null>(null);
+  const [deleteReservationCount, setDeleteReservationCount] = useState<number | null>(null);
+  const [deleteCheckLoading, setDeleteCheckLoading] = useState(false);
+  const [deleteVehicleError, setDeleteVehicleError] = useState('');
+  const [deletingVehicle, setDeletingVehicle] = useState(false);
+
+  const closeDeleteVehicle = () => {
+    if (deletingVehicle) return;
+    setDeleteTarget(null);
+    setDeleteReservationCount(null);
+    setDeleteVehicleError('');
+  };
+
+  const openDeleteVehicle = async (vehicle: Vehicle) => {
+    if (user?.role !== 'admin') return;
+    setDeleteTarget(vehicle);
+    setDeleteReservationCount(null);
+    setDeleteVehicleError('');
+    setDeleteCheckLoading(true);
+    try {
+      const { count, error } = await supabase.from('reservations')
+        .select('id', { count: 'exact', head: true })
+        .eq('vehicle_id', vehicle.id);
+      if (error) throw error;
+      setDeleteReservationCount(count ?? 0);
+    } catch (error) {
+      console.error('Failed to check vehicle reservation history:', error);
+      setDeleteVehicleError('Δεν ήταν δυνατός ο έλεγχος ιστορικού κρατήσεων. Η διαγραφή δεν επιτρέπεται.');
+    } finally {
+      setDeleteCheckLoading(false);
+    }
+  };
+
+  const permanentlyDeleteVehicle = async () => {
+    if (user?.role !== 'admin' || !deleteTarget || deletingVehicle || deleteCheckLoading || deleteReservationCount !== 0) return;
+    setDeletingVehicle(true);
+    setDeleteVehicleError('');
+    try {
+      // Recheck immediately before deletion; the reservation FK also prevents concurrent unsafe deletion.
+      const { count, error: checkError } = await supabase.from('reservations')
+        .select('id', { count: 'exact', head: true })
+        .eq('vehicle_id', deleteTarget.id);
+      if (checkError) throw checkError;
+      if (count !== 0) {
+        setDeleteReservationCount(count);
+        setDeleteVehicleError('Το όχημα έχει συνδεδεμένες κρατήσεις και δεν μπορεί να διαγραφεί.');
+        return;
+      }
+      const { data, error } = await supabase.from('vehicles')
+        .delete().eq('id', deleteTarget.id).select('id').single();
+      if (error) throw error;
+      if (!data) throw new Error('No vehicle deleted');
+      setVehicles(prev => prev.filter(v => v.id !== deleteTarget.id));
+      setDeleteTarget(null);
+      setDeleteReservationCount(null);
+    } catch (error) {
+      console.error('Failed to permanently delete vehicle:', error);
+      setDeleteVehicleError('Η διαγραφή δεν ολοκληρώθηκε. Το όχημα μπορεί να έχει ιστορικό ή συνδεδεμένα στοιχεία.');
+    } finally {
+      setDeletingVehicle(false);
+    }
+  };
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [addingVehicle, setAddingVehicle] = useState(false);
   const [cardPhotoUrls, setCardPhotoUrls] = useState<Map<string, string>>(new Map());
@@ -442,6 +505,47 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
         </div>
       )}
 
+      {/* Permanent vehicle deletion is restricted to Admin and vehicles without reservation history. */}
+      {user?.role === 'admin' && deleteTarget && (
+        <div className="fixed inset-0 z-[75] flex items-center justify-center bg-[#020b18]/85 p-4 backdrop-blur-sm"
+          onMouseDown={event => { if (event.currentTarget === event.target) closeDeleteVehicle(); }}>
+          <section role="alertdialog" aria-modal="true" aria-labelledby="delete-vehicle-title" className="w-full max-w-md rounded-2xl border border-red-400/30 bg-[#0b2949] p-6 text-white shadow-[0_20px_65px_rgba(0,0,0,0.5)]">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-red-400/30 bg-red-500/10">
+                  <TrashIcon className="h-6 w-6 text-red-300" />
+                </span>
+                <h2 id="delete-vehicle-title" className="text-lg font-semibold">Οριστική Διαγραφή Οχήματος</h2>
+              </div>
+              <button type="button" aria-label="Κλείσιμο" onClick={closeDeleteVehicle} disabled={deletingVehicle} className="text-blue-100/60 hover:text-white disabled:opacity-40"><XMarkIcon className="h-5 w-5"/></button>
+            </div>
+            <p className="mb-3 text-sm text-blue-100/85">
+              Όχημα: <strong className="text-white">{deleteTarget.brand} {deleteTarget.model} ({deleteTarget.plate})</strong>
+            </p>
+            {deleteCheckLoading && <p className="mb-4 text-sm text-blue-100/70">Έλεγχος κρατήσεων...</p>}
+            {deleteReservationCount !== null && deleteReservationCount > 0 && (
+              <p className="mb-4 rounded-xl border border-amber-400/30 bg-amber-500/10 p-3 text-sm text-amber-100">
+                Δεν επιτρέπεται η διαγραφή: το όχημα έχει {deleteReservationCount} συνδεδεμένες κρατήσεις. Μπορείτε να το απενεργοποιήσετε ώστε να διατηρηθεί το ιστορικό.
+              </p>
+            )}
+            {deleteReservationCount === 0 && !deleteCheckLoading && (
+              <p className="mb-4 rounded-xl border border-red-400/25 bg-red-500/10 p-3 text-sm text-red-100">
+                Το όχημα δεν έχει κρατήσεις. Η οριστική διαγραφή δεν μπορεί να αναιρεθεί.
+              </p>
+            )}
+            {deleteVehicleError && <p role="alert" className="mb-4 text-sm text-red-300">{deleteVehicleError}</p>}
+            <div className="flex justify-end gap-3">
+              <button type="button" disabled={deletingVehicle} onClick={closeDeleteVehicle} className="rounded-xl border border-[#2b5b85] bg-[#071d38] px-4 py-2.5 text-sm font-medium text-blue-100 hover:bg-[#12375d] disabled:opacity-40">Ακύρωση</button>
+              {deleteReservationCount === 0 && !deleteVehicleError && (
+                <button type="button" disabled={deletingVehicle || deleteCheckLoading} onClick={permanentlyDeleteVehicle} className="rounded-xl border border-red-400/40 bg-red-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-800 disabled:opacity-40">
+                  {deletingVehicle ? 'Διαγραφή...' : 'Οριστική Διαγραφή'}
+                </button>
+              )}
+            </div>
+          </section>
+        </div>
+      )}
+
       {/* Fleet Grid */}
       {vehicleOrderError && <p role="alert" className="text-sm text-red-300">{vehicleOrderError}</p>}
       {canReorder && filteredVehicles.length > 0 && (
@@ -623,6 +727,16 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
                           <NoSymbolIcon className="h-4 w-4" />
                         </button>
                       </>
+                    )}
+                    {user?.role === 'admin' && (
+                      <button
+                        onClick={(event) => { event.stopPropagation(); void openDeleteVehicle(vehicle); }}
+                        className="inline-flex min-h-10 items-center justify-center rounded-xl border border-red-400/40 bg-red-500/10 px-3 py-2 text-red-200 hover:bg-red-500/20"
+                        title="Οριστική διαγραφή οχήματος"
+                        aria-label={`Οριστική διαγραφή οχήματος ${vehicle.plate}`}
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
                     )}
                     {isInactive && canEdit && (
                       <button
