@@ -767,6 +767,10 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
           </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-2 border-t border-[#2b5b85]/60 pt-4">
+          <button type="button" onClick={() => { setFilter('all'); setExcelFilter('all'); setDateFilter(''); setSearchTerm(''); }}
+            className={`rounded-xl border px-3 py-2 text-sm font-medium transition-colors ${filter === 'all' && excelFilter === 'all' && !dateFilter && !searchTerm ? 'border-[#55a8ff]/70 bg-[#1268f3]/30 text-white' : 'border-[#2b5b85]/80 bg-[#0b2949]/75 text-blue-100/85 hover:border-[#55a8ff]/50'}`}>
+            Όλες οι κρατήσεις
+          </button>
           <button type="button" onClick={() => { setFilter('overdue_pickup'); setDateFilter(''); }}
             className={`rounded-xl border px-3 py-2 text-sm font-medium transition-colors ${filter === 'overdue_pickup' || filter === 'overdue' ? 'border-amber-400/70 bg-amber-500/20 text-amber-100' : 'border-[#2b5b85]/80 bg-[#0b2949]/75 text-blue-100/85 hover:border-amber-400/50'}`}>
             Εκπρόθεσμες παραλαβές ({overduePickupsCount})
