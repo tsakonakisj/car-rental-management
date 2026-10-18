@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useLanguage } from '../contexts/LanguageContext';
 import { reservationService, vehicleService, checkoutService, checkinService } from '../lib/database';
 import { checkoutDocumentError } from '../lib/vehicleDocuments';
+import type { Vehicle } from '../types';
 import LoginForm from './Login/LoginForm';
 import Header from './Layout/Header';
 import Sidebar, { isTabAllowed } from './Layout/Sidebar';
@@ -45,6 +46,53 @@ const MainApp: React.FC = () => {
   const [showBookingWizard, setShowBookingWizard] = useState(false);
   const [checkOutReservation, setCheckOutReservation] = useState<string | null>(null);
   const [pendingCheckout, setPendingCheckout] = useState<{ reservationId: string; odometer?: number } | null>(null);
+  const [serviceWarning, setServiceWarning] = useState<{ reservationId: string; vehicle: Vehicle; contractMissing: boolean; reasons: string[] } | null>(null);
+  const [serviceNewDate, setServiceNewDate] = useState('');
+  const [serviceNewKm, setServiceNewKm] = useState('');
+  const [serviceSaving, setServiceSaving] = useState(false);
+  const [serviceSaveError, setServiceSaveError] = useState('');
+
+  const continueAfterServiceWarning = () => {
+    if (!serviceWarning) return;
+    const { reservationId, vehicle, contractMissing } = serviceWarning;
+    setServiceWarning(null);
+    setServiceSaveError('');
+    if (contractMissing) {
+      setPendingCheckout({ reservationId, odometer: vehicle.odometer });
+    } else {
+      setCheckOutVehicleOdometer(vehicle.odometer);
+      setCheckOutReservation(reservationId);
+    }
+  };
+
+  const saveServiceReschedule = async () => {
+    if (user?.role !== 'admin' || !serviceWarning || serviceSaving) return;
+    const oldDate = serviceWarning.vehicle.next_service_date || '';
+    const oldKm = serviceWarning.vehicle.next_service_odometer;
+    const parsedKm = serviceNewKm.trim() === '' ? null : Number(serviceNewKm);
+    if ((serviceNewDate || '') === oldDate && parsedKm === (oldKm ?? null)) {
+      setServiceSaveError('Αλλάξτε πρώτα την ημερομηνία ή τα χιλιόμετρα του επόμενου service.');
+      return;
+    }
+    if (parsedKm !== null && (!Number.isInteger(parsedKm) || parsedKm < 0)) {
+      setServiceSaveError('Τα χιλιόμετρα πρέπει να είναι μη αρνητικός ακέραιος αριθμός.');
+      return;
+    }
+    setServiceSaving(true);
+    setServiceSaveError('');
+    try {
+      await vehicleService.update(serviceWarning.vehicle.id, {
+        next_service_date: serviceNewDate || null,
+        next_service_odometer: parsedKm,
+      } as Partial<Vehicle>);
+      continueAfterServiceWarning();
+    } catch (err) {
+      console.error('Service rescheduling failed', err);
+      setServiceSaveError('Η μετάθεση του service δεν αποθηκεύτηκε. Δοκιμάστε ξανά.');
+    } finally {
+      setServiceSaving(false);
+    }
+  };
   const [checkOutVehicleOdometer, setCheckOutVehicleOdometer] = useState<number | undefined>(undefined);
   const [checkInReservation, setCheckInReservation] = useState<string | null>(null);
   const [checkInVehicleFuelTankCapacity, setCheckInVehicleFuelTankCapacity] = useState<number | null | undefined>(undefined);
@@ -129,6 +177,24 @@ const MainApp: React.FC = () => {
       const documentError = checkoutDocumentError(reservation, vehicle);
       if (documentError) {
         window.alert(documentError);
+        return;
+      }
+      // Service is a non-blocking reminder; insurance and KTEO remain mandatory.
+      const reasons: string[] = [];
+      const requiredDate = String(reservation.return_date || '').slice(0, 10);
+      const serviceDate = vehicle.next_service_date || '';
+      if (serviceDate && serviceDate < requiredDate) {
+        reasons.push(`Προγραμματισμένο service στις ${new Date(serviceDate + 'T00:00:00').toLocaleDateString('el-GR')} (πριν από την επιστροφή του οχήματος).`);
+      }
+      if (vehicle.next_service_odometer != null && vehicle.odometer != null &&
+          vehicle.odometer >= vehicle.next_service_odometer) {
+        reasons.push(`Service στα ${vehicle.next_service_odometer.toLocaleString('el-GR')} χλμ. — τρέχοντα ${vehicle.odometer.toLocaleString('el-GR')} χλμ.`);
+      }
+      if (reasons.length > 0) {
+        setServiceWarning({ reservationId, vehicle, contractMissing: !(reservation as any).contract_issued_at, reasons });
+        setServiceNewDate(vehicle.next_service_date || '');
+        setServiceNewKm(vehicle.next_service_odometer == null ? '' : String(vehicle.next_service_odometer));
+        setServiceSaveError('');
         return;
       }
       if (!(reservation as any).contract_issued_at) {
@@ -264,6 +330,46 @@ const MainApp: React.FC = () => {
       setCheckInSubmitting(false);
     }
   };
+
+  if (serviceWarning) {
+    return (
+      <div className="min-h-screen bg-[#061a35] flex items-center justify-center p-4">
+        <section role="dialog" aria-modal="true" aria-labelledby="service-warning-title" className="w-full max-w-lg rounded-2xl border border-amber-400/30 bg-[#0b2949] p-6 text-white shadow-2xl">
+          <div className="mb-4 flex items-center gap-3">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-500/10 text-xl text-amber-200">!</span>
+            <h2 id="service-warning-title" className="text-lg font-semibold">Υπενθύμιση service οχήματος</h2>
+          </div>
+          <p className="mb-3 text-sm text-blue-100/85"><strong className="text-white">{serviceWarning.vehicle.brand} {serviceWarning.vehicle.model} ({serviceWarning.vehicle.plate})</strong></p>
+          <div className="mb-4 space-y-2 rounded-xl border border-amber-400/20 bg-amber-500/10 p-4 text-sm text-amber-100">
+            {serviceWarning.reasons.map((reason, index) => <p key={index}>{reason}</p>)}
+          </div>
+          <p className="mb-4 text-sm text-blue-100/75">Πρόκειται για προειδοποίηση. Μπορείτε να συνεχίσετε κανονικά το Check-Out. Η ασφάλεια και το ΚΤΕΟ εξακολουθούν να ελέγχονται υποχρεωτικά.</p>
+          {user?.role === 'admin' && (
+            <div className="mb-5 rounded-xl border border-[#2b5b85]/70 bg-[#071d38]/60 p-4">
+              <h3 className="mb-1 text-sm font-semibold text-white">Μετάθεση προγραμματισμένου service (Admin)</h3>
+              <p className="mb-3 text-xs text-blue-100/55">Η μετάθεση αλλάζει μόνο τον επόμενο προγραμματισμό, δεν καταγράφει πραγματοποίηση service.</p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <label className="text-xs text-blue-100/80">Νέα ημερομηνία
+                  <input type="date" value={serviceNewDate} onChange={e => setServiceNewDate(e.target.value)} disabled={serviceSaving} className="mt-1 w-full rounded-lg border border-[#2b5b85] bg-[#0b2949] p-2 text-sm text-white"/>
+                </label>
+                <label className="text-xs text-blue-100/80">Επόμενο service (χλμ.)
+                  <input type="number" min="0" step="1" value={serviceNewKm} onChange={e => setServiceNewKm(e.target.value)} disabled={serviceSaving} className="mt-1 w-full rounded-lg border border-[#2b5b85] bg-[#0b2949] p-2 text-sm text-white"/>
+                </label>
+              </div>
+              {serviceSaveError && <p role="alert" className="mt-2 text-sm text-red-300">{serviceSaveError}</p>}
+              <button type="button" disabled={serviceSaving} onClick={saveServiceReschedule} className="mt-3 rounded-lg border border-[#2b5b85] bg-[#12375d] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+                {serviceSaving ? 'Αποθήκευση...' : 'Αποθήκευση μετάθεσης & συνέχεια'}
+              </button>
+            </div>
+          )}
+          <div className="flex flex-wrap justify-end gap-3">
+            <button type="button" disabled={serviceSaving} onClick={() => setServiceWarning(null)} className="rounded-xl border border-[#2b5b85] px-4 py-2.5 text-sm font-medium text-blue-100 disabled:opacity-50">Ακύρωση</button>
+            <button type="button" disabled={serviceSaving} onClick={continueAfterServiceWarning} className="rounded-xl bg-[#1268f3] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Συνέχεια Check-Out</button>
+          </div>
+        </section>
+      </div>
+    );
+  }
 
   // Confirm a missing contract inside the application instead of relying on
   // a native browser confirm, which can be unreliable in embedded previews.
