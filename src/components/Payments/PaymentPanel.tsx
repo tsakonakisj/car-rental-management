@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { paymentService } from '../../lib/database';
+import { paymentService, paymentRefundService } from '../../lib/database';
+import type { PaymentRefund } from '../../lib/database';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Payment } from '../../types';
 import { CurrencyEuroIcon, PlusIcon, TrashIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
@@ -7,6 +8,7 @@ import { CurrencyEuroIcon, PlusIcon, TrashIcon, ArrowPathIcon } from '@heroicons
 interface PaymentPanelProps {
   reservationId: string;
   totalAmount: number;
+  reservationStatus?: string;
   onPaymentsChanged?: () => void;
 }
 
@@ -16,9 +18,16 @@ const methodLabels: Record<string, string> = {
   transfer: 'Μεταφορά',
 };
 
-const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount, onPaymentsChanged }) => {
+const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount, reservationStatus, onPaymentsChanged }) => {
   const { user } = useAuth();
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [refunds, setRefunds] = useState<PaymentRefund[]>([]);
+  const [refundTarget, setRefundTarget] = useState<Payment | null>(null);
+  const [refundAmount, setRefundAmount] = useState('');
+  const [refundMethod, setRefundMethod] = useState('cash');
+  const [refundReason, setRefundReason] = useState('');
+  const [refundSubmitting, setRefundSubmitting] = useState(false);
+  const [refundError, setRefundError] = useState('');
   const [voidTarget, setVoidTarget] = useState<Payment | null>(null);
   const [voidReason, setVoidReason] = useState('');
   const [voidSubmitting, setVoidSubmitting] = useState(false);
@@ -35,8 +44,12 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
   const fetchPayments = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await paymentService.getByReservationId(reservationId);
-      setPayments(data);
+      const [paymentData, refundData] = await Promise.all([
+        paymentService.getByReservationId(reservationId),
+        paymentRefundService.getByReservationId(reservationId),
+      ]);
+      setPayments(paymentData);
+      setRefunds(refundData);
     } catch (err) {
       console.error('Failed to load payments:', err);
     } finally {
@@ -48,7 +61,12 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
     fetchPayments();
   }, [fetchPayments]);
 
-  const amountPaid = payments.filter(p => !p.voided_at).reduce((sum, p) => sum + p.amount, 0);
+  const grossPaid = payments.filter(p => !p.voided_at).reduce((sum, p) => sum + p.amount, 0);
+  const totalRefunded = refunds.reduce((sum, refund) => sum + refund.amount, 0);
+  const amountPaid = grossPaid - totalRefunded;
+  const getRefundableAmount = (payment: Payment) =>
+    Math.max(0, Math.round(payment.amount * 100) - refunds.filter(r => r.payment_id === payment.id)
+      .reduce((sum, r) => sum + Math.round(r.amount * 100), 0)) / 100;
   const balanceCents = Math.round(totalAmount * 100) - Math.round(amountPaid * 100);
   const remaining = Math.max(0, balanceCents) / 100;
   const credit = Math.max(0, -balanceCents) / 100;
@@ -109,6 +127,37 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
     }
   };
 
+  const handleRefund = async () => {
+    if (!refundTarget || refundSubmitting) return;
+    const refundValue = Number(refundAmount);
+    if (!Number.isFinite(refundValue) || refundValue <= 0 ||
+        Math.abs(refundValue * 100 - Math.round(refundValue * 100)) > 1e-6 ||
+        refundValue > getRefundableAmount(refundTarget) || refundReason.trim().length < 5) {
+      setRefundError('Ελέγξτε το ποσό (έως το διαθέσιμο για επιστροφή) και την αιτιολογία.');
+      return;
+    }
+    setRefundSubmitting(true);
+    setRefundError('');
+    try {
+      await paymentRefundService.create({
+        payment_id: refundTarget.id,
+        amount: refundValue,
+        method: refundMethod,
+        reason: refundReason,
+      });
+      setRefundTarget(null);
+      setRefundAmount('');
+      setRefundReason('');
+      await fetchPayments();
+      onPaymentsChanged?.();
+    } catch (err) {
+      console.error('Failed to record refund:', err);
+      setRefundError('Η επιστροφή δεν καταχωρίστηκε. Ελέγξτε τα στοιχεία και δοκιμάστε ξανά.');
+    } finally {
+      setRefundSubmitting(false);
+    }
+  };
+
   const setQuickAmount = (value: number) => {
     setAmount(value.toFixed(2));
   };
@@ -124,7 +173,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
             <p className="text-sm font-semibold text-white">€{totalAmount.toFixed(2)}</p>
           </div>
           <div className="rounded-lg bg-emerald-500/10 border border-emerald-400/30 px-2 py-3">
-            <p className="text-xs text-emerald-300/70 mb-1">Πληρωμένο</p>
+            <p className="text-xs text-emerald-300/70 mb-1">Καθαρά εισπραχθέντα</p>
             <p className="text-sm font-semibold text-emerald-300">€{amountPaid.toFixed(2)}</p>
           </div>
           <div className={`rounded-lg border px-2 py-3 ${credit > 0 ? 'bg-sky-500/10 border-sky-400/30' : remaining > 0 ? 'bg-amber-500/10 border-amber-400/30' : 'bg-emerald-500/10 border-emerald-400/30'}`}>
@@ -132,6 +181,17 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
             <p className={`text-sm font-semibold ${credit > 0 ? 'text-sky-300' : remaining > 0 ? 'text-amber-300' : 'text-emerald-300'}`}>€{(credit > 0 ? credit : remaining).toFixed(2)}</p>
           </div>
         </div>
+        {totalRefunded > 0 && (
+          <p className="text-xs text-blue-100/75">
+            Αρχικές ενεργές εισπράξεις: €{grossPaid.toFixed(2)} · Καταχωρισμένες επιστροφές: €{totalRefunded.toFixed(2)}
+          </p>
+        )}
+        {reservationStatus === 'cancelled' && (
+          <p className="rounded-lg border border-amber-400/30 bg-amber-500/10 p-3 text-xs leading-5 text-amber-100">
+            Η κράτηση έχει ακυρωθεί. Η ακύρωση δεν επιστρέφει χρήματα αυτόματα.
+            Καταχωρίστε επιστροφή μόνο εφόσον έχει πράγματι πραγματοποιηθεί.
+          </p>
+        )}
         {credit > 0 && <p className="text-xs leading-5 text-sky-200/85">Έχουν εισπραχθεί €{credit.toFixed(2)} περισσότερα από την αξία της κράτησης. Δεν έχει καταχωριστεί αυτόματα επιστροφή χρημάτων.</p>}
 
         {/* Payment history */}
@@ -164,6 +224,18 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
                   </div>
                 </div>
                 {!p.voided_at && user?.role === 'admin' && (
+                  <div className="flex shrink-0 items-center gap-2">
+                    {getRefundableAmount(p) > 0 && (
+                      <button type="button"
+                        onClick={() => {
+                          setRefundTarget(p); setRefundAmount(getRefundableAmount(p).toFixed(2));
+                          setRefundMethod(p.method); setRefundReason(''); setRefundError('');
+                        }}
+                        className="rounded-lg border border-sky-400/30 px-2 py-1.5 text-xs font-semibold text-sky-200 hover:bg-sky-500/15">
+                        Επιστροφή
+                      </button>
+                    )}
+                  {getRefundableAmount(p) === p.amount && (
                   <button
                     type="button"
                     onClick={() => { setVoidTarget(p); setVoidReason(''); setVoidError(''); }}
@@ -173,12 +245,28 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
                   >
                     <TrashIcon className="h-4 w-4" />
                   </button>
+                  )}
+                  </div>
                 )}
               </div>
             ))}
           </div>
         ) : (
           <p className="text-sm text-blue-100/45 text-center py-2">Δεν έχουν καταχωρηθεί πληρωμές.</p>
+        )}
+
+        {refunds.length > 0 && (
+          <div className="space-y-2 border-t border-[#2b5b85]/60 pt-3">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-sky-200">Ιστορικό επιστροφών χρημάτων</h4>
+            {refunds.map(refund => (
+              <div key={refund.id} className="rounded-lg border border-sky-400/20 bg-sky-500/5 p-3 text-sm">
+                <p className="font-semibold text-sky-200">Επιστροφή €{refund.amount.toFixed(2)}</p>
+                <p className="mt-1 text-xs text-blue-100/65">
+                  {methodLabels[refund.method]} · {new Date(refund.created_at).toLocaleString('el-GR')} · {refund.reason}
+                </p>
+              </div>
+            ))}
+          </div>
         )}
 
         {/* Add payment form */}
@@ -280,6 +368,43 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
           </button>
         )}
       </div>
+      {refundTarget && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#020b18]/85 p-4 backdrop-blur-sm"
+          onMouseDown={e => { if (e.target === e.currentTarget && !refundSubmitting) setRefundTarget(null); }}>
+          <section role="dialog" aria-modal="true" aria-labelledby="refund-dialog-title"
+            className="w-full max-w-md rounded-2xl border border-sky-400/30 bg-[#0b2949] p-6 text-white shadow-2xl">
+            <h2 id="refund-dialog-title" className="text-lg font-semibold">Καταχώριση επιστροφής χρημάτων</h2>
+            <p className="mt-2 text-sm text-blue-100/80">
+              Αρχική πληρωμή €{refundTarget.amount.toFixed(2)} · Διαθέσιμο για επιστροφή €{getRefundableAmount(refundTarget).toFixed(2)}
+            </p>
+            <p className="mt-2 text-xs text-amber-200">Καταχώρισε την επιστροφή μόνο αφού τα χρήματα έχουν πραγματικά επιστραφεί στον πελάτη.</p>
+            <label className="mt-4 block text-xs text-blue-100/75" htmlFor="refund-amount">Ποσό επιστροφής (€)</label>
+            <input id="refund-amount" type="number" min="0.01" step="0.01" max={getRefundableAmount(refundTarget)}
+              value={refundAmount} onChange={e => setRefundAmount(e.target.value)} disabled={refundSubmitting}
+              className="mt-1 w-full rounded-xl border border-[#2b5b85] bg-[#071d38] px-3 py-2 text-sm text-white" />
+            <label className="mt-3 block text-xs text-blue-100/75" htmlFor="refund-method">Τρόπος επιστροφής</label>
+            <select id="refund-method" value={refundMethod} onChange={e => setRefundMethod(e.target.value)} disabled={refundSubmitting}
+              className="mt-1 w-full rounded-xl border border-[#2b5b85] bg-[#071d38] px-3 py-2 text-sm text-white">
+              <option value="cash">Μετρητά</option>
+              <option value="card">Κάρτα</option>
+              <option value="transfer">Μεταφορά</option>
+            </select>
+            <label className="mt-3 block text-xs text-blue-100/75" htmlFor="refund-reason">Αιτιολογία (υποχρεωτική)</label>
+            <textarea id="refund-reason" rows={3} value={refundReason} onChange={e => setRefundReason(e.target.value)}
+              disabled={refundSubmitting} placeholder="Π.χ. Επιστροφή προκαταβολής λόγω ακύρωσης"
+              className="mt-1 w-full rounded-xl border border-[#2b5b85] bg-[#071d38] p-3 text-sm text-white"/>
+            {refundError && <p role="alert" className="mt-2 text-sm text-red-300">{refundError}</p>}
+            <div className="mt-5 flex justify-end gap-3">
+              <button type="button" onClick={() => setRefundTarget(null)} disabled={refundSubmitting}
+                className="rounded-xl border border-[#2b5b85] px-4 py-2.5 text-sm text-blue-100">Άκυρο</button>
+              <button type="button" onClick={handleRefund} disabled={refundSubmitting || !refundAmount || refundReason.trim().length < 5}
+                className="rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40">
+                {refundSubmitting ? 'Αποθήκευση...' : 'Καταχώριση επιστροφής'}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
       {confirmOverpayment && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#020b18]/85 p-4 backdrop-blur-sm"
           onMouseDown={e => { if (e.target === e.currentTarget && !submitting) setConfirmOverpayment(false); }}>
