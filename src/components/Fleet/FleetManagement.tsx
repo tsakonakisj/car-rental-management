@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { vehicleService, photoService } from '../../lib/database';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../contexts/AuthContext';
 import type { Vehicle } from '../../types';
 import PageHero from '../Layout/PageHero';
 import {
@@ -69,6 +70,26 @@ interface FleetManagementProps {
 
 const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVehicleId, onEditVehicleConsumed }) => {
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const [fleetAccess, setFleetAccess] = useState({ create: false, edit: false });
+  const canAdd = user?.role === 'admin' || (user?.role === 'manager' && fleetAccess.create);
+  const canEdit = user?.role === 'admin' || (user?.role === 'manager' && fleetAccess.edit);
+
+  useEffect(() => {
+    if (user?.role !== 'manager') {
+      setFleetAccess({ create: false, edit: false });
+      return;
+    }
+    let mounted = true;
+    setFleetAccess({ create: false, edit: false });
+    supabase.from('employee_permissions').select('permissions').eq('user_id', user.id).maybeSingle()
+      .then(({ data, error }) => {
+        if (!mounted || error) return;
+        const p = data?.permissions as { fleet?: { create?: boolean; edit?: boolean } } | undefined;
+        setFleetAccess({ create: p?.fleet?.create === true, edit: p?.fleet?.edit === true });
+      });
+    return () => { mounted = false; };
+  }, [user?.id, user?.role]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -101,10 +122,10 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
   useEffect(() => {
     if (editVehicleId && vehicles.length > 0) {
       const v = vehicles.find(v => v.id === editVehicleId && v.status !== 'inactive');
-      if (v) setEditingVehicle(v);
+      if (v && canEdit) setEditingVehicle(v);
       onEditVehicleConsumed?.();
     }
-  }, [editVehicleId, vehicles, onEditVehicleConsumed]);
+  }, [editVehicleId, vehicles, onEditVehicleConsumed, canEdit]);
 
   useEffect(() => {
     const paths = vehicles
@@ -265,7 +286,7 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
       <PageHero
         title={t('fleet')}
         subtitle="Διαχείριση οχημάτων και διαθεσιμότητας"
-        actions={(
+        actions={canAdd ? (
           <button
             onClick={() => setAddingVehicle(true)}
             className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_8px_20px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
@@ -273,7 +294,7 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
             <PlusIcon className="mr-2 h-4 w-4" />
             Προσθήκη Οχήματος
           </button>
-        )}
+        ) : undefined}
       />
 
       {/* Filters */}
@@ -310,7 +331,7 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
       )}
 
       {/* Add Vehicle Modal */}
-      {addingVehicle && (
+      {canAdd && addingVehicle && (
         <EditVehicleModal
           vehicle={null}
           onClose={() => setAddingVehicle(false)}
@@ -322,7 +343,7 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
       )}
 
       {/* Edit Vehicle Modal */}
-      {editingVehicle && (
+      {canEdit && editingVehicle && (
         <EditVehicleModal
           vehicle={editingVehicle}
           onClose={() => setEditingVehicle(null)}
@@ -350,17 +371,17 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
             return (
               <div
                 key={vehicle.id}
-                role={!isInactive ? 'button' : undefined}
-                tabIndex={!isInactive ? 0 : undefined}
-                aria-label={!isInactive ? `Επεξεργασία οχήματος ${vehicle.plate}` : undefined}
-                onClick={() => { if (!isInactive) setEditingVehicle(vehicle); }}
+                role={!isInactive && canEdit ? 'button' : undefined}
+                tabIndex={!isInactive && canEdit ? 0 : undefined}
+                aria-label={!isInactive && canEdit ? `Επεξεργασία οχήματος ${vehicle.plate}` : undefined}
+                onClick={() => { if (!isInactive && canEdit) setEditingVehicle(vehicle); }}
                 onKeyDown={(event) => {
-                  if (!isInactive && event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
+                  if (!isInactive && canEdit && event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) {
                     event.preventDefault();
                     setEditingVehicle(vehicle);
                   }
                 }}
-                className={`flex flex-col overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)] ${isInactive ? 'opacity-50' : 'cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#55a8ff]'}`}
+                className={`flex flex-col overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)] ${isInactive ? 'opacity-50' : canEdit ? 'cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#55a8ff]' : ''}`}
               >
                 <div className="flex flex-1 flex-col p-5">
                   <div className="mb-4 flex items-center justify-between">
@@ -469,7 +490,7 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
                       <CalendarDaysIcon className="mr-1 h-4 w-4" />
                       Κρατήσεις
                     </button>
-                    {!isInactive && (
+                    {!isInactive && canEdit && (
                       <>
                         <button
                           onClick={(event) => { event.stopPropagation(); setEditingVehicle(vehicle); }}
@@ -488,7 +509,7 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
                         </button>
                       </>
                     )}
-                    {isInactive && (
+                    {isInactive && canEdit && (
                       <button
                         onClick={(event) => { event.stopPropagation(); handleReactivate(vehicle); }}
                         disabled={togglingId === vehicle.id}
