@@ -14,7 +14,8 @@ import {
   PencilSquareIcon,
   DocumentTextIcon,
   EllipsisHorizontalIcon,
-  CurrencyEuroIcon
+  CurrencyEuroIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/react/24/outline';
 import ContractGenerator, { type ContractGeneratorRef } from '../PDF/ContractGenerator';
 import BookingConfirmation from '../PDF/BookingConfirmation';
