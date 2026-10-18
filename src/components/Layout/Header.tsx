@@ -139,7 +139,7 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar, previewRole = 'admin',
                         <div className="my-1 border-t border-[#2b5b85]" />
                       </>
                     )}
-                    <button role="menuitem" onClick={openPasswordChange} className="w-full rounded-lg px-3 py-2.5 text-left hover:bg-[#16436a]">Αλλαγή κωδικού</button>
+                    {isAdmin && <button role="menuitem" onClick={openPasswordChange} className="w-full rounded-lg px-3 py-2.5 text-left hover:bg-[#16436a]">Αλλαγή κωδικού</button>}
                     <button role="menuitem" onClick={() => { setMenuOpen(false); void logout(); }} className="w-full rounded-lg px-3 py-2.5 text-left text-red-300 hover:bg-[#16436a]">Αποσύνδεση</button>
                   </div>
                 )}
