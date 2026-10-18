@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { pricingService, vehicleService, insuranceService } from '../../lib/database';
 import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 import type { Season, Pricing, Extra as ExtraType, Insurance as InsuranceType } from '../../types';
 import PageHero from '../Layout/PageHero';
 import {
@@ -44,6 +45,33 @@ const PricingManagement: React.FC = () => {
   const canDelete = user?.role === 'admin';
 
   const [seasons, setSeasons] = useState<Season[]>([]);
+  const [dragSeasonId, setDragSeasonId] = useState<string | null>(null);
+  const [savingSeasonOrder, setSavingSeasonOrder] = useState(false);
+  const [seasonOrderError, setSeasonOrderError] = useState<string | null>(null);
+  const suppressSeasonClick = React.useRef(false);
+
+  const reorderSeasons = async (sourceId: string, targetId: string) => {
+    if (!canEdit || savingSeasonOrder || sourceId === targetId) return;
+    const previous = [...seasons];
+    const moved = [...seasons];
+    const from = moved.findIndex(s => s.id === sourceId);
+    const to = moved.findIndex(s => s.id === targetId);
+    if (from < 0 || to < 0) return;
+    moved.splice(to, 0, moved.splice(from, 1)[0]);
+    setSeasons(moved);
+    setSeasonOrderError(null);
+    setSavingSeasonOrder(true);
+    try {
+      const { error } = await supabase.rpc('reorder_season_cards', { p_ids: moved.map(s => s.id) });
+      if (error) throw error;
+    } catch (err) {
+      setSeasons(previous);
+      setSeasonOrderError('Δεν αποθηκεύτηκε η νέα σειρά σεζόν. Δοκιμάστε ξανά.');
+      console.error('Failed to reorder seasons:', err);
+    } finally {
+      setSavingSeasonOrder(false);
+    }
+  };
   const [pricing, setPricing] = useState<Pricing[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -82,7 +110,8 @@ const PricingManagement: React.FC = () => {
       setInsurances(insuranceData);
 
       const sortedSeasons = [...seasonData].sort(
-        (a, b) => (a.priority ?? 0) - (b.priority ?? 0)
+        (a, b) => ((a as Season & { display_order?: number }).display_order ?? a.priority ?? 0)
+          - ((b as Season & { display_order?: number }).display_order ?? b.priority ?? 0)
       );
       setSeasons(sortedSeasons);
       setPricing(pricingData);
@@ -591,11 +620,36 @@ const PricingManagement: React.FC = () => {
           </div>
         </div>
         <div className="p-6">
+          {seasonOrderError && <p role="alert" className="mb-3 text-sm text-red-300">{seasonOrderError}</p>}
+          {canEdit && <p className="mb-3 text-xs text-blue-100/55">Σύρετε μια κάρτα για να αλλάξετε τη σειρά εμφάνισης σε όλους τους χρήστες. Κάντε κλικ για επεξεργασία.{savingSeasonOrder ? ' Αποθήκευση σειράς...' : ''}</p>}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {seasons.map((season) => {
               const isEditingSeason = editingSeasonId === season.id;
               return (
-              <div key={season.id} className={`rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)] p-4 ${isEditingSeason ? 'md:col-span-2 lg:col-span-4' : ''}`}>
+              <div key={season.id}
+                draggable={canEdit && !isEditingSeason && !savingSeasonOrder}
+                onDragStart={e => {
+                  if (!canEdit) { e.preventDefault(); return; }
+                  suppressSeasonClick.current = true;
+                  setDragSeasonId(season.id);
+                  e.dataTransfer.effectAllowed = 'move';
+                  e.dataTransfer.setData('text/plain', season.id);
+                }}
+                onDragOver={e => { if (canEdit && dragSeasonId && dragSeasonId !== season.id) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; } }}
+                onDrop={e => {
+                  e.preventDefault();
+                  const source = dragSeasonId || e.dataTransfer.getData('text/plain');
+                  setDragSeasonId(null);
+                  void reorderSeasons(source, season.id);
+                }}
+                onDragEnd={() => { setDragSeasonId(null); }}
+                onClick={e => {
+                  if (!canEdit || isEditingSeason || savingSeasonOrder) return;
+                  if (suppressSeasonClick.current) { suppressSeasonClick.current = false; return; }
+                  if ((e.target as HTMLElement).closest('button, input, select, textarea')) return;
+                  startSeasonEdit(season);
+                }}
+                className={`rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)] p-4 ${isEditingSeason ? 'md:col-span-2 lg:col-span-4' : ''} ${canEdit && !isEditingSeason ? 'cursor-grab hover:border-[#55a8ff] active:cursor-grabbing' : ''} ${dragSeasonId === season.id ? 'opacity-50' : ''}`}>
                 {isEditingSeason && editSeasonForm ? (
                   <div className="space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
