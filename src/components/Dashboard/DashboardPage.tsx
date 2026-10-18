@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase, isDemoMode } from '../../lib/supabase';
-import { checkinService } from '../../lib/database';
+import { checkinService, fuelWaiverService } from '../../lib/database';
+import type { FuelWaiverRequest } from '../../lib/database';
+import { useAuth } from '../../contexts/AuthContext';
 import PageHero from '../Layout/PageHero';
 import {
   CalendarDaysIcon,
@@ -280,6 +282,13 @@ interface DashboardPageProps {
 }
 
 const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, onNavigateFleet, onNavigateVehicle, onNewBooking }) => {
+  const { user } = useAuth();
+  const [pendingFuelWaivers, setPendingFuelWaivers] = useState<FuelWaiverRequest[]>([]);
+  const [reviewTarget, setReviewTarget] = useState<FuelWaiverRequest | null>(null);
+  const [reviewApprove, setReviewApprove] = useState(false);
+  const [reviewNote, setReviewNote] = useState('');
+  const [reviewSaving, setReviewSaving] = useState(false);
+  const [reviewError, setReviewError] = useState('');
   const [loading, setLoading] = useState(true);
   const [sourceStats, setSourceStats] = useState<SourceStat[]>([]);
   const [statusStats, setStatusStats] = useState<StatusStat[]>([]);
@@ -298,6 +307,12 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
 
     setLoading(true);
     try {
+      if (user?.role === 'admin') {
+        const pending = await fuelWaiverService.listPending();
+        setPendingFuelWaivers(pending);
+      } else {
+        setPendingFuelWaivers([]);
+      }
       const today = new Date().toISOString().split('T')[0];
 
       // Fetch reservations with customer source
@@ -504,7 +519,25 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.role]);
+
+  const completeFuelReview = async () => {
+    if (!reviewTarget || reviewNote.trim().length < 5 || reviewSaving) return;
+    setReviewSaving(true);
+    setReviewError('');
+    try {
+      await fuelWaiverService.review(reviewTarget.id, reviewApprove, reviewNote);
+      setPendingFuelWaivers(current => current.filter(request => request.id !== reviewTarget.id));
+      setReviewTarget(null);
+      setReviewNote('');
+      await fetchDashboard();
+    } catch (err) {
+      console.error('Fuel approval failed:', err);
+      setReviewError('Δεν αποθηκεύτηκε η απόφαση. Δοκιμάστε ξανά.');
+    } finally {
+      setReviewSaving(false);
+    }
+  };
 
   useEffect(() => {
     fetchDashboard();
@@ -815,6 +848,58 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
           </div>
         </div>
       </div>
+
+      {user?.role === 'admin' && (
+        <section className="rounded-2xl border border-amber-400/35 bg-[#071d38]/90 p-5 shadow-lg">
+          <div className="mb-3 flex items-center gap-2">
+            <ExclamationTriangleIcon className="h-5 w-5 text-amber-300" />
+            <h2 className="text-base font-semibold text-white">Εγκρίσεις εξαιρέσεων καυσίμου</h2>
+            <span className="rounded-lg bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-200">{pendingFuelWaivers.length}</span>
+          </div>
+          {pendingFuelWaivers.length === 0 ? (
+            <p className="text-sm text-blue-100/60">Δεν υπάρχουν εκκρεμή αιτήματα.</p>
+          ) : (
+            <div className="space-y-3">
+              {pendingFuelWaivers.map(request => (
+                <div key={request.id} className="rounded-xl border border-[#2b5b85]/70 bg-[#0b2949]/75 p-4">
+                  <p className="text-sm font-semibold text-white">Κράτηση #{request.reservation_id.slice(0,8).toUpperCase()} · Προτεινόμενη χρέωση €{request.proposed_charge.toFixed(2)}</p>
+                  <p className="mt-1 text-xs text-blue-100/70">Έλλειμμα {request.fuel_liters.toFixed(1)} λίτρα · Αίτημα {new Date(request.requested_at).toLocaleString('el-GR')}</p>
+                  <p className="mt-2 text-sm text-amber-100">Αιτιολογία: {request.reason}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button type="button" onClick={() => {setReviewTarget(request);setReviewApprove(true);setReviewNote('');setReviewError('');}}
+                      className="rounded-lg border border-emerald-400/40 bg-emerald-500/15 px-3 py-2 text-sm font-semibold text-emerald-200">Έγκριση εξαίρεσης</button>
+                    <button type="button" onClick={() => {setReviewTarget(request);setReviewApprove(false);setReviewNote('');setReviewError('');}}
+                      className="rounded-lg border border-amber-400/40 bg-amber-500/15 px-3 py-2 text-sm font-semibold text-amber-200">Απόρριψη — Χρέωση €{request.proposed_charge.toFixed(2)}</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+      {reviewTarget && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#020b18]/85 p-4 backdrop-blur-sm"
+          onMouseDown={e => {if(e.target===e.currentTarget && !reviewSaving)setReviewTarget(null);}}>
+          <section role="dialog" aria-modal="true" aria-labelledby="fuel-review-title"
+            className="w-full max-w-lg rounded-2xl border border-amber-400/35 bg-[#0b2949] p-6 text-white shadow-2xl">
+            <h2 id="fuel-review-title" className="text-lg font-semibold">{reviewApprove ? 'Έγκριση εξαίρεσης καυσίμου' : 'Απόρριψη εξαίρεσης καυσίμου'}</h2>
+            <p className="mt-3 text-sm text-blue-100/80">Κράτηση #{reviewTarget.reservation_id.slice(0,8).toUpperCase()} · €{reviewTarget.proposed_charge.toFixed(2)}</p>
+            <p className="mt-2 text-sm text-amber-100">{reviewApprove ? 'Δεν θα καταχωριστεί χρέωση καυσίμου.' : 'Θα καταχωριστεί η χρέωση καυσίμου στο ολοκληρωμένο Check-In και στην οφειλή του πελάτη.'}</p>
+            <label className="mt-4 block text-sm text-blue-100/80">Αιτιολογία απόφασης (υποχρεωτική)
+              <textarea value={reviewNote} onChange={e=>setReviewNote(e.target.value)} rows={3} disabled={reviewSaving}
+                className="mt-2 w-full rounded-lg border border-[#2b5b85] bg-[#071d38] p-3 text-white" />
+            </label>
+            {reviewError && <p role="alert" className="mt-2 text-sm text-red-300">{reviewError}</p>}
+            <div className="mt-5 flex justify-end gap-3">
+              <button type="button" disabled={reviewSaving} onClick={()=>setReviewTarget(null)}
+                className="rounded-lg border border-[#2b5b85] px-4 py-2 text-sm">Ακύρωση</button>
+              <button type="button" disabled={reviewSaving||reviewNote.trim().length<5} onClick={completeFuelReview}
+                className="rounded-lg bg-[#1268f3] px-4 py-2 text-sm font-semibold disabled:opacity-40">
+                {reviewSaving?'Αποθήκευση...':'Επιβεβαίωση απόφασης'}</button>
+            </div>
+          </section>
+        </div>
+      )}
 
       {/* Summary footer */}
       <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 p-6 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
