@@ -1187,6 +1187,10 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                     <PaymentPanel
                       reservationId={viewReservation.id}
                       totalAmount={Number(viewReservation.total_amount) || 0}
+                      additionalCharges={(checkinDetails?.additional_charges || []).reduce(
+                        (sum, charge) => sum + (Number(charge.amount) || 0), 0
+                      )}
+                      chargesLoading={detailsLoading}
                       reservationStatus={viewReservation.status}
                     />
 
