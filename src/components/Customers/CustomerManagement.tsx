@@ -129,6 +129,34 @@ const CustomerManagement: React.FC<CustomerManagementProps> = ({ onViewReservati
 
   const [searchTerm, setSearchTerm] = useState('');
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [dragCustomerId, setDragCustomerId] = useState<string | null>(null);
+  const [savingCustomerOrder, setSavingCustomerOrder] = useState(false);
+  const [customerOrderError, setCustomerOrderError] = useState('');
+  const skipNextCardClick = React.useRef(false);
+  const canReorderCustomers = user?.role === 'admin' && searchTerm.trim() === '';
+
+  const reorderCustomers = async (sourceId: string, targetId: string) => {
+    if (!canReorderCustomers || savingCustomerOrder || sourceId === targetId) return;
+    const before = [...customers];
+    const next = [...customers];
+    const from = next.findIndex(c => c.id === sourceId);
+    const to = next.findIndex(c => c.id === targetId);
+    if (from === -1 || to === -1) return;
+    next.splice(to, 0, next.splice(from, 1)[0]);
+    setCustomers(next);
+    setCustomerOrderError('');
+    setSavingCustomerOrder(true);
+    try {
+      const { error } = await supabase.rpc('reorder_customer_cards', { p_ids: next.map(c => c.id) });
+      if (error) throw error;
+    } catch (error) {
+      setCustomers(before);
+      setCustomerOrderError('Η νέα σειρά δεν αποθηκεύτηκε. Κάντε ανανέωση και δοκιμάστε ξανά.');
+      console.error('Failed to save customer order:', error);
+    } finally {
+      setSavingCustomerOrder(false);
+    }
+  };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -146,7 +174,14 @@ const CustomerManagement: React.FC<CustomerManagementProps> = ({ onViewReservati
     setError('');
     try {
       const data = await customerService.getAll();
-      setCustomers(data);
+      setCustomers([...data].sort((a, b) => {
+        const x = (a as Customer & { display_order?: number | null }).display_order;
+        const y = (b as Customer & { display_order?: number | null }).display_order;
+        if (x == null && y == null) return (b.created_at || '').localeCompare(a.created_at || '');
+        if (x == null) return 1;
+        if (y == null) return -1;
+        return x - y;
+      }));
     } catch (err) {
       console.error('Failed to load customers:', err);
       setError('Αποτυχία φόρτωσης πελατών.');
@@ -320,10 +355,49 @@ const CustomerManagement: React.FC<CustomerManagementProps> = ({ onViewReservati
       )}
 
       {/* Customers Grid */}
+      {customerOrderError && <p role="alert" className="text-sm text-red-300">{customerOrderError}</p>}
+      {user?.role === 'admin' && filteredCustomers.length > 0 && (
+        <p className="text-xs text-blue-100/55">
+          {searchTerm.trim() ? 'Καθαρίστε την αναζήτηση για να αλλάξετε τη σειρά των καρτών.' :
+          savingCustomerOrder ? 'Αποθήκευση νέας σειράς...' :
+          'Σύρετε τις κάρτες για να αλλάξετε τη σειρά τους για όλους τους χρήστες. Πατήστε στην κάρτα για επεξεργασία.'}
+        </p>
+      )}
       {filteredCustomers.length > 0 && (
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           {filteredCustomers.map((customer) => (
-            <div key={customer.id} className="overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)]">
+            <div
+              key={customer.id}
+              draggable={canReorderCustomers && !savingCustomerOrder}
+              onDragStart={event => {
+                if (!canReorderCustomers) { event.preventDefault(); return; }
+                skipNextCardClick.current = true;
+                setDragCustomerId(customer.id);
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', customer.id);
+              }}
+              onDragOver={event => {
+                if (canReorderCustomers && dragCustomerId && dragCustomerId !== customer.id) {
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = 'move';
+                }
+              }}
+              onDrop={event => {
+                event.preventDefault();
+                const sourceId = dragCustomerId || event.dataTransfer.getData('text/plain');
+                setDragCustomerId(null);
+                void reorderCustomers(sourceId, customer.id);
+              }}
+              onDragEnd={() => { setDragCustomerId(null); }}
+              onClick={event => {
+                if (skipNextCardClick.current) { skipNextCardClick.current = false; return; }
+                if ((event.target as HTMLElement).closest('button, a, input, select, textarea')) return;
+                if (user?.role === 'admin' && canEdit) openEditCustomer(customer);
+                else if (canEdit) openEditCustomer(customer);
+                else void openCustomerModal(customer);
+              }}
+              className={`overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)] ${canReorderCustomers ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${dragCustomerId === customer.id ? 'opacity-50' : ''}`}
+            >
               <div className="p-5">
                 <div className="mb-4 flex items-center justify-between">
                   <div className="flex items-center">
