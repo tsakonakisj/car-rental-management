@@ -14,7 +14,9 @@ import {
   ArrowPathIcon,
   XMarkIcon,
   CalendarDaysIcon,
-  TrashIcon
+  TrashIcon,
+  PlusIcon,
+  PencilIcon
 } from '@heroicons/react/24/outline';
 
 interface CustomerReservation {
@@ -33,23 +35,98 @@ interface CustomerManagementProps {
 const CustomerManagement: React.FC<CustomerManagementProps> = ({ onViewReservation }) => {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const [mayDeleteCustomer, setMayDeleteCustomer] = useState(false);
+  const [customerRights, setCustomerRights] = useState({ create: false, edit: false, delete: false });
+  const canCreate = user?.role === 'admin' || (user?.role === 'manager' && customerRights.create);
+  const canEdit = user?.role === 'admin' || (user?.role === 'manager' && customerRights.edit);
+  const mayDeleteCustomer = user?.role === 'admin' || (user?.role === 'manager' && customerRights.delete);
+
   useEffect(() => {
-    if (user?.role === 'admin') {
-      setMayDeleteCustomer(true);
-      return;
-    }
-    setMayDeleteCustomer(false);
+    setCustomerRights({ create: false, edit: false, delete: false });
     if (user?.role !== 'manager') return;
     let active = true;
     supabase.from('employee_permissions').select('permissions').eq('user_id', user.id).maybeSingle()
       .then(({ data, error }) => {
         if (!active || error) return;
-        const rights = data?.permissions as { customers?: { delete?: boolean } } | undefined;
-        setMayDeleteCustomer(rights?.customers?.delete === true);
+        const p = data?.permissions as { customers?: { create?: boolean; edit?: boolean; delete?: boolean } } | undefined;
+        setCustomerRights({
+          create: p?.customers?.create === true,
+          edit: p?.customers?.edit === true,
+          delete: p?.customers?.delete === true,
+        });
       });
     return () => { active = false; };
   }, [user?.id, user?.role]);
+
+  type CustomerForm = { name: string; phone: string; email: string; country: string; license_number: string; birth_date: string; notes: string; source: Customer['source'] };
+  const blankCustomer: CustomerForm = { name: '', phone: '', email: '', country: '', license_number: '', birth_date: '', notes: '', source: 'store' };
+  const [customerFormMode, setCustomerFormMode] = useState<'create' | 'edit' | null>(null);
+  const [customerFormTarget, setCustomerFormTarget] = useState<string | null>(null);
+  const [customerForm, setCustomerForm] = useState<CustomerForm>(blankCustomer);
+  const [savingCustomer, setSavingCustomer] = useState(false);
+  const [customerFormError, setCustomerFormError] = useState('');
+
+  const openCreateCustomer = () => {
+    if (!canCreate) return;
+    setCustomerForm({ ...blankCustomer });
+    setCustomerFormTarget(null);
+    setCustomerFormError('');
+    setCustomerFormMode('create');
+  };
+  const openEditCustomer = (customer: Customer) => {
+    if (!canEdit) return;
+    setSelectedCustomer(null);
+    setCustomerForm({
+      name: customer.name || '',
+      phone: customer.phone || '',
+      email: customer.email || '',
+      country: customer.country || '',
+      license_number: customer.license_number || '',
+      birth_date: customer.birth_date || '',
+      notes: customer.notes || '',
+      source: customer.source || 'store',
+    });
+    setCustomerFormTarget(customer.id);
+    setCustomerFormError('');
+    setCustomerFormMode('edit');
+  };
+  const saveCustomer = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (savingCustomer || (customerFormMode === 'create' ? !canCreate : !canEdit)) return;
+    if (!customerForm.name.trim() || !customerForm.phone.trim()) {
+      setCustomerFormError('Συμπληρώστε όνομα και τηλέφωνο.');
+      return;
+    }
+    setSavingCustomer(true);
+    setCustomerFormError('');
+    try {
+      const payload = {
+        name: customerForm.name.trim(), phone: customerForm.phone.trim(),
+        email: customerForm.email.trim() || null,
+        country: customerForm.country.trim() || null,
+        license_number: customerForm.license_number.trim() || null,
+        birth_date: customerForm.birth_date || null,
+        notes: customerForm.notes.trim() || null,
+        source: customerForm.source,
+      };
+      if (customerFormMode === 'create') {
+        const { error } = await supabase.from('customers').insert(payload);
+        if (error) throw error;
+      } else {
+        if (!customerFormTarget) throw new Error('Δεν επιλέχθηκε πελάτης.');
+        const { error } = await supabase.from('customers').update(payload).eq('id', customerFormTarget).select('id').single();
+        if (error) throw error;
+      }
+      setCustomerFormMode(null);
+      setCustomerFormTarget(null);
+      await fetchCustomers();
+    } catch (err) {
+      console.error('Failed to save customer:', err);
+      setCustomerFormError('Η αποθήκευση απέτυχε. Ελέγξτε τα στοιχεία ή τα δικαιώματά σας.');
+    } finally {
+      setSavingCustomer(false);
+    }
+  };
+
   const [searchTerm, setSearchTerm] = useState('');
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -209,6 +286,11 @@ const CustomerManagement: React.FC<CustomerManagementProps> = ({ onViewReservati
       <PageHero
         title={t('customers')}
         subtitle="Διαχείριση στοιχείων και ιστορικού πελατών"
+        actions={canCreate ? (
+          <button type="button" onClick={openCreateCustomer} className="inline-flex items-center rounded-xl bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white hover:bg-[#2478ff]">
+            <PlusIcon className="mr-2 h-4 w-4" /> Νέος Πελάτης
+          </button>
+        ) : undefined}
       />
 
       {/* Search */}
@@ -231,7 +313,7 @@ const CustomerManagement: React.FC<CustomerManagementProps> = ({ onViewReservati
           <UsersIcon className="mx-auto mb-4 h-12 w-12 text-blue-100/45" />
           <p className="text-blue-100/55">
             {customers.length === 0
-              ? 'Δεν υπάρχουν πελάτες ακόμα. Θα εμφανιστούν εδώ μετά την πρώτη κράτηση.'
+              ? 'Δεν υπάρχουν πελάτες ακόμα. Μπορείτε να καταχωρίσετε νέο πελάτη από αυτή τη σελίδα ή μέσω κράτησης.'
               : 'Δεν βρέθηκαν πελάτες με αυτή την αναζήτηση.'}
           </p>
         </div>
@@ -288,6 +370,12 @@ const CustomerManagement: React.FC<CustomerManagementProps> = ({ onViewReservati
                     <EyeIcon className="mr-1 h-4 w-4" />
                     Προβολή
                   </button>
+                  {canEdit && <button
+                    onClick={() => openEditCustomer(customer)}
+                    className="inline-flex min-h-10 items-center justify-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3 py-2 text-sm font-medium text-blue-100/85 hover:border-[#55a8ff]"
+                  >
+                    <PencilIcon className="mr-1 h-4 w-4" /> Επεξεργασία
+                  </button>}
                   {mayDeleteCustomer && <button
                     onClick={() => openDeleteConfirm(customer)}
                     disabled={deleting && deleteTarget?.id === customer.id}
@@ -300,6 +388,60 @@ const CustomerManagement: React.FC<CustomerManagementProps> = ({ onViewReservati
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Add / Edit Customer */}
+      {customerFormMode && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 p-4">
+          <form onSubmit={saveCustomer} className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-[#2b5b85]/80 bg-[#071d38] p-6 text-white shadow-2xl">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-lg font-semibold">{customerFormMode === 'create' ? 'Νέος Πελάτης' : 'Επεξεργασία Πελάτη'}</h2>
+              <button type="button" onClick={() => setCustomerFormMode(null)} className="text-blue-100/60 hover:text-white" aria-label="Κλείσιμο"><XMarkIcon className="h-6 w-6"/></button>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {([
+                ['name', 'Ονοματεπώνυμο *', 'text'],
+                ['phone', 'Τηλέφωνο *', 'tel'],
+                ['email', 'Email', 'email'],
+                ['country', 'Χώρα', 'text'],
+                ['license_number', 'Αριθμός άδειας οδήγησης', 'text'],
+                ['birth_date', 'Ημερομηνία γέννησης', 'date'],
+              ] as const).map(([field, label, type]) => (
+                <label key={field} className="block text-sm text-blue-100/85">
+                  <span className="mb-1 block">{label}</span>
+                  <input
+                    type={type}
+                    required={field === 'name' || field === 'phone'}
+                    value={customerForm[field]}
+                    onChange={e => setCustomerForm(current => ({ ...current, [field]: e.target.value }))}
+                    className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-white focus:border-[#55a8ff] focus:outline-none"
+                  />
+                </label>
+              ))}
+              <label className="block text-sm text-blue-100/85">
+                <span className="mb-1 block">Προέλευση</span>
+                <select value={customerForm.source} onChange={e => setCustomerForm(current => ({ ...current, source: e.target.value as Customer['source'] }))} className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-white">
+                  <option value="store">Κατάστημα</option>
+                  <option value="phone">Τηλέφωνο</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="whatsapp">WhatsApp</option>
+                  <option value="website">Ιστοσελίδα</option>
+                  <option value="repeat">Επαναλαμβανόμενος πελάτης</option>
+                  <option value="other">Άλλο</option>
+                </select>
+              </label>
+              <label className="block text-sm text-blue-100/85 sm:col-span-2">
+                <span className="mb-1 block">Σημειώσεις</span>
+                <textarea rows={3} value={customerForm.notes} onChange={e => setCustomerForm(current => ({ ...current, notes: e.target.value }))} className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-white focus:border-[#55a8ff] focus:outline-none" />
+              </label>
+            </div>
+            {customerFormError && <p role="alert" className="mt-4 text-sm text-red-300">{customerFormError}</p>}
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" disabled={savingCustomer} onClick={() => setCustomerFormMode(null)} className="rounded-xl border border-[#2b5b85] px-4 py-2 text-sm text-blue-100">Άκυρο</button>
+              <button type="submit" disabled={savingCustomer} className="rounded-xl bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">{savingCustomer ? 'Αποθήκευση...' : customerFormMode === 'create' ? 'Καταχώριση' : 'Αποθήκευση'}</button>
+            </div>
+          </form>
         </div>
       )}
 
