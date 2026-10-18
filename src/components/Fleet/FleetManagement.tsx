@@ -14,7 +14,8 @@ import {
   ClockIcon,
   ArrowPathIcon,
   CalendarDaysIcon,
-  NoSymbolIcon
+  NoSymbolIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline';
 import VehicleReservationsModal from './VehicleReservationsModal';
 import EditVehicleModal from './EditVehicleModal';
@@ -128,6 +129,8 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [filter, setFilter] = useState<FleetFilter>(initialFilter || 'active');
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [deactivateTarget, setDeactivateTarget] = useState<Vehicle | null>(null);
+  const [deactivateError, setDeactivateError] = useState('');
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [addingVehicle, setAddingVehicle] = useState(false);
   const [cardPhotoUrls, setCardPhotoUrls] = useState<Map<string, string>>(new Map());
@@ -183,18 +186,18 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
     return () => { cancelled = true; };
   }, [vehicles]);
 
-  const handleDeactivate = async (vehicle: Vehicle) => {
-    const confirmed = window.confirm(
-      'Θέλετε να απενεργοποιήσετε αυτό το όχημα; Δεν θα εμφανίζεται σε νέες κρατήσεις, αλλά θα παραμείνει στο ιστορικό.'
-    );
-    if (!confirmed) return;
-
+  const handleDeactivate = async () => {
+    if (!deactivateTarget || !canEdit || togglingId) return;
+    const vehicle = deactivateTarget;
     setTogglingId(vehicle.id);
+    setDeactivateError('');
     try {
       await vehicleService.update(vehicle.id, { status: 'inactive' } as Partial<Vehicle>);
       setVehicles(prev => prev.map(v => v.id === vehicle.id ? { ...v, status: 'inactive' } : v));
+      setDeactivateTarget(null);
     } catch (err) {
       console.error('Deactivation failed:', err);
+      setDeactivateError('Η απενεργοποίηση απέτυχε. Ελέγξτε τη σύνδεση και δοκιμάστε ξανά.');
     } finally {
       setTogglingId(null);
     }
@@ -397,6 +400,48 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
         />
       )}
 
+      {/* Vehicle Deactivation Confirmation */}
+      {canEdit && deactivateTarget && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-[#020b18]/85 p-4 backdrop-blur-sm"
+          onMouseDown={event => {
+            if (event.target === event.currentTarget && !togglingId) {
+              setDeactivateTarget(null);
+              setDeactivateError('');
+            }
+          }}
+        >
+          <section role="alertdialog" aria-modal="true" aria-labelledby="deactivate-vehicle-title" aria-describedby="deactivate-vehicle-description" className="w-full max-w-md rounded-2xl border border-amber-400/30 bg-[#0b2949] p-6 text-white shadow-[0_20px_65px_rgba(0,0,0,0.5)]">
+            <div className="mb-4 flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-amber-400/30 bg-amber-500/10">
+                  <NoSymbolIcon className="h-6 w-6 text-amber-300" />
+                </span>
+                <h2 id="deactivate-vehicle-title" className="text-lg font-semibold">Απενεργοποίηση οχήματος</h2>
+              </div>
+              <button type="button" disabled={!!togglingId} onClick={() => { setDeactivateTarget(null); setDeactivateError(''); }} aria-label="Κλείσιμο" className="text-blue-100/60 hover:text-white disabled:opacity-40">
+                <XMarkIcon className="h-5 w-5" />
+              </button>
+            </div>
+            <p id="deactivate-vehicle-description" className="mb-3 text-sm leading-6 text-blue-100/85">
+              Θέλετε να απενεργοποιήσετε το όχημα <strong className="font-semibold text-white">{deactivateTarget.brand} {deactivateTarget.model} ({deactivateTarget.plate})</strong>;
+            </p>
+            <p className="mb-5 rounded-xl border border-[#2b5b85]/70 bg-[#071d38]/60 p-3 text-sm leading-6 text-blue-100/70">
+              Δεν θα είναι διαθέσιμο για νέες κρατήσεις. Θα διατηρηθεί στον στόλο και στο ιστορικό, και μπορείτε να το επανενεργοποιήσετε.
+            </p>
+            {deactivateError && <p role="alert" className="mb-4 text-sm text-red-300">{deactivateError}</p>}
+            <div className="flex justify-end gap-3">
+              <button type="button" disabled={!!togglingId} onClick={() => { setDeactivateTarget(null); setDeactivateError(''); }} className="rounded-xl border border-[#2b5b85] bg-[#071d38] px-4 py-2.5 text-sm font-medium text-blue-100 hover:bg-[#12375d] disabled:opacity-40">
+                Ακύρωση
+              </button>
+              <button type="button" onClick={handleDeactivate} disabled={!!togglingId} className="rounded-xl border border-amber-400/40 bg-amber-500/20 px-4 py-2.5 text-sm font-semibold text-amber-100 hover:bg-amber-500/30 disabled:opacity-40">
+                {togglingId ? 'Απενεργοποίηση...' : 'Απενεργοποίηση'}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
       {/* Fleet Grid */}
       {vehicleOrderError && <p role="alert" className="text-sm text-red-300">{vehicleOrderError}</p>}
       {canReorder && filteredVehicles.length > 0 && (
@@ -566,7 +611,11 @@ const FleetManagement: React.FC<FleetManagementProps> = ({ initialFilter, editVe
                           <PencilIcon className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={(event) => { event.stopPropagation(); handleDeactivate(vehicle); }}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setDeactivateError('');
+                            setDeactivateTarget(vehicle);
+                          }}
                           disabled={togglingId === vehicle.id}
                           className="inline-flex min-h-10 items-center rounded-xl border border-amber-400/40 bg-amber-500/15 px-3 py-2 text-sm font-medium text-amber-300 transition-colors hover:bg-amber-500/25 disabled:opacity-50"
                           title="Απενεργοποίηση"
