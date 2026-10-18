@@ -583,11 +583,30 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
     return !Number.isNaN(pickup.getTime()) && pickup.getTime() < Date.now();
   };
 
+  const isOverdueReturn = (reservation: ReservationRow): boolean => {
+    if (reservation.status !== 'active' || !reservation.return_date) return false;
+    const returned = new Date(reservation.return_date.replace(' ', 'T'));
+    return !Number.isNaN(returned.getTime()) && returned.getTime() < Date.now();
+  };
+
+  const getDisplayStatus = (reservation: ReservationRow) => {
+    if (isOverduePickup(reservation)) return 'Εκκρεμεί Check-Out';
+    if (isOverdueReturn(reservation)) return 'Εκκρεμεί Check-In';
+    return getStatusLabel(reservation.status);
+  };
+
+  const overduePickupsCount = reservations.filter(isOverduePickup).length;
+  const overdueReturnsCount = reservations.filter(isOverdueReturn).length;
+
   const filteredReservations = reservations.filter(reservation => {
-    if (filter === 'overdue') {
+    if (filter === 'overdue' || filter === 'overdue_pickup') {
       if (!isOverduePickup(reservation)) return false;
+    } else if (filter === 'overdue_return') {
+      if (!isOverdueReturn(reservation)) return false;
     } else if (filter === 'upcoming') {
       if (reservation.status !== 'upcoming' || isOverduePickup(reservation)) return false;
+    } else if (filter === 'active') {
+      if (reservation.status !== 'active' || isOverdueReturn(reservation)) return false;
     } else if (filter !== 'all' && reservation.status !== filter) return false;
     if (excelFilter === 'pending' && reservation.excel_updated !== false) return false;
     if (excelFilter === 'done' && reservation.excel_updated !== true) return false;
@@ -709,7 +728,8 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
               {statusOptions.map(s => (
                 <option key={s.value} value={s.value}>{s.labelEl}</option>
               ))}
-              <option value="overdue">Εκπρόθεσμες παραλαβές</option>
+              <option value="overdue_pickup">Εκπρόθεσμες παραλαβές ({overduePickupsCount})</option>
+              <option value="overdue_return">Εκπρόθεσμες επιστροφές ({overdueReturnsCount})</option>
             </select>
           </div>
           <div>
@@ -745,6 +765,16 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
               Καθαρισμός
             </button>
           </div>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2 border-t border-[#2b5b85]/60 pt-4">
+          <button type="button" onClick={() => { setFilter('overdue_pickup'); setDateFilter(''); }}
+            className={`rounded-xl border px-3 py-2 text-sm font-medium transition-colors ${filter === 'overdue_pickup' || filter === 'overdue' ? 'border-amber-400/70 bg-amber-500/20 text-amber-100' : 'border-[#2b5b85]/80 bg-[#0b2949]/75 text-blue-100/85 hover:border-amber-400/50'}`}>
+            Εκπρόθεσμες παραλαβές ({overduePickupsCount})
+          </button>
+          <button type="button" onClick={() => { setFilter('overdue_return'); setDateFilter(''); }}
+            className={`rounded-xl border px-3 py-2 text-sm font-medium transition-colors ${filter === 'overdue_return' ? 'border-amber-400/70 bg-amber-500/20 text-amber-100' : 'border-[#2b5b85]/80 bg-[#0b2949]/75 text-blue-100/85 hover:border-amber-400/50'}`}>
+            Εκπρόθεσμες επιστροφές ({overdueReturnsCount})
+          </button>
         </div>
       </div>
 
@@ -797,8 +827,8 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                     <span className={`mr-1.5 h-2.5 w-2.5 rounded-full ${reservation.excel_updated ? 'bg-emerald-300' : 'bg-amber-300'}`} />
                     {reservation.excel_updated ? 'Excel ενημερώθηκε' : 'Excel εκκρεμεί'}
                   </span>
-                  <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${isOverduePickup(reservation) ? 'bg-amber-500/15 text-amber-200 ring-1 ring-inset ring-amber-400/50' : getStatusColor(reservation.status)}`}>
-                    {isOverduePickup(reservation) ? 'Εκκρεμεί Check-Out' : getStatusLabel(reservation.status)}
+                  <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${isOverduePickup(reservation) || isOverdueReturn(reservation) ? 'bg-amber-500/15 text-amber-200 ring-1 ring-inset ring-amber-400/50' : getStatusColor(reservation.status)}`}>
+                    {getDisplayStatus(reservation)}
                   </span>
                   <button
                     onClick={() => setViewReservation(reservation)}
@@ -991,8 +1021,8 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                   <>
                     {/* View Mode */}
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(viewReservation.status)}`}>
-                        {getStatusLabel(viewReservation.status)}
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${isOverduePickup(viewReservation) || isOverdueReturn(viewReservation) ? 'bg-amber-500/15 text-amber-200 ring-1 ring-inset ring-amber-400/50' : getStatusColor(viewReservation.status)}`}>
+                        {getDisplayStatus(viewReservation)}
                       </span>
                       <div className="flex items-center space-x-2">
                         <label className="text-sm text-blue-100/65">Αλλαγή κατάστασης:</label>
