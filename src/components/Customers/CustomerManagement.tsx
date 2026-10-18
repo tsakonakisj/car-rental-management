@@ -388,12 +388,11 @@ const CustomerManagement: React.FC<CustomerManagementProps> = ({ onViewReservati
                 setDragCustomerId(null);
                 void reorderCustomers(sourceId, customer.id);
               }}
-              onDragEnd={() => { setDragCustomerId(null); }}
+              onDragEnd={() => { setDragCustomerId(null); window.setTimeout(() => { skipNextCardClick.current = false; }, 150); }}
               onClick={event => {
                 if (skipNextCardClick.current) { skipNextCardClick.current = false; return; }
                 if ((event.target as HTMLElement).closest('button, a, input, select, textarea')) return;
-                if (user?.role === 'admin' && canEdit) openEditCustomer(customer);
-                else if (canEdit) openEditCustomer(customer);
+                if (canEdit) openEditCustomer(customer);
                 else void openCustomerModal(customer);
               }}
               className={`overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[linear-gradient(145deg,rgba(11,42,75,0.96),rgba(5,24,48,0.98))] shadow-[0_18px_45px_rgba(0,0,0,0.25)] transition-all hover:-translate-y-0.5 hover:border-[#3475aa] hover:shadow-[0_22px_52px_rgba(0,0,0,0.34)] ${canReorderCustomers ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'} ${dragCustomerId === customer.id ? 'opacity-50' : ''}`}
