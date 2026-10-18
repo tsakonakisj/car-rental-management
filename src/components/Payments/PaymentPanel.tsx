@@ -196,6 +196,11 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
                 className="w-full rounded-lg border border-[#2b5b85]/80 bg-[#0b2949] px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                 autoFocus
               />
+              {amount.trim() !== '' && Number.isFinite(Number(amount)) && Number(amount) > 0 && enteredCents > 0 && enteredCents < balanceCents && (
+                <p className="mt-2 rounded-lg border border-sky-400/35 bg-sky-500/10 p-2 text-xs text-sky-200" role="status">
+                  Μερική πληρωμή €{(enteredCents / 100).toFixed(2)}. Μετά την καταχώριση θα απομένουν €{((balanceCents - enteredCents) / 100).toFixed(2)}.
+                </p>
+              )}
               {willOverpay && Number(amount) > 0 && (
                 <p className="mt-2 rounded-lg border border-amber-400/35 bg-amber-500/10 p-2 text-xs text-amber-200">
                   Το ποσό υπερβαίνει το υπόλοιπο. Με την καταχώριση θα προκύψουν €{projectedCredit.toFixed(2)} επιπλέον εισπραχθέντα. Θα ζητηθεί επιβεβαίωση.
