@@ -312,6 +312,8 @@ const MainApp: React.FC = () => {
         odometer: data.odometer,
         new_damages: data.new_damages,
         additional_charges: data.additional_charges,
+        fuel_price: data.fuel_price,
+        fuel_waiver_reason: data.fuel_waiver_reason,
       });
 
       setCheckInReservation(null);
@@ -323,6 +325,8 @@ const MainApp: React.FC = () => {
         setCheckInError('Έχει ήδη πραγματοποιηθεί Check-In για αυτή την κράτηση.');
       } else if (message.includes('CHECKIN_DENIED:NO_CHECKOUT')) {
         setCheckInError('Δεν μπορεί να γίνει Check-In χωρίς προηγούμενο Check-Out.');
+      } else if (message.includes('CHECKIN_DENIED:FUEL_')) {
+        setCheckInError('Εκκρεμεί η τακτοποίηση καυσίμου. Ελέγξτε την τιμή ανά λίτρο και καταχωρίστε τη σωστή χρέωση ή αίτημα εξαίρεσης.');
       } else if (message.includes('CHECKIN_DENIED:MEASUREMENTS')) {
         setCheckInError('Ελέγξτε τη στάθμη καυσίμου και τα χιλιόμετρα του οχήματος.');
       } else if (message.includes('CHECKIN_DENIED:RESERVATION_STATUS') || message.includes('CHECKIN_DENIED:VEHICLE_STATUS')) {
