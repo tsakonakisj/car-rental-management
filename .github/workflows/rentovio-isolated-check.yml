@@ -10,6 +10,7 @@ on:
       - ".github/workflows/rentovio-isolated-check.yml"
       - "src/**"
       - "supabase/migrations/20261017*"
+      - "supabase/migrations/20261018*"
       - "tests/fixtures/**"
   workflow_dispatch:
 
