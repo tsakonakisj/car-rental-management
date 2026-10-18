@@ -932,6 +932,45 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                 </div>
               </div>
 
+              {(isOverduePickup(reservation) || isOverdueReturn(reservation)) && (
+                <div
+                  className="mb-4 rounded-xl border border-amber-400/40 bg-amber-500/10 p-3 sm:p-4"
+                  onClick={event => event.stopPropagation()}
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="flex items-center gap-2 text-sm font-semibold text-amber-200">
+                        <ExclamationTriangleIcon className="h-5 w-5 shrink-0" />
+                        {isOverduePickup(reservation) ? 'Εκπρόθεσμη παραλαβή — εκκρεμεί Check-Out' : 'Εκπρόθεσμη επιστροφή — εκκρεμεί Check-In'}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-amber-100/80">
+                        {isOverduePickup(reservation)
+                          ? 'Η προγραμματισμένη παραλαβή έχει παρέλθει. Ελέγξτε αν το όχημα παραδόθηκε και καταχωρίστε το Check-Out μόνο εφόσον έγινε η πραγματική παράδοση.'
+                          : 'Η προγραμματισμένη επιστροφή έχει παρέλθει. Ελέγξτε αν το όχημα επέστρεψε και καταχωρίστε το Check-In μόνο εφόσον έγινε η πραγματική παραλαβή.'}
+                      </p>
+                    </div>
+                    {isOverduePickup(reservation) ? (
+                      <button
+                        type="button"
+                        onClick={() => onCheckOut?.(reservation.id)}
+                        disabled={!onCheckOut}
+                        className="shrink-0 rounded-xl border border-amber-300/50 bg-amber-400/20 px-4 py-2.5 text-sm font-semibold text-amber-100 hover:bg-amber-400/30 disabled:opacity-40"
+                      >
+                        Μετάβαση σε Check-Out
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleCheckInClick(reservation)}
+                        className="shrink-0 rounded-xl border border-amber-300/50 bg-amber-400/20 px-4 py-2.5 text-sm font-semibold text-amber-100 hover:bg-amber-400/30"
+                      >
+                        Μετάβαση σε Check-In
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {(reservation.status === 'upcoming' || reservation.status === 'active') && (
                 <div className="flex items-stretch gap-2 border-t border-[#1e4e7d]/70 pt-4" onClick={(e) => e.stopPropagation()}>
                   {reservation.status === 'upcoming' && (
