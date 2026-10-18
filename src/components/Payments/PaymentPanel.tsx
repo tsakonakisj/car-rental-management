@@ -58,7 +58,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
 
   const handleSubmit = async (overpaymentConfirmed = false) => {
     const numAmount = Number(amount);
-    if (!Number.isFinite(numAmount) || numAmount <= 0 || !Number.isInteger(numAmount * 100 + 1e-8)) {
+    if (!Number.isFinite(numAmount) || numAmount <= 0 || Math.abs(numAmount * 100 - Math.round(numAmount * 100)) > 1e-6) {
       setError('Εισάγετε έγκυρο θετικό ποσό με έως δύο δεκαδικά ψηφία.');
       return;
     }
