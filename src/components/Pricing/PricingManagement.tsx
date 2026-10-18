@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { pricingService, vehicleService, insuranceService } from '../../lib/database';
 import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
 import type { Season, Pricing, Extra as ExtraType, Insurance as InsuranceType } from '../../types';
 import PageHero from '../Layout/PageHero';
 import {
@@ -39,30 +38,10 @@ const parseDateParts = (dateStr: string): { month: number; day: number } | null 
 const PricingManagement: React.FC = () => {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const [pricingRights, setPricingRights] = useState({ create: false, edit: false, delete: false });
-  const canCreate = user?.role === 'admin' || (user?.role === 'manager' && pricingRights.create);
-  const canEdit = user?.role === 'admin' || (user?.role === 'manager' && pricingRights.edit);
-  const canDelete = user?.role === 'admin' || (user?.role === 'manager' && pricingRights.delete);
-
-  useEffect(() => {
-    if (user?.role !== 'manager') {
-      setPricingRights({ create: false, edit: false, delete: false });
-      return;
-    }
-    let active = true;
-    setPricingRights({ create: false, edit: false, delete: false });
-    supabase.from('employee_permissions').select('permissions').eq('user_id', user.id).maybeSingle()
-      .then(({ data, error }) => {
-        if (!active || error) return;
-        const p = data?.permissions as { pricing?: { create?: boolean; edit?: boolean; delete?: boolean } } | undefined;
-        setPricingRights({
-          create: p?.pricing?.create === true,
-          edit: p?.pricing?.edit === true,
-          delete: p?.pricing?.delete === true,
-        });
-      });
-    return () => { active = false; };
-  }, [user?.id, user?.role]);
+  // Pricing configuration is immutable for employees, regardless of historical permission flags.
+  const canCreate = user?.role === 'admin';
+  const canEdit = user?.role === 'admin';
+  const canDelete = user?.role === 'admin';
 
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [pricing, setPricing] = useState<Pricing[]>([]);
