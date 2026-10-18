@@ -466,7 +466,7 @@ const CustomerManagement: React.FC<CustomerManagementProps> = ({ onViewReservati
 
       {/* Add / Edit Customer */}
       {customerFormMode && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 p-4">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 p-4" onMouseDown={event => { if (event.target === event.currentTarget && !savingCustomer) setCustomerFormMode(null); }}>
           <form onSubmit={saveCustomer} className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-[#2b5b85]/80 bg-[#071d38] p-6 text-white shadow-2xl">
             <div className="mb-5 flex items-center justify-between">
               <h2 className="text-lg font-semibold">{customerFormMode === 'create' ? 'Νέος Πελάτης' : 'Επεξεργασία Πελάτη'}</h2>
@@ -618,7 +618,7 @@ const CustomerManagement: React.FC<CustomerManagementProps> = ({ onViewReservati
       )}
 
       {mayDeleteCustomer && deleteConfirmOpen && deleteTarget && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#020b18]/90">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-[#020b18]/90" onMouseDown={event => { if (event.target === event.currentTarget && !deleting) { setDeleteConfirmOpen(false); setDeleteTarget(null); setDeleteConfirmText(''); setDeleteError(''); } }}>
           <div className="mx-4 w-full max-w-md rounded-2xl border border-red-400/30 bg-[#0b2949] p-6 shadow-[0_18px_45px_rgba(0,0,0,0.35)]">
             <div className="mb-4 flex items-center">
               <div className="flex h-10 w-10 items-center justify-center rounded-full border border-red-400/30 bg-red-500/15">
