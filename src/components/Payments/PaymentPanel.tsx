@@ -30,6 +30,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [confirmOverpayment, setConfirmOverpayment] = useState(false);
 
   const fetchPayments = useCallback(async () => {
     setLoading(true);
@@ -48,14 +49,24 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
   }, [fetchPayments]);
 
   const amountPaid = payments.filter(p => !p.voided_at).reduce((sum, p) => sum + p.amount, 0);
-  const remaining = Math.max(0, totalAmount - amountPaid);
+  const balanceCents = Math.round(totalAmount * 100) - Math.round(amountPaid * 100);
+  const remaining = Math.max(0, balanceCents) / 100;
+  const credit = Math.max(0, -balanceCents) / 100;
+  const enteredCents = Math.round(Number(amount) * 100);
+  const willOverpay = Number.isFinite(enteredCents) && enteredCents > balanceCents;
+  const projectedCredit = Math.max(0, enteredCents - balanceCents) / 100;
 
-  const handleSubmit = async () => {
-    const numAmount = parseFloat(amount);
-    if (!numAmount || numAmount <= 0) {
-      setError('Εισάγετε έγκυρο ποσό.');
+  const handleSubmit = async (overpaymentConfirmed = false) => {
+    const numAmount = Number(amount);
+    if (!Number.isFinite(numAmount) || numAmount <= 0 || !Number.isInteger(numAmount * 100 + 1e-8)) {
+      setError('Εισάγετε έγκυρο θετικό ποσό με έως δύο δεκαδικά ψηφία.');
       return;
     }
+    if (willOverpay && !overpaymentConfirmed) {
+      setConfirmOverpayment(true);
+      return;
+    }
+    setConfirmOverpayment(false);
     setSubmitting(true);
     setError('');
     try {
@@ -66,6 +77,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
         notes: notes.trim() || undefined,
       });
       setAmount('');
+      setConfirmOverpayment(false);
       setNotes('');
       setMethod('cash');
       setShowForm(false);
@@ -115,11 +127,12 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
             <p className="text-xs text-emerald-300/70 mb-1">Πληρωμένο</p>
             <p className="text-sm font-semibold text-emerald-300">€{amountPaid.toFixed(2)}</p>
           </div>
-          <div className={`rounded-lg border px-2 py-3 ${remaining > 0 ? 'bg-amber-500/10 border-amber-400/30' : 'bg-emerald-500/10 border-emerald-400/30'}`}>
-            <p className={`text-xs mb-1 ${remaining > 0 ? 'text-amber-300/70' : 'text-emerald-300/70'}`}>Υπόλοιπο</p>
-            <p className={`text-sm font-semibold ${remaining > 0 ? 'text-amber-300' : 'text-emerald-300'}`}>€{remaining.toFixed(2)}</p>
+          <div className={`rounded-lg border px-2 py-3 ${credit > 0 ? 'bg-sky-500/10 border-sky-400/30' : remaining > 0 ? 'bg-amber-500/10 border-amber-400/30' : 'bg-emerald-500/10 border-emerald-400/30'}`}>
+            <p className={`text-xs mb-1 ${credit > 0 ? 'text-sky-300/80' : remaining > 0 ? 'text-amber-300/70' : 'text-emerald-300/70'}`}>{credit > 0 ? 'Επιπλέον εισπραχθέντα' : 'Υπόλοιπο'}</p>
+            <p className={`text-sm font-semibold ${credit > 0 ? 'text-sky-300' : remaining > 0 ? 'text-amber-300' : 'text-emerald-300'}`}>€{(credit > 0 ? credit : remaining).toFixed(2)}</p>
           </div>
         </div>
+        {credit > 0 && <p className="text-xs leading-5 text-sky-200/85">Έχουν εισπραχθεί €{credit.toFixed(2)} περισσότερα από την αξία της κράτησης. Δεν έχει καταχωριστεί αυτόματα επιστροφή χρημάτων.</p>}
 
         {/* Payment history */}
         {loading ? (
@@ -183,6 +196,11 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
                 className="w-full rounded-lg border border-[#2b5b85]/80 bg-[#0b2949] px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
                 autoFocus
               />
+              {willOverpay && Number(amount) > 0 && (
+                <p className="mt-2 rounded-lg border border-amber-400/35 bg-amber-500/10 p-2 text-xs text-amber-200">
+                  Το ποσό υπερβαίνει το υπόλοιπο. Με την καταχώριση θα προκύψουν €{projectedCredit.toFixed(2)} επιπλέον εισπραχθέντα. Θα ζητηθεί επιβεβαίωση.
+                </p>
+              )}
               <div className="flex flex-wrap gap-2 mt-2">
                 <button
                   onClick={() => setQuickAmount(remaining)}
@@ -239,7 +257,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
                 Άκυρο
               </button>
               <button
-                onClick={handleSubmit}
+                onClick={() => handleSubmit()}
                 disabled={submitting || !amount}
                 className="inline-flex items-center rounded-lg border border-transparent bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
@@ -257,6 +275,28 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
           </button>
         )}
       </div>
+      {confirmOverpayment && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#020b18]/85 p-4 backdrop-blur-sm"
+          onMouseDown={e => { if (e.target === e.currentTarget && !submitting) setConfirmOverpayment(false); }}>
+          <section role="alertdialog" aria-modal="true" aria-labelledby="overpayment-confirm-title"
+            className="w-full max-w-md rounded-2xl border border-amber-400/30 bg-[#0b2949] p-6 text-white shadow-2xl">
+            <h2 id="overpayment-confirm-title" className="text-lg font-semibold">Επιβεβαίωση υπερπληρωμής</h2>
+            <p className="mt-3 text-sm leading-6 text-blue-100/85">
+              Το υπόλοιπο της κράτησης είναι €{remaining.toFixed(2)}.
+              Αν καταχωριστούν €{Number(amount).toFixed(2)}, θα υπάρχουν €{projectedCredit.toFixed(2)} επιπλέον εισπραχθέντα.
+            </p>
+            <p className="mt-2 text-xs text-amber-200">Η επιβεβαίωση καταγράφει είσπραξη, όχι επιστροφή χρημάτων.</p>
+            <div className="mt-5 flex justify-end gap-3">
+              <button type="button" disabled={submitting} onClick={() => setConfirmOverpayment(false)}
+                className="rounded-xl border border-[#2b5b85] px-4 py-2.5 text-sm font-medium text-blue-100">Διόρθωση ποσού</button>
+              <button type="button" disabled={submitting} onClick={() => handleSubmit(true)}
+                className="rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-40">
+                {submitting ? 'Καταχώριση...' : 'Καταχώριση παρ’ όλα αυτά'}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
       {voidTarget && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#020b18]/85 p-4 backdrop-blur-sm"
           onMouseDown={e => { if (e.target === e.currentTarget && !voidSubmitting) setVoidTarget(null); }}>
