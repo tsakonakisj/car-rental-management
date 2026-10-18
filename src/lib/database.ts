@@ -1121,6 +1121,33 @@ export interface CheckinDetails {
   checked_in_at: string;
 }
 
+export interface FuelWaiverRequest {
+  id: string;
+  reservation_id: string;
+  requested_at: string;
+  reason: string;
+  fuel_liters: number;
+  proposed_charge: number;
+  status: 'pending' | 'approved' | 'rejected';
+}
+export const fuelWaiverService = {
+  async listPending(): Promise<FuelWaiverRequest[]> {
+    if (isDemo) return [];
+    const { data, error } = await supabase!.from('fuel_waiver_requests')
+      .select('id,reservation_id,requested_at,reason,fuel_liters,proposed_charge,status')
+      .eq('status','pending').order('requested_at',{ascending:true});
+    if (error) throw error;
+    return (data || []).map(x => ({...x,fuel_liters:Number(x.fuel_liters),proposed_charge:Number(x.proposed_charge)}));
+  },
+  async review(id: string, approve: boolean, note: string): Promise<void> {
+    if (isDemo) return;
+    const { error } = await supabase!.rpc('review_fuel_waiver',{
+      p_request_id:id,p_approve:approve,p_admin_note:note.trim()
+    });
+    if (error) throw error;
+  }
+};
+
 // Checkins
 export const checkinService = {
   async complete(data: {
@@ -1129,9 +1156,11 @@ export const checkinService = {
     odometer: number;
     new_damages: Array<{ description: string; estimated_cost?: number }>;
     additional_charges: Array<{ type: string; amount: number; description: string }>;
+    fuel_price: number | null;
+    fuel_waiver_reason: string | null;
   }): Promise<void> {
     if (isDemo) return Promise.resolve();
-    const { error } = await supabase!.rpc('complete_vehicle_checkin', {
+    const { error } = await supabase!.rpc('complete_vehicle_checkin_v2', {
       p_reservation_id: data.reservation_id,
       p_fuel_level: data.fuel_level,
       p_odometer: data.odometer,
@@ -1142,6 +1171,8 @@ export const checkinService = {
       p_additional_charges: data.additional_charges.map(c => ({
         type: c.type, amount: c.amount, description: c.description,
       })),
+      p_fuel_price: data.fuel_price,
+      p_fuel_waiver_reason: data.fuel_waiver_reason,
     });
     if (error) throw error;
   },
