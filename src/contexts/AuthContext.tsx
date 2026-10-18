@@ -4,7 +4,7 @@ import { User } from '../types';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string, captchaToken?: string) => Promise<void>;
+  login: (identifier: string, password: string, captchaToken?: string) => Promise<void>;
   logout: () => Promise<void>;
   loading: boolean;
   isPasswordRecovery: boolean;
@@ -85,7 +85,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, []);
 
-  const login = async (email: string, password: string, captchaToken?: string) => {
+  const login = async (identifier: string, password: string, captchaToken?: string) => {
+    const trimmed = identifier.trim();
+    const email = trimmed.includes('@') ? trimmed : `${trimmed.toLowerCase()}@staff.rentovio.example.com`;
     const { data, error } = await supabase.auth.signInWithPassword({ email, password, options: captchaToken ? { captchaToken } : undefined });
 
     if (error) throw error;
