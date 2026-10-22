@@ -69,10 +69,10 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
   const [insurances, setInsurances] = useState<Insurance[]>([]);
   const [extrasList, setExtrasList] = useState<Extra[]>([]);
 
-  // Scroll to top when wizard opens
+  // Start each booking step at the top of the page.
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
+    window.scrollTo({ top: 0, behavior: 'auto' });
+  }, [currentStep]);
 
   // Load insurance and extras from DB on mount
   useEffect(() => {
