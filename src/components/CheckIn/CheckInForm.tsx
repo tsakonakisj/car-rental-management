@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { photoService, checkoutService } from '../../lib/database';
 import HandoverPayments from '../Payments/HandoverPayments';
@@ -58,6 +58,9 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
   const [remaining, setRemaining] = useState<number | null>(null);
   const [allowUnpaid, setAllowUnpaid] = useState(false);
   const [unpaidReason, setUnpaidReason] = useState('');
+  const [unpaidReasonError, setUnpaidReasonError] = useState(false);
+  const unpaidReasonRef = useRef<HTMLTextAreaElement>(null);
+  const fuelSectionRef = useRef<HTMLDivElement>(null);
   const [confirmation, setConfirmation] = useState<CheckInData | null>(null);
   const [checkInData, setCheckInData] = useState<CheckInData>(initialData || {
     fuel_level: 100,
@@ -245,8 +248,18 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
 
   const handleSubmit = () => {
     setFuelSettlementError('');
-    if (!initialData && (remaining === null || (remaining > 0 && (!allowUnpaid || unpaidReason.trim().length < 5)))) {
+    setUnpaidReasonError(false);
+    if (!initialData && remaining !== null && remaining > 0 && allowUnpaid && unpaidReason.trim().length < 5) {
+      setUnpaidReasonError(true);
+      requestAnimationFrame(() => {
+        unpaidReasonRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        unpaidReasonRef.current?.focus({ preventScroll: true });
+      });
+      return;
+    }
+    if (!initialData && (remaining === null || (remaining > 0 && !allowUnpaid))) {
       setFuelSettlementError('Καταχωρίστε την είσπραξη ή επιλέξτε επιστροφή με ανεξόφλητο υπόλοιπο και αιτιολογία.');
+      requestAnimationFrame(() => fuelSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
       return;
     }
     if (initialData && (!correctionReason || correctionReason.trim().length < 5)) {
@@ -369,7 +382,7 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
                 </div>
               )}
               {checkOutFuelLevel != null && checkInData.fuel_level < checkOutFuelLevel && vehicleFuelTankCapacity != null && (
-                <div className="mt-3 rounded-lg border border-[#1e4e7d]/70 bg-[#071d38]/90 px-4 py-3 space-y-3">
+                <div ref={fuelSectionRef} className="mt-3 rounded-lg border border-[#1e4e7d]/70 bg-[#071d38]/90 px-4 py-3 space-y-3">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-blue-100/65">Χωρητικότητα ρεζερβουάρ:</span>
                     <span className="font-medium text-white">{vehicleFuelTankCapacity} L</span>
@@ -716,9 +729,12 @@ const CheckInForm: React.FC<CheckInFormProps> = ({ reservationId, vehicleFuelTan
             onBalanceChange={setRemaining} />
           {remaining !== null && remaining > 0 && <div className="rounded-lg border border-amber-400/40 p-3 text-amber-100">
             <label><input type="checkbox" checked={allowUnpaid} onChange={e => setAllowUnpaid(e.target.checked)} /> Επιστροφή με ανεξόφλητο υπόλοιπο (εξαιρετική περίπτωση)</label>
-            {allowUnpaid && <textarea aria-label="Αιτιολογία ανεξόφλητης επιστροφής" maxLength={2000} value={unpaidReason}
-              onChange={e => setUnpaidReason(e.target.value)} placeholder="Υποχρεωτική αιτιολογία"
-              className="mt-2 w-full rounded bg-[#071d38] p-3 text-white" />}
+            {allowUnpaid && <>
+              <textarea ref={unpaidReasonRef} aria-label="Αιτιολογία ανεξόφλητης επιστροφής" aria-invalid={unpaidReasonError} maxLength={2000} value={unpaidReason}
+                onChange={e => { setUnpaidReason(e.target.value); if (e.target.value.trim().length >= 5) setUnpaidReasonError(false); }} placeholder="Υποχρεωτική αιτιολογία"
+                className="mt-2 w-full rounded bg-[#071d38] p-3 text-white" />
+              {unpaidReasonError && <p role="alert" className="mt-1 text-sm text-red-300">Η αιτιολογία πρέπει να περιέχει τουλάχιστον 5 χαρακτήρες.</p>}
+            </>}
           </div>}
         </div>}
         <div className="px-6 py-4 border-t border-[#1e4e7d]/70 flex justify-end space-x-3">
