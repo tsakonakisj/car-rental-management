@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { reservationService, customerService, stationService, vehicleService, pricingService, resolveDailyRate, insuranceService, reservationExtrasService, photoService, checkoutService, checkinService, hasVehicleBookingConflict } from '../../lib/database';
-import type { CheckoutDetails, CheckinDetails } from '../../lib/database';
+import { reservationService, customerService, stationService, vehicleService, pricingService, resolveDailyRate, insuranceService, reservationExtrasService, photoService, checkoutService, checkinService, reservationFinancialSummaryService, hasVehicleBookingConflict } from '../../lib/database';
+import type { CheckoutDetails, CheckinDetails, ReservationFinancialSummary } from '../../lib/database';
 import { useAuth } from '../../contexts/AuthContext';
 import {
   EyeIcon,
@@ -137,6 +137,8 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   const [reservations, setReservations] = useState<ReservationRow[]>([]);
+  const [financialSummaries, setFinancialSummaries] = useState<Record<string, ReservationFinancialSummary>>({});
+  const [financialsFailed, setFinancialsFailed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<string>(initialFilter || 'all');
@@ -204,6 +206,23 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
   useEffect(() => {
     stationService.getAll().then(setStations).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setFinancialSummaries({});
+    setFinancialsFailed(false);
+    const ids = reservations.map(r => r.id);
+    if (ids.length) {
+      const totals = Object.fromEntries(reservations.map(r => [r.id, Number(r.total_amount) || 0]));
+      reservationFinancialSummaryService.getMany(ids, totals).then(summaries => {
+        if (!cancelled) setFinancialSummaries(summaries);
+      }).catch(err => {
+        console.error('Failed to load reservation financial summaries:', err);
+        if (!cancelled) setFinancialsFailed(true);
+      });
+    }
+    return () => { cancelled = true; };
+  }, [reservations]);
 
   useEffect(() => {
     setFilter('all');
@@ -983,6 +1002,26 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                   <p className="text-xl font-bold text-emerald-300">{'\u20AC'}{Number(reservation.total_amount || 0).toFixed(2)}</p>
                 </div>
               </div>
+
+              {reservation.status === 'completed' && (
+                <div className="mb-4 rounded-xl border border-[#2b5b85]/70 bg-[#061a31]/60 p-3 text-sm">
+                  {financialSummaries[reservation.id] ? (
+                    <>
+                      <div className="flex justify-between gap-3 text-blue-100/75"><span>Συνολική οφειλή</span><span className="font-semibold text-white">€{financialSummaries[reservation.id].total.toFixed(2)}</span></div>
+                      <div className="mt-1 flex justify-between gap-3 text-blue-100/75"><span>Καθαρά εισπραχθέντα</span><span className="font-semibold text-emerald-300">€{financialSummaries[reservation.id].received.toFixed(2)}</span></div>
+                      {financialSummaries[reservation.id].balance > 0 && (
+                        <div className="mt-2 flex justify-between gap-3 font-semibold text-amber-300"><span>Ανεξόφλητο υπόλοιπο</span><span>€{financialSummaries[reservation.id].balance.toFixed(2)}</span></div>
+                      )}
+                      {financialSummaries[reservation.id].overpayment > 0 && (
+                        <div className="mt-2 flex justify-between gap-3 font-semibold text-blue-200"><span>Υπερπληρωμή</span><span>€{financialSummaries[reservation.id].overpayment.toFixed(2)}</span></div>
+                      )}
+                      {financialSummaries[reservation.id].balance === 0 && financialSummaries[reservation.id].overpayment === 0 && (
+                        <p className="mt-2 text-xs font-medium text-emerald-300">Εξοφλημένη</p>
+                      )}
+                    </>
+                  ) : <p className="text-xs text-blue-100/65">{financialsFailed ? 'Δεν ήταν δυνατή η φόρτωση οικονομικών στοιχείων.' : 'Φόρτωση οικονομικών στοιχείων…'}</p>}
+                </div>
+              )}
 
               {(isOverduePickup(reservation) || isOverdueReturn(reservation)) && (
                 <div
