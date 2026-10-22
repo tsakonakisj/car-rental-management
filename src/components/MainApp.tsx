@@ -164,6 +164,15 @@ const MainApp: React.FC = () => {
         setCheckoutAlert('Η κράτηση δεν βρέθηκε. Ανανεώστε τη λίστα και δοκιμάστε ξανά.');
         return;
       }
+      const customer = (reservation as any).customer;
+      if (!customer?.name?.trim() || !customer?.phone?.trim()) {
+        setCheckoutAlert('Συμπληρώστε ονοματεπώνυμο και τηλέφωνο πελάτη πριν το Check-Out.');
+        return;
+      }
+      if (!customer?.license_number?.trim() || customer.license_number.trim() === '-' || !customer?.birth_date) {
+        setCheckoutAlert('Συμπληρώστε αριθμό διπλώματος και ημερομηνία γέννησης πελάτη πριν το Check-Out.');
+        return;
+      }
       if (!(reservation as any).vehicle_id) {
         setCheckoutAlert('Δεν έχει επιλεγεί όχημα για αυτή την κράτηση.');
         return;
