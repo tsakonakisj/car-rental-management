@@ -891,6 +891,62 @@ export const paymentRefundService = {
   },
 };
 
+// Read-only financial summaries for reservation cards and other overview screens.
+// Amounts use cents to avoid floating-point balance drift.
+export interface ReservationFinancialSummary {
+  total: number;
+  received: number;
+  balance: number;
+  overpayment: number;
+}
+
+export const reservationFinancialSummaryService = {
+  async getMany(reservationIds: string[], totals: Record<string, number>): Promise<Record<string, ReservationFinancialSummary>> {
+    if (!reservationIds.length) return {};
+    if (isDemo) return Object.fromEntries(reservationIds.map(id => [id, {
+      total: totals[id] || 0, received: 0, balance: totals[id] || 0, overpayment: 0
+    }]));
+
+    const [paymentsResult, refundsResult, checkinsResult] = await Promise.all([
+      supabase!.from('payments').select('reservation_id,amount,voided_at').in('reservation_id', reservationIds),
+      supabase!.from('payment_refunds').select('reservation_id,amount').in('reservation_id', reservationIds),
+      supabase!.from('checkins').select('reservation_id,additional_charges,checked_in_at').in('reservation_id', reservationIds).is('voided_at', null).order('checked_in_at', { ascending: false }),
+    ]);
+    if (paymentsResult.error) throw paymentsResult.error;
+    if (refundsResult.error) throw refundsResult.error;
+    if (checkinsResult.error) throw checkinsResult.error;
+
+    const paid = new Map<string, number>();
+    const refunded = new Map<string, number>();
+    const charges = new Map<string, number>();
+    for (const p of paymentsResult.data || []) {
+      if (p.voided_at) continue;
+      paid.set(p.reservation_id, (paid.get(p.reservation_id) || 0) + Math.round(Number(p.amount) * 100));
+    }
+    for (const r of refundsResult.data || []) {
+      refunded.set(r.reservation_id, (refunded.get(r.reservation_id) || 0) + Math.round(Number(r.amount) * 100));
+    }
+    for (const c of checkinsResult.data || []) {
+      // Only the latest non-voided return contributes additional charges.
+      if (charges.has(c.reservation_id)) continue;
+      const extra = Array.isArray(c.additional_charges)
+        ? c.additional_charges.reduce((sum: number, item: { amount?: number }) => sum + Math.round(Number(item.amount || 0) * 100), 0)
+        : 0;
+      charges.set(c.reservation_id, extra);
+    }
+    return Object.fromEntries(reservationIds.map(id => {
+      const totalCents = Math.round(Number(totals[id] || 0) * 100) + (charges.get(id) || 0);
+      const receivedCents = (paid.get(id) || 0) - (refunded.get(id) || 0);
+      return [id, {
+        total: totalCents / 100,
+        received: receivedCents / 100,
+        balance: Math.max(0, totalCents - receivedCents) / 100,
+        overpayment: Math.max(0, receivedCents - totalCents) / 100,
+      }];
+    }));
+  },
+};
+
 // Payments
 export const paymentService = {
   async getByReservationId(reservationId: string): Promise<Payment[]> {
