@@ -256,6 +256,13 @@ const MainApp: React.FC = () => {
       const allReservations = await reservationService.getAll();
       const reservation = allReservations.find((r: any) => r.id === checkOutReservation);
       if (!reservation) throw new Error('Reservation not found');
+      const checkoutCustomer = (reservation as any).customer;
+      if (!checkoutCustomer?.name?.trim() || !checkoutCustomer?.phone?.trim() ||
+          !checkoutCustomer?.license_number?.trim() || checkoutCustomer.license_number.trim() === '-' ||
+          !checkoutCustomer?.birth_date) {
+        setCheckOutError('Πριν την παράδοση απαιτούνται ονοματεπώνυμο, τηλέφωνο, αριθμός διπλώματος και ημερομηνία γέννησης.');
+        return;
+      }
       if (!reservation.vehicle_id) {
         setCheckOutError('Δεν έχει επιλεγεί όχημα για αυτή την κράτηση.');
         return;
