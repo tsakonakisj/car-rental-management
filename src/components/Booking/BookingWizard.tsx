@@ -58,7 +58,7 @@ interface BookingData {
 }
 
 interface BookingWizardProps {
-  onComplete?: () => void;
+  onComplete?: (reservationId: string) => void;
 }
 
 const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
@@ -317,7 +317,7 @@ const BookingWizard: React.FC<BookingWizardProps> = ({ onComplete }) => {
         });
       }
 
-      onComplete?.();
+      onComplete?.(reservation.id);
     } catch (error: any) {
       console.error('Booking creation failed:', error);
       const msg = error?.message || error?.error_description || JSON.stringify(error);
