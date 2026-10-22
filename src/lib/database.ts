@@ -133,7 +133,7 @@ export const customerService = {
 
     const { data, error } = await supabase!
       .from('customers')
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update({ ...updates, ...(updates.birth_date === '' ? { birth_date: null } : {}), updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
       .single();
