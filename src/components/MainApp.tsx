@@ -107,6 +107,16 @@ const MainApp: React.FC = () => {
   const [fleetInitialFilter, setFleetInitialFilter] = useState<'active' | 'inactive' | 'all'>('active');
   const [fleetEditVehicleId, setFleetEditVehicleId] = useState<string | null>(null);
   const [viewReservationId, setViewReservationId] = useState<string | null>(null);
+  const [bookingsResetKey, setBookingsResetKey] = useState(0);
+
+  const handleSidebarTab = (tab: string) => {
+    if (tab === 'bookings') {
+      setViewReservationId(null);
+      setReservationsInitialFilter('all');
+      setBookingsResetKey(prev => prev + 1);
+    }
+    setActiveTab(tab);
+  };
 
   const toggleMobileSidebar = useCallback(() => {
     setMobileSidebarOpen(prev => !prev);
@@ -496,8 +506,11 @@ const MainApp: React.FC = () => {
         <Header />
         <div className="py-4 sm:py-8">
           <BookingWizard
-            onComplete={() => {
+            onComplete={(reservationId) => {
               setShowBookingWizard(false);
+              setViewReservationId(reservationId);
+              setReservationsInitialFilter('all');
+              setBookingsResetKey(prev => prev + 1);
               setActiveTab('bookings');
               setReservationRefresh(prev => prev + 1);
             }}
@@ -539,6 +552,7 @@ const MainApp: React.FC = () => {
               refreshTrigger={reservationRefresh}
               initialFilter={reservationsInitialFilter}
               initialViewReservationId={viewReservationId}
+              resetKey={bookingsResetKey}
             />
           </div>
         );
@@ -565,7 +579,7 @@ const MainApp: React.FC = () => {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar
           activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          setActiveTab={handleSidebarTab}
           mobileOpen={mobileSidebarOpen}
           onCloseMobile={closeMobileSidebar}
           previewRole={user?.role === 'admin' ? previewRole : undefined}
