@@ -567,16 +567,15 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
       });
       await reservationExtrasService.replaceForReservation(viewReservation.id, extrasToSave);
 
+      const allRes = await reservationService.getAll();
+      const refreshedReservations = allRes as ReservationRow[];
+      const fresh = refreshedReservations.find(r => r.id === viewReservation.id);
+      setReservations(refreshedReservations);
       setEditing(false);
       setEditForm(null);
-      setViewReservation(null);
-      await fetchReservations();
+      if (fresh) setViewReservation(fresh);
       if (contractMode) {
-        const allRes = await reservationService.getAll();
-        const fresh = (allRes as ReservationRow[]).find(r => r.id === viewReservation.id);
-        if (fresh) {
-          setContractGenReservation(fresh);
-        }
+        if (fresh) setContractGenReservation(fresh);
         setContractMode(false);
       }
     } catch (err) {
