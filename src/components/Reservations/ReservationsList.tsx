@@ -866,7 +866,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
         <div className="border-b border-white/10 px-4 py-4">
           <h2 className="text-base font-semibold text-white">Λίστα κρατήσεων</h2>
           <p className="mt-2 text-xs text-blue-100/55">Σύρετε οριζόντια για όλες τις στήλες και τις ενέργειες.</p>
-          <p className="mt-1 text-xs text-blue-100/55">{filteredReservations.length} από {reservations.length} κρατήσεις · Επιλέξτε πελάτη για λεπτομέρειες</p>
+          <p className="mt-1 text-xs text-blue-100/55">{filteredReservations.length} από {reservations.length} κρατήσεις · Επιλέξτε γραμμή για λεπτομέρειες</p>
         </div>
         <div role="region" aria-label="Πίνακας κρατήσεων" tabIndex={0} className="relative min-w-0 max-w-full overflow-x-auto rounded-b-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#55a8ff]">
           <table className="w-full min-w-[1050px] table-fixed text-left text-xs">
@@ -886,7 +886,21 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
             <tbody className="divide-y divide-white/10">
               {filteredReservations.map((reservation, index) => (
                 <React.Fragment key={reservation.id}>
-                  <tr className="align-middle transition-colors hover:bg-blue-400/5">
+                  <tr
+                    tabIndex={0}
+                    onClick={(event) => {
+                      if ((event.target as Element).closest('button, a, input, select, textarea, summary')) return;
+                      setViewReservation(reservation);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.target !== event.currentTarget) return;
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        setViewReservation(reservation);
+                      }
+                    }}
+                    className="cursor-pointer align-middle transition-colors hover:bg-blue-400/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#55a8ff]"
+                  >
                     <td className="break-words px-4 py-3 font-mono text-blue-100/65">#{reservation.id.substring(0, 8).toUpperCase()}</td>
                     <td className="px-3 py-3">
                       <button type="button" onClick={() => setViewReservation(reservation)} className="flex w-full items-center gap-2 rounded-lg text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#55a8ff]">
