@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase, isDemoMode } from '../../lib/supabase';
-import { checkinService, fuelWaiverService } from '../../lib/database';
+import { reservationFinancialSummaryService, fuelWaiverService } from '../../lib/database';
 import type { FuelWaiverRequest } from '../../lib/database';
 import { useAuth } from '../../contexts/AuthContext';
 import PageHero from '../Layout/PageHero';
@@ -10,18 +10,33 @@ import {
   TruckIcon,
   ArrowPathIcon,
   CheckCircleIcon,
-  ClockIcon,
   ExclamationTriangleIcon,
-  XMarkIcon,
   PlusIcon,
   ChevronDownIcon,
-  WrenchScrewdriverIcon
 } from '@heroicons/react/24/outline';
 
 interface SourceStat {
   source: string;
   count: number;
-  revenue: number;
+}
+
+interface DashboardReservation {
+  id: string;
+  status: string;
+  total_amount?: number;
+  pickup_date: string | null;
+  return_date: string | null;
+  customer: { name: string; source: string } | null;
+  vehicle: { plate: string; brand: string; model: string } | null;
+  pickup_station: { name: string } | null;
+  return_station: { name: string } | null;
+}
+
+interface FinancialOverview {
+  userId: string;
+  netReceived: number;
+  bookingValue: number;
+  outstanding: number;
 }
 
 interface StatusStat {
@@ -35,6 +50,9 @@ interface FleetStat {
   active: number;
   service: number;
   total: number;
+  rented: number;
+  inactive: number;
+  other: number;
 }
 
 interface TodayEntry {
@@ -147,61 +165,72 @@ const SOURCE_LABELS: Record<string, string> = {
   'other': 'Άλλο'
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  'upcoming': 'Επερχόμενες',
-  'active': 'Ενεργές',
-  'completed': 'Ολοκληρωμένες',
-  'cancelled': 'Ακυρωμένες'
-};
-
 type DashboardCardTheme = {
   icon: string;
   iconBackground: string;
 };
 
-const STATUS_CARD_THEMES: Record<string, DashboardCardTheme> = {
+const KPI_THEMES: Record<string, DashboardCardTheme> = {
   upcoming: { icon: 'text-blue-200', iconBackground: 'bg-blue-500/25 ring-blue-400/20' },
   active: { icon: 'text-emerald-200', iconBackground: 'bg-emerald-500/25 ring-emerald-400/20' },
-  completed: { icon: 'text-slate-200', iconBackground: 'bg-slate-500/30 ring-slate-400/20' },
-  cancelled: { icon: 'text-rose-200', iconBackground: 'bg-rose-500/25 ring-rose-400/20' },
+  available: { icon: 'text-slate-200', iconBackground: 'bg-slate-500/30 ring-slate-400/20' },
+  pending: { icon: 'text-amber-200', iconBackground: 'bg-amber-500/25 ring-amber-400/20' },
 };
 
-const FLEET_CARD_THEMES: Record<string, DashboardCardTheme> = {
-  total: { icon: 'text-slate-200', iconBackground: 'bg-slate-500/30 ring-slate-400/20' },
-  available: { icon: 'text-emerald-200', iconBackground: 'bg-emerald-500/25 ring-emerald-400/20' },
-  reserved: { icon: 'text-amber-200', iconBackground: 'bg-amber-500/25 ring-amber-400/20' },
-  active: { icon: 'text-blue-200', iconBackground: 'bg-blue-500/25 ring-blue-400/20' },
-  service: { icon: 'text-rose-200', iconBackground: 'bg-rose-500/25 ring-rose-400/20' },
-};
+const currency = new Intl.NumberFormat('el-GR', { style: 'currency', currency: 'EUR' });
 
 interface DashboardMetricCardProps {
   title: string;
   value: number;
+  description: string;
   icon: React.ComponentType<{ className?: string }>;
   theme: DashboardCardTheme;
-  badge?: string;
-  showTitle?: boolean;
   onClick?: () => void;
 }
 
-const DashboardMetricCard: React.FC<DashboardMetricCardProps> = ({ title, value, icon: Icon, theme, badge, showTitle = true, onClick }) => {
+const DashboardMetricCard: React.FC<DashboardMetricCardProps> = ({ title, value, description, icon: Icon, theme, onClick }) => {
   const content = (
-    <div className="flex items-start gap-3 sm:gap-4">
-      <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl ring-1 ring-inset ${theme.iconBackground}`}>
-        <Icon className={`h-7 w-7 ${theme.icon}`} />
+    <div className="flex items-start gap-3">
+      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset ${theme.iconBackground}`}>
+        <Icon className={`h-6 w-6 ${theme.icon}`} />
       </div>
-      <div className="min-w-0 pt-0.5">
-        <p className="text-sm font-medium leading-5 text-slate-300">
-          {showTitle ? title : (badge || title)}
-        </p>
-        <p className="mt-2 text-3xl font-semibold leading-none tabular-nums tracking-tight text-white">{value}</p>
+      <div className="min-w-0">
+        <p className="text-xs font-medium leading-4 text-slate-300">{title}</p>
+        <p className="mt-1 text-[1.75rem] font-semibold leading-none tabular-nums tracking-tight text-white">{value}</p>
+        <p className="mt-1.5 text-xs leading-4 text-slate-400">{description}</p>
       </div>
     </div>
   );
-
-  const className = `min-h-[128px] rounded-2xl border border-slate-400/15 bg-[#0b223b] p-4 sm:p-5 shadow-sm transition-colors ${onClick ? 'cursor-pointer hover:border-slate-400/30 hover:bg-[#102b47] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#061a35]' : ''}`;
-
+  const className = `min-h-[100px] rounded-xl border border-slate-400/15 bg-[#0b223b] p-4 shadow-sm transition-colors ${onClick ? 'cursor-pointer hover:border-slate-400/30 hover:bg-[#102b47] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#061a35]' : ''}`;
   return onClick ? <button type="button" onClick={onClick} className={`${className} w-full text-left`}>{content}</button> : <div className={className}>{content}</div>;
+};
+
+interface FleetSegment {
+  label: string;
+  count: number;
+  color: string;
+}
+
+// Each vehicle contributes to exactly one segment, including inactive vehicles.
+const FleetDonut: React.FC<{ segments: FleetSegment[]; total: number }> = ({ segments, total }) => {
+  let offset = 0;
+  return (
+    <div className="relative mx-auto h-44 w-44 shrink-0">
+      <svg viewBox="0 0 160 160" role="img" aria-label={`Κατάσταση ${total} οχημάτων: ${segments.map(segment => `${segment.label} ${segment.count}`).join(', ')}`} className="h-full w-full -rotate-90">
+        <circle cx="80" cy="80" r="64" fill="none" stroke="#1e344e" strokeWidth="14" />
+        {total > 0 && segments.map(segment => {
+          const percentage = segment.count / total * 100;
+          const start = offset;
+          offset += percentage;
+          return segment.count > 0 ? <circle key={segment.label} cx="80" cy="80" r="64" fill="none" stroke={segment.color} strokeWidth="14" pathLength="100" strokeDasharray={`${percentage} ${100 - percentage}`} strokeDashoffset={-start} /> : null;
+        })}
+      </svg>
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-3xl font-semibold tabular-nums text-white">{total}</span>
+        <span className="mt-1 text-xs text-slate-400">Οχήματα</span>
+      </div>
+    </div>
+  );
 };
 
 interface DashboardPageProps {
@@ -213,6 +242,13 @@ interface DashboardPageProps {
 
 const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, onNavigateFleet, onNavigateVehicle, onNewBooking }) => {
   const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+  const userId = user?.id;
+  const requestVersion = useRef(0);
+  const pendingTasksRef = useRef<HTMLDivElement>(null);
+  const [financials, setFinancials] = useState<FinancialOverview | null>(null);
+  const [financialError, setFinancialError] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [pendingFuelWaivers, setPendingFuelWaivers] = useState<FuelWaiverRequest[]>([]);
   const [reviewTarget, setReviewTarget] = useState<FuelWaiverRequest | null>(null);
   const [reviewApprove, setReviewApprove] = useState(false);
@@ -222,7 +258,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
   const [loading, setLoading] = useState(true);
   const [sourceStats, setSourceStats] = useState<SourceStat[]>([]);
   const [statusStats, setStatusStats] = useState<StatusStat[]>([]);
-  const [fleetStats, setFleetStats] = useState<FleetStat>({ available: 0, reserved: 0, active: 0, service: 0, total: 0 });
+  const [fleetStats, setFleetStats] = useState<FleetStat>({ available: 0, reserved: 0, active: 0, service: 0, total: 0, rented: 0, inactive: 0, other: 0 });
   const [todayPickups, setTodayPickups] = useState<TodayEntry[]>([]);
   const [todayReturns, setTodayReturns] = useState<TodayEntry[]>([]);
   const [vehicleAlertGroups, setVehicleAlertGroups] = useState<VehicleAlertGroup[]>([]);
@@ -235,9 +271,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
       return;
     }
 
+    const version = ++requestVersion.current;
     setLoading(true);
+    setLoadError(false);
+    setFinancials(null);
+    setFinancialError(false);
     try {
-      if (user?.role === 'admin') {
+      if (isAdmin) {
         const pending = await fuelWaiverService.listPending();
         setPendingFuelWaivers(pending);
       } else {
@@ -249,21 +289,21 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
       const { data: reservations, error: resError } = await supabase
         .from('reservations')
         .select(`
-          id, status, total_amount, pickup_date, return_date,
+          id, status, ${isAdmin ? 'total_amount,' : ''} pickup_date, return_date,
           customer:customers!reservations_customer_id_fkey(name, source),
           vehicle:vehicles!reservations_vehicle_id_fkey(plate, brand, model),
           pickup_station:stations!reservations_pickup_station_id_fkey(name),
           return_station:stations!reservations_return_station_id_fkey(name)
         `);
 
-      if (resError) {
-        console.error('Reservations query error:', resError);
-      }
+      if (resError) throw resError;
+      const reservationRows = (reservations || []) as unknown as DashboardReservation[];
 
       // Fetch vehicles
-      const { data: vehicles } = await supabase
+      const { data: vehicles, error: vehiclesError } = await supabase
         .from('vehicles')
         .select('id, plate, brand, model, status, insurance_expiry, inspection_expiry, odometer, next_service_date, next_service_odometer');
+      if (vehiclesError) throw vehiclesError;
 
       // Fetch service-reminder thresholds from settings (default 30 days / 1000 km)
       let serviceWarningDays = DEFAULT_SERVICE_WARNING_DAYS;
@@ -279,28 +319,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
         if (typeof v.warning_km === 'number' && v.warning_km > 0) serviceWarningKm = v.warning_km;
       }
 
-      // Fetch additional charges from checkins
-      const reservationIds = (reservations || []).map((r: any) => r.id).filter(Boolean);
-      const chargesMap = await checkinService.getAdditionalChargesByReservationIds(reservationIds);
-
-      // Process source stats
-      const sourceMap = new Map<string, { count: number; revenue: number }>();
-      (reservations || []).forEach((r: any) => {
+      // Source counts are operational data; financial queries run only for Admin.
+      const sourceMap = new Map<string, number>();
+      reservationRows.forEach((r) => {
         const source = r.customer?.source || 'other';
-        const existing = sourceMap.get(source) || { count: 0, revenue: 0 };
-        existing.count += 1;
-        existing.revenue += (Number(r.total_amount) || 0) + (chargesMap.get(r.id) || 0);
-        sourceMap.set(source, existing);
+        sourceMap.set(source, (sourceMap.get(source) || 0) + 1);
       });
-      const sourceData: SourceStat[] = Array.from(sourceMap.entries()).map(([source, data]) => ({
-        source,
-        ...data
-      }));
-      setSourceStats(sourceData);
+      if (version !== requestVersion.current) return;
+      setSourceStats(Array.from(sourceMap, ([source, count]) => ({ source, count })));
 
       // Process status stats
       const statusMap = new Map<string, number>();
-      (reservations || []).forEach((r: any) => {
+      reservationRows.forEach((r) => {
         statusMap.set(r.status, (statusMap.get(r.status) || 0) + 1);
       });
       const statusData: StatusStat[] = ['upcoming', 'active', 'completed', 'cancelled'].map(status => ({
@@ -310,13 +340,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
       setStatusStats(statusData);
 
       // Process fleet stats
-      const fleet: FleetStat = { available: 0, reserved: 0, active: 0, service: 0, total: 0 };
+      const fleet: FleetStat = { available: 0, reserved: 0, active: 0, service: 0, total: 0, rented: 0, inactive: 0, other: 0 };
       const alerts: VehicleAlert[] = [];
-      (vehicles || []).forEach((v: any) => {
+      (vehicles || []).forEach((v) => {
         fleet.total += 1;
         if (v.status === 'available') fleet.available += 1;
         else if (v.status === 'reserved') fleet.reserved += 1;
         else if (v.status === 'service') fleet.service += 1;
+        else if (v.status === 'rented') fleet.rented += 1;
+        else if (v.status === 'inactive') fleet.inactive += 1;
+        else fleet.other += 1;
 
         if (v.status === 'inactive') return;
         if (v.insurance_expiry) {
@@ -422,9 +455,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
       setFleetStats(fleet);
 
       // Today's pickups
-      const pickups: TodayEntry[] = (reservations || [])
-        .filter((r: any) => r.pickup_date && r.pickup_date.startsWith(today) && r.status !== 'cancelled')
-        .map((r: any) => ({
+      const pickups: TodayEntry[] = reservationRows
+        .filter((r) => r.pickup_date && r.pickup_date.startsWith(today) && r.status !== 'cancelled')
+        .map((r) => ({
           id: r.id,
           customerName: r.customer?.name || '-',
           vehicleLabel: r.vehicle ? `${r.vehicle.plate} ${r.vehicle.brand} ${r.vehicle.model}` : '-',
@@ -434,9 +467,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
       setTodayPickups(pickups);
 
       // Today's returns
-      const returns: TodayEntry[] = (reservations || [])
-        .filter((r: any) => r.return_date && r.return_date.startsWith(today) && r.status !== 'cancelled')
-        .map((r: any) => ({
+      const returns: TodayEntry[] = reservationRows
+        .filter((r) => r.return_date && r.return_date.startsWith(today) && r.status !== 'cancelled')
+        .map((r) => ({
           id: r.id,
           customerName: r.customer?.name || '-',
           vehicleLabel: r.vehicle ? `${r.vehicle.plate} ${r.vehicle.brand} ${r.vehicle.model}` : '-',
@@ -444,15 +477,49 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
           station: r.return_station?.name || '-'
         }));
       setTodayReturns(returns);
+
+      if (isAdmin && userId) {
+        try {
+          // Reuse receipt/refund/void handling and the latest valid check-in charges.
+          // Batch IDs to keep the existing service queries within URL-size limits.
+          let netReceivedCents = 0;
+          let bookingValueCents = 0;
+          let outstandingCents = 0;
+          for (let start = 0; start < reservationRows.length; start += 100) {
+            const batch = reservationRows.slice(start, start + 100);
+            const summaries = await reservationFinancialSummaryService.getMany(
+              batch.map(row => row.id),
+              Object.fromEntries(batch.map(row => [row.id, Number(row.total_amount) || 0])),
+            );
+            if (version !== requestVersion.current) return;
+            for (const row of batch) {
+              const summary = summaries[row.id];
+              netReceivedCents += Math.round(summary.received * 100);
+              if (row.status !== 'cancelled') {
+                bookingValueCents += Math.round(summary.total * 100);
+                outstandingCents += Math.round(summary.balance * 100);
+              }
+            }
+          }
+          if (version === requestVersion.current) setFinancials({
+            userId, netReceived: netReceivedCents / 100,
+            bookingValue: bookingValueCents / 100, outstanding: outstandingCents / 100,
+          });
+        } catch (err) {
+          console.error('Dashboard financial summary failed:', err);
+          if (version === requestVersion.current) setFinancialError(true);
+        }
+      }
     } catch (err) {
       console.error('Dashboard load failed:', err);
+      if (version === requestVersion.current) setLoadError(true);
     } finally {
-      setLoading(false);
+      if (version === requestVersion.current) setLoading(false);
     }
-  }, [user?.role]);
+  }, [isAdmin, userId]);
 
   const completeFuelReview = async () => {
-    if (!reviewTarget || reviewNote.trim().length < 5 || reviewSaving) return;
+    if (!isAdmin || !reviewTarget || reviewNote.trim().length < 5 || reviewSaving) return;
     setReviewSaving(true);
     setReviewError('');
     try {
@@ -471,6 +538,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
 
   useEffect(() => {
     fetchDashboard();
+    return () => { requestVersion.current += 1; };
   }, [fetchDashboard]);
 
   if (loading) {
@@ -487,7 +555,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
       <div className="space-y-6">
         <PageHero
           title="Κεντρικό Ταμπλό"
-          subtitle="Επισκόπηση κρατήσεων, στόλου και εσόδων"
+          subtitle="Επισκόπηση κρατήσεων και στόλου"
         />
         <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/85 py-12 text-center shadow-[0_16px_40px_rgba(0,0,0,0.2)]">
           <p className="text-blue-100/45">Το ταμπλό χρειάζεται σύνδεση βάσης δεδομένων.</p>
@@ -497,14 +565,24 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
   }
 
   const totalReservations = statusStats.reduce((s, st) => s + st.count, 0);
-  const totalRevenue = sourceStats.reduce((s, st) => s + st.revenue, 0);
+  const statusCount = (status: string) => statusStats.find(stat => stat.status === status)?.count || 0;
+  const pendingCount = vehicleAlertGroups.length + (isAdmin ? pendingFuelWaivers.length : 0);
+  const visibleFinancials = isAdmin && financials?.userId === user?.id ? financials : null;
+  const fleetSegments: FleetSegment[] = [
+    { label: 'Διαθέσιμα', count: fleetStats.available, color: '#34d399' },
+    { label: 'Νοικιασμένα', count: fleetStats.rented, color: '#6380ff' },
+    { label: 'Κρατημένα', count: fleetStats.reserved, color: '#fbbf24' },
+    { label: 'Συντήρηση', count: fleetStats.service, color: '#fb7185' },
+    { label: 'Ανενεργά', count: fleetStats.inactive, color: '#64748b' },
+    { label: 'Λοιπά', count: fleetStats.other, color: '#94a3b8' },
+  ];
 
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-4 border-b border-[#2b5b85]/50 pb-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-[-0.03em] text-white sm:text-3xl">Κεντρικό Ταμπλό</h1>
-          <p className="mt-1 text-sm text-blue-100/70">Επισκόπηση κρατήσεων, στόλου και εσόδων</p>
+          <p className="mt-1 text-sm text-blue-100/70">Επισκόπηση κρατήσεων και στόλου</p>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-3">
             <button
@@ -526,40 +604,73 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
         </div>
       </div>
 
-      {/* Reservation Status Overview */}
-      <div>
-        <h2 className="mb-4 text-lg font-semibold tracking-[-0.02em] text-white">Κατάσταση Κρατήσεων</h2>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {statusStats.map((st) => {
-            const statusIcon = st.status === 'upcoming' ? ClockIcon : st.status === 'active' ? CheckCircleIcon : st.status === 'completed' ? CalendarDaysIcon : XMarkIcon;
-            return (
-              <DashboardMetricCard
-                key={st.status}
-                title={STATUS_LABELS[st.status] || st.status}
-                value={st.count}
-                icon={statusIcon}
-                theme={STATUS_CARD_THEMES[st.status] || STATUS_CARD_THEMES.completed}
-                badge={STATUS_LABELS[st.status] || st.status}
-                showTitle={false}
-                onClick={() => onNavigateReservations?.(st.status)}
-              />
-            );
-          })}
+      {loadError && (
+        <div role="alert" className="rounded-xl border border-rose-400/30 bg-rose-500/10 p-4 text-sm text-rose-200">
+          Δεν φορτώθηκαν τα στοιχεία του ταμπλό. Πατήστε Ανανέωση για να δοκιμάσετε ξανά.
         </div>
+      )}
+
+      {!loadError && <>
+      {/* Four compact operational KPIs */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <DashboardMetricCard title="Επερχόμενες Κρατήσεις" value={statusCount('upcoming')} description="Προγραμματισμένες" icon={CalendarDaysIcon} theme={KPI_THEMES.upcoming} onClick={onNavigateReservations ? () => onNavigateReservations('upcoming') : undefined} />
+        <DashboardMetricCard title="Ενεργές Ενοικιάσεις" value={fleetStats.active} description="Σε εξέλιξη τώρα" icon={CheckCircleIcon} theme={KPI_THEMES.active} onClick={onNavigateReservations ? () => onNavigateReservations('active') : undefined} />
+        <DashboardMetricCard title="Διαθέσιμα Οχήματα" value={fleetStats.available} description={`Από ${fleetStats.total} οχήματα στόλου`} icon={TruckIcon} theme={KPI_THEMES.available} onClick={onNavigateFleet} />
+        <DashboardMetricCard title="Εκκρεμότητες" value={pendingCount} description={isAdmin ? `${vehicleAlertGroups.length} οχήματα · ${pendingFuelWaivers.length} αιτήματα` : 'Οχήματα με ειδοποιήσεις'} icon={ExclamationTriangleIcon} theme={KPI_THEMES.pending} onClick={pendingCount > 0 ? () => { setAlertsOpen(true); setShowAllAlerts(false); pendingTasksRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } : undefined} />
       </div>
 
-      {/* Fleet Availability */}
-      <div>
-        <h2 className="mb-4 text-lg font-semibold tracking-[-0.02em] text-white">Στόλος</h2>
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-          <DashboardMetricCard title="Σύνολο" value={fleetStats.total} icon={TruckIcon} theme={FLEET_CARD_THEMES.total} badge="Σύνολο" showTitle={false} onClick={() => onNavigateFleet?.()} />
-          <DashboardMetricCard title="Διαθέσιμα" value={fleetStats.available} icon={TruckIcon} theme={FLEET_CARD_THEMES.available} badge="Διαθέσιμα" showTitle={false} onClick={() => onNavigateFleet?.()} />
-          <DashboardMetricCard title="Κρατημένα" value={fleetStats.reserved} icon={ClockIcon} theme={FLEET_CARD_THEMES.reserved} badge="Κρατημένα" showTitle={false} onClick={() => onNavigateFleet?.()} />
-          <DashboardMetricCard title="Ενεργά" value={fleetStats.active} icon={TruckIcon} theme={FLEET_CARD_THEMES.active} badge="Ενεργά" showTitle={false} onClick={() => onNavigateReservations?.('active')} />
-          <DashboardMetricCard title="Συντήρηση" value={fleetStats.service} icon={WrenchScrewdriverIcon} theme={FLEET_CARD_THEMES.service} badge="Συντήρηση" showTitle={false} onClick={() => onNavigateFleet?.()} />
-        </div>
+      <div className={`grid grid-cols-1 gap-5 ${isAdmin ? 'lg:grid-cols-2' : ''}`}>
+        {isAdmin && (
+          <section aria-labelledby="dashboard-financial-title" className="min-w-0 rounded-2xl border border-slate-400/15 bg-[#0b223b] p-5">
+            <div className="flex items-center justify-between gap-3">
+              <h2 id="dashboard-financial-title" className="text-base font-semibold text-white">Οικονομική Επισκόπηση</h2>
+              <CurrencyEuroIcon className="h-5 w-5 shrink-0 text-blue-300" />
+            </div>
+            <p className="mt-1 text-xs text-slate-400">Σύνολο καταχωρισμένων συναλλαγών · Μόνο Admin</p>
+            {financialError ? (
+              <p role="alert" className="mt-6 text-sm text-amber-200">Τα οικονομικά στοιχεία δεν είναι διαθέσιμα. Πατήστε Ανανέωση.</p>
+            ) : visibleFinancials ? (
+              <>
+                <p className="mt-6 text-sm text-slate-300">Καθαρές εισπράξεις</p>
+                <p className="mt-2 break-words text-3xl font-semibold tabular-nums tracking-tight text-white">{currency.format(visibleFinancials.netReceived)}</p>
+                <p className="mt-2 text-xs leading-5 text-slate-400">Έγκυρες πληρωμές μείον επιστροφές χρημάτων.</p>
+                <dl className="mt-6 grid grid-cols-1 gap-4 border-t border-slate-400/15 pt-4 sm:grid-cols-2">
+                  <div>
+                    <dt className="text-xs text-slate-400">Αξία κρατήσεων</dt>
+                    <dd className="mt-1 break-words text-lg font-semibold tabular-nums text-blue-100">{currency.format(visibleFinancials.bookingValue)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-slate-400">Ανεξόφλητα υπόλοιπα</dt>
+                    <dd className="mt-1 break-words text-lg font-semibold tabular-nums text-amber-200">{currency.format(visibleFinancials.outstanding)}</dd>
+                  </div>
+                </dl>
+                <p className="mt-3 text-xs leading-5 text-slate-400">Αξία και υπόλοιπα χωρίς ακυρωμένες κρατήσεις, με τις ισχύουσες πρόσθετες χρεώσεις.</p>
+              </>
+            ) : <p role="status" className="mt-6 text-sm text-slate-400">Φόρτωση οικονομικών στοιχείων...</p>}
+          </section>
+        )}
+        <section aria-labelledby="dashboard-fleet-title" className="min-w-0 rounded-2xl border border-slate-400/15 bg-[#0b223b] p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="dashboard-fleet-title" className="text-base font-semibold text-white">Κατάσταση Στόλου</h2>
+            {onNavigateFleet && <button type="button" onClick={onNavigateFleet} className="text-xs font-medium text-blue-300 hover:text-blue-100">Προβολή στόλου →</button>}
+          </div>
+          <p className="mt-1 text-xs text-slate-400">Τρέχουσα κατάσταση όλων των οχημάτων</p>
+          <div className="mt-5 flex flex-col items-stretch gap-5 sm:flex-row sm:items-center">
+            <FleetDonut segments={fleetSegments} total={fleetStats.total} />
+            <dl className="min-w-0 flex-1 space-y-2.5">
+              {fleetSegments.filter(segment => segment.label !== 'Λοιπά' || segment.count > 0).map(segment => (
+                <div key={segment.label} className="flex items-center justify-between gap-3 text-sm">
+                  <dt className="flex min-w-0 items-center gap-2 text-slate-300"><span aria-hidden="true" className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: segment.color }} />{segment.label}</dt>
+                  <dd className="font-semibold tabular-nums text-white">{segment.count}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+          {fleetStats.total === 0 && <p className="mt-4 text-center text-xs text-slate-400">Δεν υπάρχουν καταχωρισμένα οχήματα.</p>}
+        </section>
       </div>
 
+      <div ref={pendingTasksRef} className="scroll-mt-4 space-y-4">
       {/* Vehicle Alerts — accordion */}
       {vehicleAlertGroups.length > 0 && (
         <div className="overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
@@ -651,8 +762,38 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
         </div>
       )}
 
-      {/* Reservations by Source + Revenue by Source */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {isAdmin && (
+        <section className="rounded-2xl border border-amber-400/35 bg-[#071d38]/90 p-5 shadow-lg">
+          <div className="mb-3 flex items-center gap-2">
+            <ExclamationTriangleIcon className="h-5 w-5 text-amber-300" />
+            <h2 className="text-base font-semibold text-white">Εγκρίσεις εξαιρέσεων καυσίμου</h2>
+            <span className="rounded-lg bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-200">{pendingFuelWaivers.length}</span>
+          </div>
+          {pendingFuelWaivers.length === 0 ? (
+            <p className="text-sm text-blue-100/60">Δεν υπάρχουν εκκρεμή αιτήματα.</p>
+          ) : (
+            <div className="space-y-3">
+              {pendingFuelWaivers.map(request => (
+                <div key={request.id} className="rounded-xl border border-[#2b5b85]/70 bg-[#0b2949]/75 p-4">
+                  <p className="text-sm font-semibold text-white">Κράτηση #{request.reservation_id.slice(0,8).toUpperCase()} · Προτεινόμενη χρέωση €{request.proposed_charge.toFixed(2)}</p>
+                  <p className="mt-1 text-xs text-blue-100/70">Έλλειμμα {request.fuel_liters.toFixed(1)} λίτρα · Αίτημα {new Date(request.requested_at).toLocaleString('el-GR')}</p>
+                  <p className="mt-2 text-sm text-amber-100">Αιτιολογία: {request.reason}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button type="button" onClick={() => {setReviewTarget(request);setReviewApprove(true);setReviewNote('');setReviewError('');}}
+                      className="rounded-lg border border-emerald-400/40 bg-emerald-500/15 px-3 py-2 text-sm font-semibold text-emerald-200">Έγκριση εξαίρεσης</button>
+                    <button type="button" onClick={() => {setReviewTarget(request);setReviewApprove(false);setReviewNote('');setReviewError('');}}
+                      className="rounded-lg border border-amber-400/40 bg-amber-500/15 px-3 py-2 text-sm font-semibold text-amber-200">Απόρριψη — Χρέωση €{request.proposed_charge.toFixed(2)}</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+      </div>
+
+      {/* Reservations by source — no financial data */}
+      <div className="grid grid-cols-1 gap-6">
         <div className="overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
           <div className="border-b border-[#1e4e7d]/70 px-6 py-4">
             <h3 className="text-base font-semibold text-white">Κρατήσεις ανά Πηγή</h3>
@@ -681,35 +822,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
-          <div className="border-b border-[#1e4e7d]/70 px-6 py-4">
-            <h3 className="text-base font-semibold text-white">Έσοδα ανά Πηγή</h3>
-          </div>
-          <div className="p-6">
-            {sourceStats.length === 0 ? (
-              <p className="py-4 text-center text-sm text-blue-100/45">Δεν υπάρχουν δεδομένα</p>
-            ) : (
-              <div className="space-y-3">
-                {sourceStats.map((s) => (
-                  <div key={s.source} className="flex items-center justify-between">
-                    <span className="text-sm text-blue-100/85">{SOURCE_LABELS[s.source] || s.source}</span>
-                    <div className="flex items-center space-x-3">
-                      <div className="w-24 overflow-hidden rounded-full bg-[#0b2949]/80 h-2">
-                        <div
-                          className="h-full rounded-full bg-emerald-400 transition-all duration-300"
-                          style={{ width: `${totalRevenue > 0 ? (s.revenue / totalRevenue) * 100 : 0}%` }}
-                        />
-                      </div>
-                      <span className="w-20 text-right text-sm font-semibold tabular-nums text-emerald-300">
-                        {'\u20AC'}{s.revenue.toFixed(0)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
       </div>
 
       {/* Today's Pickups & Returns */}
@@ -779,35 +891,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
         </div>
       </div>
 
-      {user?.role === 'admin' && (
-        <section className="rounded-2xl border border-amber-400/35 bg-[#071d38]/90 p-5 shadow-lg">
-          <div className="mb-3 flex items-center gap-2">
-            <ExclamationTriangleIcon className="h-5 w-5 text-amber-300" />
-            <h2 className="text-base font-semibold text-white">Εγκρίσεις εξαιρέσεων καυσίμου</h2>
-            <span className="rounded-lg bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-200">{pendingFuelWaivers.length}</span>
-          </div>
-          {pendingFuelWaivers.length === 0 ? (
-            <p className="text-sm text-blue-100/60">Δεν υπάρχουν εκκρεμή αιτήματα.</p>
-          ) : (
-            <div className="space-y-3">
-              {pendingFuelWaivers.map(request => (
-                <div key={request.id} className="rounded-xl border border-[#2b5b85]/70 bg-[#0b2949]/75 p-4">
-                  <p className="text-sm font-semibold text-white">Κράτηση #{request.reservation_id.slice(0,8).toUpperCase()} · Προτεινόμενη χρέωση €{request.proposed_charge.toFixed(2)}</p>
-                  <p className="mt-1 text-xs text-blue-100/70">Έλλειμμα {request.fuel_liters.toFixed(1)} λίτρα · Αίτημα {new Date(request.requested_at).toLocaleString('el-GR')}</p>
-                  <p className="mt-2 text-sm text-amber-100">Αιτιολογία: {request.reason}</p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button type="button" onClick={() => {setReviewTarget(request);setReviewApprove(true);setReviewNote('');setReviewError('');}}
-                      className="rounded-lg border border-emerald-400/40 bg-emerald-500/15 px-3 py-2 text-sm font-semibold text-emerald-200">Έγκριση εξαίρεσης</button>
-                    <button type="button" onClick={() => {setReviewTarget(request);setReviewApprove(false);setReviewNote('');setReviewError('');}}
-                      className="rounded-lg border border-amber-400/40 bg-amber-500/15 px-3 py-2 text-sm font-semibold text-amber-200">Απόρριψη — Χρέωση €{request.proposed_charge.toFixed(2)}</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      )}
-      {reviewTarget && (
+      {isAdmin && reviewTarget && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#020b18]/85 p-4 backdrop-blur-sm"
           onMouseDown={e => {if(e.target===e.currentTarget && !reviewSaving)setReviewTarget(null);}}>
           <section role="dialog" aria-modal="true" aria-labelledby="fuel-review-title"
@@ -839,8 +923,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
             <p className="text-2xl font-bold tabular-nums text-white">{totalReservations}</p>
           </div>
           <div>
-            <p className="mb-1 text-sm text-blue-100/55">Συνολικά Έσοδα</p>
-            <p className="text-2xl font-bold tabular-nums text-emerald-300">{'\u20AC'}{totalRevenue.toFixed(2)}</p>
+            <p className="mb-1 text-sm text-blue-100/55">Κατάσταση Κρατήσεων</p>
+            <div className="flex flex-wrap justify-center gap-3 text-sm">
+              <button type="button" onClick={() => onNavigateReservations?.('completed')} className="text-blue-100/80 hover:text-white">Ολοκληρωμένες: {statusCount('completed')}</button>
+              <button type="button" onClick={() => onNavigateReservations?.('cancelled')} className="text-blue-100/80 hover:text-white">Ακυρωμένες: {statusCount('cancelled')}</button>
+            </div>
           </div>
           <div>
             <p className="mb-1 text-sm text-blue-100/55">Οχήματα Στόλου</p>
@@ -848,6 +935,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
           </div>
         </div>
       </div>
+      </>}
     </div>
   );
 };
