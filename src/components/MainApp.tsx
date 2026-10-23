@@ -533,7 +533,12 @@ const MainApp: React.FC = () => {
     const effectiveTab = isTabAllowed(effectiveRole, activeTab) && (user?.role !== 'manager' || managerTabs.includes(activeTab)) ? activeTab : 'dashboard';
     switch (effectiveTab) {
       case 'dashboard':
-        return <DashboardPage onNavigateReservations={(f) => { setReservationsInitialFilter(f); setActiveTab('bookings'); }} onNavigateFleet={() => { setFleetInitialFilter('all'); setActiveTab('fleet'); }} onNavigateVehicle={(vehicleId) => { setFleetEditVehicleId(vehicleId); setFleetInitialFilter('all'); setActiveTab('fleet'); }} onNewBooking={() => setShowBookingWizard(true)} />;
+        return <DashboardPage onViewReservation={(reservationId) => {
+          setViewReservationId(reservationId);
+          setReservationsInitialFilter('all');
+          setBookingsResetKey(prev => prev + 1);
+          setActiveTab('bookings');
+        }} onNavigateReservations={(f) => { setViewReservationId(null); setReservationsInitialFilter(f); setActiveTab('bookings'); }} onNavigateFleet={() => { setFleetInitialFilter('all'); setActiveTab('fleet'); }} onNavigateVehicle={(vehicleId) => { setFleetEditVehicleId(vehicleId); setFleetInitialFilter('all'); setActiveTab('fleet'); }} onNewBooking={() => setShowBookingWizard(true)} />;
       case 'bookings':
         return (
           <div className="space-y-6">

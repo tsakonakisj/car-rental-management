@@ -171,6 +171,25 @@ const ReservationDate: React.FC<{ value: string | null }> = ({ value }) => {
   );
 };
 
+const CUSTOMER_AVATAR_COLORS = [
+  'bg-blue-500/20 text-blue-200 ring-blue-400/25',
+  'bg-emerald-500/20 text-emerald-200 ring-emerald-400/25',
+  'bg-violet-500/20 text-violet-200 ring-violet-400/25',
+  'bg-amber-500/20 text-amber-200 ring-amber-400/25',
+  'bg-rose-500/20 text-rose-200 ring-rose-400/25',
+];
+
+const CustomerAvatar: React.FC<{ name?: string }> = ({ name }) => {
+  const normalized = name?.trim() || '';
+  const words = normalized.split(/\s+/).filter(Boolean);
+  const initials = words.length > 0
+    ? [words[0], ...(words.length > 1 ? [words[words.length - 1]] : [])]
+      .map(word => Array.from(word)[0]).join('').toLocaleUpperCase('el-GR')
+    : '—';
+  const colorIndex = Array.from(normalized).reduce((hash, letter) => (hash * 31 + (letter.codePointAt(0) || 0)) >>> 0, 0) % CUSTOMER_AVATAR_COLORS.length;
+  return <span aria-hidden="true" className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold ring-1 ring-inset ${CUSTOMER_AVATAR_COLORS[colorIndex]}`}>{initials}</span>;
+};
+
 type DashboardCardTheme = {
   icon: string;
   iconBackground: string;
@@ -241,12 +260,13 @@ const FleetDonut: React.FC<{ segments: FleetSegment[]; total: number }> = ({ seg
 
 interface DashboardPageProps {
   onNavigateReservations?: (filter: string) => void;
+  onViewReservation?: (reservationId: string) => void;
   onNavigateFleet?: () => void;
   onNavigateVehicle?: (vehicleId: string) => void;
   onNewBooking?: () => void;
 }
 
-const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, onNavigateFleet, onNavigateVehicle, onNewBooking }) => {
+const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, onViewReservation, onNavigateFleet, onNavigateVehicle, onNewBooking }) => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   const userId = user?.id;
@@ -675,6 +695,123 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
         </section>
       </div>
 
+      {/* Recent reservations and existing daily operations */}
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+        <section aria-labelledby="recent-reservations-title" className="min-w-0 overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
+          <div className="border-b border-[#1e4e7d]/70 px-6 py-4">
+            <h3 id="recent-reservations-title" className="text-base font-semibold text-white">Πρόσφατες Κρατήσεις</h3>
+            <p className="mt-1 text-xs text-blue-100/45">Οι 5 τελευταίες καταχωρίσεις</p>
+          </div>
+          {recentReservations.length === 0 ? (
+            <p className="px-4 py-8 text-center text-sm text-blue-100/45">Δεν υπάρχουν κρατήσεις.</p>
+          ) : (
+            <div role="region" aria-label="Πίνακας πρόσφατων κρατήσεων" tabIndex={0} className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400">
+              <table className="w-full min-w-[520px] text-left text-xs">
+                <caption className="sr-only">Οι πέντε πιο πρόσφατες κρατήσεις κατά ημερομηνία δημιουργίας</caption>
+                <thead className="border-b border-[#1e4e7d]/50 bg-[#0b2949]/35 text-blue-100/55">
+                  <tr>
+                    <th scope="col" className="px-3 py-3 font-medium">Πελάτης</th>
+                    <th scope="col" className="px-3 py-3 font-medium">Όχημα</th>
+                    <th scope="col" className="px-3 py-3 font-medium">Παραλαβή</th>
+                    <th scope="col" className="px-3 py-3 font-medium">Επιστροφή</th>
+                    <th scope="col" className="px-3 py-3 font-medium">Κατάσταση</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#1e4e7d]/40">
+                  {recentReservations.map(reservation => {
+                    const status = RESERVATION_STATUS[reservation.status] || { label: 'Άγνωστη', className: 'bg-slate-500/20 text-slate-200 ring-slate-400/25' };
+                    return (
+                      <tr key={reservation.id} onClick={onViewReservation ? () => onViewReservation(reservation.id) : undefined} className={`transition-colors ${onViewReservation ? 'cursor-pointer hover:bg-[#0b2949]/50 focus-within:bg-[#0b2949]/50' : ''}`}>
+                        <td className="px-3 py-3 align-top">
+                          <button type="button" disabled={!onViewReservation} onClick={event => { event.stopPropagation(); onViewReservation?.(reservation.id); }} aria-label={`Προβολή κράτησης: ${reservation.customer?.name || 'Πελάτης χωρίς όνομα'}`} className="flex items-center gap-2 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 disabled:cursor-default">
+                            <CustomerAvatar name={reservation.customer?.name} />
+                            <span className="block max-w-[140px] break-words font-medium text-white">{reservation.customer?.name || '—'}</span>
+                          </button>
+                        </td>
+                        <td className="px-3 py-3 align-top">
+                          <span className="block whitespace-nowrap font-medium text-blue-100/85">{reservation.vehicle?.plate || '—'}</span>
+                          {reservation.vehicle && <span className="mt-0.5 block max-w-[120px] break-words text-blue-100/45">{reservation.vehicle.brand} {reservation.vehicle.model}</span>}
+                        </td>
+                        <td className="px-3 py-3 align-top"><ReservationDate value={reservation.pickup_date} /></td>
+                        <td className="px-3 py-3 align-top"><ReservationDate value={reservation.return_date} /></td>
+                        <td className="px-3 py-3 align-top"><span className={`inline-flex whitespace-nowrap rounded-full px-2 py-1 text-[11px] font-medium ring-1 ring-inset ${status.className}`}>{status.label}</span></td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
+        {/* Today\'s Pickups & Returns — compact right column */}
+        <div className="grid min-w-0 grid-cols-1 gap-5">
+        <div className="overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
+          <div className="border-b border-[#1e4e7d]/70 px-6 py-4">
+            <div className="flex items-center">
+              <TruckIcon className="mr-2 h-5 w-5 text-[#55a8ff]" />
+              <h3 className="text-base font-semibold text-white">Παραλαβές Σήμερα</h3>
+              <span className="ml-2 rounded-full bg-blue-500/15 px-2 py-0.5 text-xs font-semibold text-[#8ec7ff] ring-1 ring-inset ring-blue-400/40">
+                {todayPickups.length}
+              </span>
+            </div>
+          </div>
+          <div className="p-4">
+            {todayPickups.length === 0 ? (
+              <p className="py-6 text-center text-sm text-blue-100/45">Δεν υπάρχουν παραλαβές σήμερα</p>
+            ) : (
+              <div className="divide-y divide-[#1e4e7d]/50">
+                {todayPickups.map((entry) => (
+                  <button key={entry.id} type="button" disabled={!onViewReservation} onClick={() => onViewReservation?.(entry.id)} aria-label={`Προβολή κράτησης: ${entry.customerName}, ${entry.time}`} className="flex w-full items-center justify-between gap-3 rounded-lg px-2 py-3 text-left transition-colors hover:bg-[#0b2949]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400 disabled:cursor-default">
+                    <div>
+                      <p className="text-sm font-medium text-white">{entry.customerName}</p>
+                      <p className="text-xs text-blue-100/45">{entry.vehicleLabel}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium tabular-nums text-white">{entry.time}</p>
+                      <p className="text-xs text-blue-100/45">{entry.station}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
+          <div className="border-b border-[#1e4e7d]/70 px-6 py-4">
+            <div className="flex items-center">
+              <CheckCircleIcon className="mr-2 h-5 w-5 text-emerald-400" />
+              <h3 className="text-base font-semibold text-white">Επιστροφές Σήμερα</h3>
+              <span className="ml-2 rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold text-emerald-300 ring-1 ring-inset ring-emerald-400/40">
+                {todayReturns.length}
+              </span>
+            </div>
+          </div>
+          <div className="p-4">
+            {todayReturns.length === 0 ? (
+              <p className="py-6 text-center text-sm text-blue-100/45">Δεν υπάρχουν επιστροφές σήμερα</p>
+            ) : (
+              <div className="divide-y divide-[#1e4e7d]/50">
+                {todayReturns.map((entry) => (
+                  <button key={entry.id} type="button" disabled={!onViewReservation} onClick={() => onViewReservation?.(entry.id)} aria-label={`Προβολή κράτησης: ${entry.customerName}, ${entry.time}`} className="flex w-full items-center justify-between gap-3 rounded-lg px-2 py-3 text-left transition-colors hover:bg-[#0b2949]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400 disabled:cursor-default">
+                    <div>
+                      <p className="text-sm font-medium text-white">{entry.customerName}</p>
+                      <p className="text-xs text-blue-100/45">{entry.vehicleLabel}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium tabular-nums text-white">{entry.time}</p>
+                      <p className="text-xs text-blue-100/45">{entry.station}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        </div>
+      </div>
+
       <div ref={pendingTasksRef} className="scroll-mt-4 space-y-4">
       {/* Vehicle Alerts — accordion */}
       {vehicleAlertGroups.length > 0 && (
@@ -795,118 +932,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
           )}
         </section>
       )}
-      </div>
-
-      {/* Recent reservations and existing daily operations */}
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-        <section aria-labelledby="recent-reservations-title" className="min-w-0 overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
-          <div className="border-b border-[#1e4e7d]/70 px-6 py-4">
-            <h3 id="recent-reservations-title" className="text-base font-semibold text-white">Πρόσφατες Κρατήσεις</h3>
-            <p className="mt-1 text-xs text-blue-100/45">Οι 5 τελευταίες καταχωρίσεις</p>
-          </div>
-          {recentReservations.length === 0 ? (
-            <p className="px-4 py-8 text-center text-sm text-blue-100/45">Δεν υπάρχουν κρατήσεις.</p>
-          ) : (
-            <div role="region" aria-label="Πίνακας πρόσφατων κρατήσεων" tabIndex={0} className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400">
-              <table className="w-full min-w-[520px] text-left text-xs">
-                <caption className="sr-only">Οι πέντε πιο πρόσφατες κρατήσεις κατά ημερομηνία δημιουργίας</caption>
-                <thead className="border-b border-[#1e4e7d]/50 bg-[#0b2949]/35 text-blue-100/55">
-                  <tr>
-                    <th scope="col" className="px-3 py-3 font-medium">Πελάτης</th>
-                    <th scope="col" className="px-3 py-3 font-medium">Όχημα</th>
-                    <th scope="col" className="px-3 py-3 font-medium">Παραλαβή</th>
-                    <th scope="col" className="px-3 py-3 font-medium">Επιστροφή</th>
-                    <th scope="col" className="px-3 py-3 font-medium">Κατάσταση</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#1e4e7d]/40">
-                  {recentReservations.map(reservation => {
-                    const status = RESERVATION_STATUS[reservation.status] || { label: 'Άγνωστη', className: 'bg-slate-500/20 text-slate-200 ring-slate-400/25' };
-                    return (
-                      <tr key={reservation.id} className="transition-colors hover:bg-[#0b2949]/30">
-                        <td className="px-3 py-3 align-top"><span className="block max-w-[140px] break-words font-medium text-white">{reservation.customer?.name || '—'}</span></td>
-                        <td className="px-3 py-3 align-top">
-                          <span className="block whitespace-nowrap font-medium text-blue-100/85">{reservation.vehicle?.plate || '—'}</span>
-                          {reservation.vehicle && <span className="mt-0.5 block max-w-[120px] break-words text-blue-100/45">{reservation.vehicle.brand} {reservation.vehicle.model}</span>}
-                        </td>
-                        <td className="px-3 py-3 align-top"><ReservationDate value={reservation.pickup_date} /></td>
-                        <td className="px-3 py-3 align-top"><ReservationDate value={reservation.return_date} /></td>
-                        <td className="px-3 py-3 align-top"><span className={`inline-flex whitespace-nowrap rounded-full px-2 py-1 text-[11px] font-medium ring-1 ring-inset ${status.className}`}>{status.label}</span></td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-
-        {/* Today\'s Pickups & Returns — compact right column */}
-        <div className="grid min-w-0 grid-cols-1 gap-5">
-        <div className="overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
-          <div className="border-b border-[#1e4e7d]/70 px-6 py-4">
-            <div className="flex items-center">
-              <TruckIcon className="mr-2 h-5 w-5 text-[#55a8ff]" />
-              <h3 className="text-base font-semibold text-white">Παραλαβές Σήμερα</h3>
-              <span className="ml-2 rounded-full bg-blue-500/15 px-2 py-0.5 text-xs font-semibold text-[#8ec7ff] ring-1 ring-inset ring-blue-400/40">
-                {todayPickups.length}
-              </span>
-            </div>
-          </div>
-          <div className="p-4">
-            {todayPickups.length === 0 ? (
-              <p className="py-6 text-center text-sm text-blue-100/45">Δεν υπάρχουν παραλαβές σήμερα</p>
-            ) : (
-              <div className="divide-y divide-[#1e4e7d]/50">
-                {todayPickups.map((entry) => (
-                  <div key={entry.id} className="flex items-center justify-between py-3">
-                    <div>
-                      <p className="text-sm font-medium text-white">{entry.customerName}</p>
-                      <p className="text-xs text-blue-100/45">{entry.vehicleLabel}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium tabular-nums text-white">{entry.time}</p>
-                      <p className="text-xs text-blue-100/45">{entry.station}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
-          <div className="border-b border-[#1e4e7d]/70 px-6 py-4">
-            <div className="flex items-center">
-              <CheckCircleIcon className="mr-2 h-5 w-5 text-emerald-400" />
-              <h3 className="text-base font-semibold text-white">Επιστροφές Σήμερα</h3>
-              <span className="ml-2 rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-semibold text-emerald-300 ring-1 ring-inset ring-emerald-400/40">
-                {todayReturns.length}
-              </span>
-            </div>
-          </div>
-          <div className="p-4">
-            {todayReturns.length === 0 ? (
-              <p className="py-6 text-center text-sm text-blue-100/45">Δεν υπάρχουν επιστροφές σήμερα</p>
-            ) : (
-              <div className="divide-y divide-[#1e4e7d]/50">
-                {todayReturns.map((entry) => (
-                  <div key={entry.id} className="flex items-center justify-between py-3">
-                    <div>
-                      <p className="text-sm font-medium text-white">{entry.customerName}</p>
-                      <p className="text-xs text-blue-100/45">{entry.vehicleLabel}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium tabular-nums text-white">{entry.time}</p>
-                      <p className="text-xs text-blue-100/45">{entry.station}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-        </div>
       </div>
 
       {isAdmin && reviewTarget && (
