@@ -155,90 +155,22 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 type DashboardCardTheme = {
-  border: string;
   icon: string;
-  iconBackground: string;
-  accent: string;
-  badge: string;
-  decoration: string;
 };
 
 const STATUS_CARD_THEMES: Record<string, DashboardCardTheme> = {
-  upcoming: {
-    border: 'border-blue-500/60',
-    icon: 'text-[#a8d6ff]',
-    iconBackground: 'bg-[#1678d9]/70',
-    accent: 'text-white',
-    badge: 'bg-[#1678d9]/65 text-[#a8d6ff]',
-    decoration: 'from-[#1268f3]/40 via-[#1268f3]/15 to-transparent text-[#1268f3]/30',
-  },
-  active: {
-    border: 'border-emerald-500/50',
-    icon: 'text-[#a1ffd1]',
-    iconBackground: 'bg-emerald-500/65',
-    accent: 'text-white',
-    badge: 'bg-emerald-500/55 text-[#7dffc1]',
-    decoration: 'from-emerald-500/35 via-emerald-500/15 to-transparent text-emerald-500/25',
-  },
-  completed: {
-    border: 'border-slate-400/40',
-    icon: 'text-blue-100',
-    iconBackground: 'bg-slate-500/70',
-    accent: 'text-white',
-    badge: 'bg-slate-400/45 text-blue-100',
-    decoration: 'from-slate-500/30 via-slate-500/10 to-transparent text-slate-400/25',
-  },
-  cancelled: {
-    border: 'border-rose-400/45',
-    icon: 'text-[#ffb0b8]',
-    iconBackground: 'bg-rose-500/65',
-    accent: 'text-white',
-    badge: 'bg-rose-500/55 text-[#ffadb5]',
-    decoration: 'from-rose-500/35 via-rose-500/15 to-transparent text-rose-500/25',
-  },
+  upcoming: { icon: 'text-blue-300' },
+  active: { icon: 'text-emerald-300' },
+  completed: { icon: 'text-slate-300' },
+  cancelled: { icon: 'text-rose-300' },
 };
 
 const FLEET_CARD_THEMES: Record<string, DashboardCardTheme> = {
-  total: {
-    border: 'border-slate-400/40',
-    icon: 'text-blue-100',
-    iconBackground: 'bg-slate-500/70',
-    accent: 'text-white',
-    badge: 'bg-slate-400/45 text-blue-100',
-    decoration: 'from-slate-500/30 via-slate-500/10 to-transparent text-slate-400/25',
-  },
-  available: {
-    border: 'border-emerald-500/50',
-    icon: 'text-[#9bffd0]',
-    iconBackground: 'bg-emerald-500/65',
-    accent: 'text-[#b9ffe0]',
-    badge: 'bg-emerald-500/55 text-[#7dffc1]',
-    decoration: 'from-emerald-500/35 via-emerald-500/15 to-transparent text-emerald-500/25',
-  },
-  reserved: {
-    border: 'border-amber-400/45',
-    icon: 'text-[#ffe08b]',
-    iconBackground: 'bg-amber-500/65',
-    accent: 'text-[#fff0a8]',
-    badge: 'bg-amber-500/55 text-[#ffe08b]',
-    decoration: 'from-amber-500/35 via-amber-500/15 to-transparent text-amber-500/25',
-  },
-  active: {
-    border: 'border-blue-500/60',
-    icon: 'text-[#b7ddff]',
-    iconBackground: 'bg-[#1678d9]/70',
-    accent: 'text-[#b9e1ff]',
-    badge: 'bg-[#1678d9]/65 text-[#a8d6ff]',
-    decoration: 'from-[#1268f3]/40 via-[#1268f3]/15 to-transparent text-[#1268f3]/30',
-  },
-  service: {
-    border: 'border-rose-400/45',
-    icon: 'text-[#ffadb5]',
-    iconBackground: 'bg-rose-500/65',
-    accent: 'text-[#ffc0c7]',
-    badge: 'bg-rose-500/55 text-[#ffadb5]',
-    decoration: 'from-rose-500/35 via-rose-500/15 to-transparent text-rose-500/25',
-  },
+  total: { icon: 'text-slate-300' },
+  available: { icon: 'text-emerald-300' },
+  reserved: { icon: 'text-amber-300' },
+  active: { icon: 'text-blue-300' },
+  service: { icon: 'text-rose-300' },
 };
 
 interface DashboardMetricCardProps {
@@ -254,22 +186,17 @@ interface DashboardMetricCardProps {
 const DashboardMetricCard: React.FC<DashboardMetricCardProps> = ({ title, value, icon: Icon, theme, badge, showTitle = true, onClick }) => {
   const content = (
     <>
-      <div className={`absolute -bottom-12 -right-10 h-28 w-56 rounded-[55%] bg-gradient-to-br ${theme.decoration} rotate-[-18deg]`} />
-      <Icon className={`absolute bottom-2 right-7 h-14 w-14 ${theme.decoration.split(' ').pop()}`} strokeWidth={1.5} />
-      <div className="relative flex items-start justify-between gap-3">
-        <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full ${theme.iconBackground} shadow-[0_6px_18px_rgba(0,0,0,0.2)]`}>
-          <Icon className={`h-6 w-6 ${theme.icon}`} strokeWidth={2} />
-        </div>
-        {badge && <span className={`rounded-full px-3 py-1 text-xs font-semibold ${theme.badge}`}>{badge}</span>}
+      <div className="flex items-center gap-2.5">
+        <Icon className={`h-5 w-5 flex-shrink-0 ${theme.icon}`} />
+        <span className="min-w-0 text-sm font-medium leading-5 text-slate-300">
+          {showTitle ? title : (badge || title)}
+        </span>
       </div>
-      <div className={`relative ${showTitle ? 'mt-2' : 'mt-5'}`}>
-        {showTitle && <p className="text-base font-medium text-blue-50/90">{title}</p>}
-        <p className={`${showTitle ? 'mt-2' : ''} text-[2.1rem] font-bold leading-none tabular-nums ${theme.accent}`}>{value}</p>
-      </div>
+      <p className="mt-3 text-3xl font-semibold leading-none tabular-nums tracking-tight text-white">{value}</p>
     </>
   );
 
-  const className = `relative min-h-[142px] overflow-hidden rounded-2xl border bg-[linear-gradient(145deg,rgba(8,43,78,0.98),rgba(6,29,57,0.98))] p-4 shadow-[0_14px_32px_rgba(0,0,0,0.24)] transition-all ${theme.border} ${onClick ? 'cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_20px_42px_rgba(0,0,0,0.34)]' : ''}`;
+  const className = `min-h-[112px] rounded-2xl border border-slate-400/15 bg-[#0b223b] p-4 shadow-sm transition-colors ${onClick ? 'cursor-pointer hover:border-slate-400/30 hover:bg-[#102b47] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#061a35]' : ''}`;
 
   return onClick ? <button type="button" onClick={onClick} className={`${className} w-full text-left`}>{content}</button> : <div className={className}>{content}</div>;
 };
