@@ -655,6 +655,18 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
     return getStatusLabel(reservation.status);
   };
 
+  // Display today's schedule independently of the table filters, in local browser time.
+  const today = new Date();
+  const todayOperations = reservations.flatMap(reservation => {
+    if (reservation.status === 'cancelled') return [];
+    return (['pickup', 'return'] as const).flatMap(kind => {
+      const dateValue = kind === 'pickup' ? reservation.pickup_date : reservation.return_date;
+      const date = new Date((dateValue || '').replace(' ', 'T'));
+      if (Number.isNaN(date.getTime()) || date.toDateString() !== today.toDateString()) return [];
+      return [{ reservation, kind, date }];
+    });
+  }).sort((a, b) => a.date.getTime() - b.date.getTime());
+
   const overduePickupsCount = reservations.filter(isOverduePickup).length;
   const overdueReturnsCount = reservations.filter(isOverdueReturn).length;
 
@@ -848,11 +860,12 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
         </div>
       )}
 
+      <div className="grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(300px,1fr)]">
       {/* Reservations table: existing actions are expanded within the table. */}
       <section className="min-w-0 rounded-2xl border border-white/10 bg-[#101e35]">
         <div className="border-b border-white/10 px-4 py-4">
           <h2 className="text-base font-semibold text-white">Λίστα κρατήσεων</h2>
-          <p className="mt-2 text-xs text-blue-100/55 xl:hidden">Σύρετε οριζόντια για όλες τις στήλες και τις ενέργειες.</p>
+          <p className="mt-2 text-xs text-blue-100/55">Σύρετε οριζόντια για όλες τις στήλες και τις ενέργειες.</p>
           <p className="mt-1 text-xs text-blue-100/55">{filteredReservations.length} από {reservations.length} κρατήσεις · Επιλέξτε πελάτη για λεπτομέρειες</p>
         </div>
         <div role="region" aria-label="Πίνακας κρατήσεων" tabIndex={0} className="relative overflow-x-auto rounded-b-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#55a8ff]">
@@ -1061,6 +1074,43 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
           </table>
         </div>
       </section>
+
+      <aside aria-labelledby="today-operations-title" className="min-w-0 rounded-2xl border border-white/10 bg-[#101e35]">
+        <div className="border-b border-white/10 p-4">
+          <div className="flex items-start gap-2">
+            <CalendarDaysIcon aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-blue-300" />
+            <h2 id="today-operations-title" className="min-w-0 flex-1 text-base font-semibold text-white">Σημερινές Παραλαβές &amp; Επιστροφές</h2>
+            <span className="rounded-full bg-blue-500/15 px-2 py-0.5 text-xs font-semibold text-blue-200">{todayOperations.length}</span>
+          </div>
+          <p className="mt-2 text-xs text-blue-100/55">{today.toLocaleDateString('el-GR', { weekday: 'long', day: 'numeric', month: 'short' })} · Όλες οι κρατήσεις της ημέρας</p>
+        </div>
+        <div className="space-y-3 p-3">
+          {todayOperations.length === 0 ? (
+            <p className="px-2 py-6 text-center text-sm text-blue-100/55">Δεν υπάρχουν παραλαβές ή επιστροφές σήμερα.</p>
+          ) : todayOperations.map(({ reservation, kind, date }) => (
+            <article key={`${reservation.id}-${kind}`} className={`min-w-0 rounded-xl border p-3 ${kind === 'pickup' ? 'border-emerald-400/20 bg-emerald-500/[0.03]' : 'border-blue-400/20 bg-blue-500/[0.03]'}`}>
+              <button type="button" onClick={() => setViewReservation(reservation)} aria-label={`Προβολή κράτησης ${reservation.id.substring(0, 8).toUpperCase()}: ${kind === 'pickup' ? 'Παραλαβή' : 'Επιστροφή'}, ${reservation.customer?.name || 'Άγνωστος πελάτης'}`} className="block w-full min-w-0 rounded-lg text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#55a8ff]">
+                <span className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className={`rounded-lg px-2 py-1 font-semibold ${kind === 'pickup' ? 'bg-emerald-500/15 text-emerald-300' : 'bg-blue-500/15 text-blue-200'}`}>{kind === 'pickup' ? 'Παραλαβή' : 'Επιστροφή'}</span>
+                  <time dateTime={kind === 'pickup' ? reservation.pickup_date : reservation.return_date} className="font-semibold tabular-nums text-white">{date.toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit', hour12: false })}</time>
+                  <span className="ml-auto break-all font-mono text-[10px] text-blue-100/45">#{reservation.id.substring(0, 8).toUpperCase()}</span>
+                </span>
+                <span className="mt-3 block break-words text-sm font-semibold text-white">{reservation.customer?.name || 'Άγνωστος πελάτης'}</span>
+                <span className="mt-1 block break-words text-xs text-blue-100/65">{reservation.vehicle ? `${reservation.vehicle.brand} ${reservation.vehicle.model}` : 'Όχημα μη διαθέσιμο'} · {reservation.vehicle?.plate || '-'}</span>
+                <span className="mt-2 block break-words text-xs text-blue-100/65">{kind === 'pickup' ? reservation.pickup_station?.name || '-' : reservation.return_station?.name || '-'}</span>
+                <span className={`mt-2 inline-flex rounded-lg px-2 py-1 text-[11px] font-medium ${getStatusColor(reservation.status)}`}>{getDisplayStatus(reservation)}</span>
+              </button>
+              {kind === 'pickup' && reservation.status === 'upcoming' && onCheckOut && (
+                <button type="button" onClick={() => onCheckOut(reservation.id)} className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#1268f3] px-3 py-2 text-xs font-semibold text-white hover:bg-[#2478ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300"><TruckIcon className="h-4 w-4 shrink-0" />Check-Out · Παράδοση οχήματος</button>
+              )}
+              {kind === 'return' && reservation.status === 'active' && onCheckIn && (
+                <button type="button" onClick={() => handleCheckInClick(reservation)} className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#1268f3] px-3 py-2 text-xs font-semibold text-white hover:bg-[#2478ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300"><CheckIcon className="h-4 w-4 shrink-0" />Check-In · Παραλαβή οχήματος</button>
+              )}
+            </article>
+          ))}
+        </div>
+      </aside>
+      </div>
 
       {/* View/Edit Reservation Modal */}
       {viewReservation && (
