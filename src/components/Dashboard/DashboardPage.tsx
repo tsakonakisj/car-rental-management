@@ -571,11 +571,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
 
   return (
     <div className="space-y-8">
-      <PageHero
-        title="Κεντρικό Ταμπλό"
-        subtitle="Επισκόπηση κρατήσεων, στόλου και εσόδων"
-        actions={(
-          <>
+      <div className="flex flex-col gap-4 border-b border-[#2b5b85]/50 pb-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-[-0.03em] text-white sm:text-3xl">Κεντρικό Ταμπλό</h1>
+          <p className="mt-1 text-sm text-blue-100/70">Επισκόπηση κρατήσεων, στόλου και εσόδων</p>
+        </div>
+        <div className="flex shrink-0 flex-wrap items-center gap-3">
+>
             <button
               onClick={fetchDashboard}
               className="inline-flex items-center rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/75 px-3.5 py-2 text-sm font-medium text-blue-100/85 transition-colors hover:border-[#55a8ff] hover:bg-[#12375d] hover:text-white"
@@ -592,9 +594,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
                 Νέα Κράτηση
               </button>
             )}
-          </>
-        )}
-      />
+        </div>
+      </div>
 
       {/* Reservation Status Overview */}
       <div>
