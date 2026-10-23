@@ -35,6 +35,18 @@ interface FinancialOverview {
   outstanding: number;
 }
 
+interface DailyNetPayment {
+  date: string;
+  label: string;
+  net: number;
+}
+
+interface ReceiptChartState {
+  userId: string;
+  days: DailyNetPayment[];
+  error: string | null;
+}
+
 interface StatusStat {
   status: string;
   count: number;
@@ -204,6 +216,89 @@ const KPI_THEMES: Record<string, DashboardCardTheme> = {
 
 const currency = new Intl.NumberFormat('el-GR', { style: 'currency', currency: 'EUR' });
 
+function localDateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+// Read-only chart data. Use each transaction's own recorded date, never booking dates.
+async function loadNetPaymentDays(): Promise<DailyNetPayment[]> {
+  const end = new Date();
+  end.setHours(24, 0, 0, 0);
+  const start = new Date(end);
+  start.setDate(start.getDate() - 7);
+  const days = Array.from({ length: 7 }, (_, index) => {
+    const day = new Date(start);
+    day.setDate(day.getDate() + index);
+    return { date: localDateKey(day), label: day.toLocaleDateString('el-GR', { day: '2-digit', month: '2-digit' }), net: 0 };
+  });
+  const cents = new Map(days.map(day => [day.date, 0]));
+  for (const table of ['payments', 'payment_refunds'] as const) {
+    // Historical payments allow NULL timestamps. Do not silently omit undated money.
+    let undatedQuery = supabase.from(table).select('id').is('created_at', null).limit(1);
+    if (table === 'payments') undatedQuery = undatedQuery.is('voided_at', null);
+    const undated = await undatedQuery;
+    if (undated.error) throw undated.error;
+    if (undated.data?.length) throw new Error('MISSING_TRANSACTION_DATE');
+
+    const pageSize = 500;
+    for (let offset = 0; ; offset += pageSize) {
+      let query = supabase.from(table).select('id,amount,created_at')
+        .gte('created_at', start.toISOString()).lt('created_at', end.toISOString())
+        .order('created_at', { ascending: true }).order('id', { ascending: true })
+        .range(offset, offset + pageSize - 1);
+      if (table === 'payments') query = query.is('voided_at', null);
+      const { data, error } = await query;
+      if (error) throw error;
+      for (const row of data || []) {
+        const recordedAt = row.created_at ? new Date(row.created_at) : null;
+        if (!recordedAt || Number.isNaN(recordedAt.getTime())) throw new Error('MISSING_TRANSACTION_DATE');
+        const amount = Number(row.amount);
+        if (row.amount == null || !Number.isFinite(amount)) throw new Error('INVALID_TRANSACTION_AMOUNT');
+        const key = localDateKey(recordedAt);
+        if (cents.has(key)) cents.set(key, cents.get(key)! + (table === 'payments' ? 1 : -1) * Math.round(amount * 100));
+      }
+      if (!data || data.length < pageSize) break;
+    }
+  }
+  return days.map(day => ({ ...day, net: cents.get(day.date)! / 100 }));
+}
+
+const NetPaymentsChart: React.FC<{ days: DailyNetPayment[] }> = ({ days }) => {
+  const maximum = Math.max(0, ...days.map(day => day.net));
+  const minimum = Math.min(0, ...days.map(day => day.net));
+  const extent = maximum - minimum || 1;
+  const y = (value: number) => 12 + (maximum - value) / extent * 82;
+  const baseline = maximum === minimum ? 94 : y(0);
+  return (
+    <figure className="mt-5 border-t border-slate-400/10 pt-4">
+      <figcaption className="flex flex-wrap items-center justify-between gap-2 text-xs">
+        <span className="font-medium text-slate-300">Καθαρές εισπράξεις · 7 ημέρες</span>
+        <span className="text-slate-400">Ημερομηνία καταχώρισης · Τοπική ώρα</span>
+      </figcaption>
+      <svg viewBox="0 0 420 126" role="img" aria-label={`Καθαρές εισπράξεις ανά ημέρα: ${days.map(day => `${day.date}: ${currency.format(day.net)}`).join(', ')}`} className="mt-3 block w-full">
+        <line x1="24" x2="414" y1="12" y2="12" stroke="#94a3b8" strokeOpacity="0.08" strokeDasharray="3 5" />
+        <line x1="24" x2="414" y1="53" y2="53" stroke="#94a3b8" strokeOpacity="0.08" strokeDasharray="3 5" />
+        <line x1="24" x2="414" y1={baseline} y2={baseline} stroke="#94a3b8" strokeOpacity="0.25" />
+        <text x="18" y={baseline + 3} textAnchor="end" fill="#94a3b8" fontSize="9">0</text>
+        {days.map((day, index) => {
+          const center = 51 + index * 55;
+          const valueY = day.net === 0 ? baseline : y(day.net);
+          return (
+            <g key={day.date}>
+              <title>{`${day.label}: ${currency.format(day.net)}`}</title>
+              <rect x={center - 22} y="8" width="44" height="92" fill="transparent" />
+              <rect x={center - 13} y={Math.min(valueY, baseline)} width="26" height={Math.abs(baseline - valueY)} rx="3" fill="#6883ed" fillOpacity={day.net < 0 ? 0.45 : 0.7} />
+              <text x={center} y="116" textAnchor="middle" fill="#94a3b8" fontSize="10">{day.label}</text>
+            </g>
+          );
+        })}
+      </svg>
+      <p className="mt-1 text-[11px] leading-4 text-slate-400">Πληρωμές μείον επιστροφές ανά ημέρα, χωρίς ακυρωμένες πληρωμές. Αρνητικά ποσά εμφανίζονται κάτω από το 0.</p>
+      {days.every(day => day.net === 0) && <p className="mt-2 text-xs text-slate-400">Οι καθαρές εισπράξεις του 7ημέρου είναι μηδενικές.</p>}
+    </figure>
+  );
+};
+
 interface DashboardMetricCardProps {
   title: string;
   value: number;
@@ -274,6 +369,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
   const pendingTasksRef = useRef<HTMLDivElement>(null);
   const [financials, setFinancials] = useState<FinancialOverview | null>(null);
   const [financialError, setFinancialError] = useState(false);
+  const [receiptChart, setReceiptChart] = useState<ReceiptChartState | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [pendingFuelWaivers, setPendingFuelWaivers] = useState<FuelWaiverRequest[]>([]);
   const [reviewTarget, setReviewTarget] = useState<FuelWaiverRequest | null>(null);
@@ -302,6 +398,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
     setLoadError(false);
     setFinancials(null);
     setFinancialError(false);
+    setReceiptChart(null);
     try {
       if (isAdmin) {
         const pending = await fuelWaiverService.listPending();
@@ -530,6 +627,19 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
             userId, netReceived: netReceivedCents / 100,
             bookingValue: bookingValueCents / 100, outstanding: outstandingCents / 100,
           });
+          if (version !== requestVersion.current) return;
+          try {
+            const days = await loadNetPaymentDays();
+            if (version === requestVersion.current) setReceiptChart({ userId, days, error: null });
+          } catch (error) {
+            console.error('Dashboard payment chart failed:', error);
+            const missingDate = error instanceof Error && error.message === 'MISSING_TRANSACTION_DATE';
+            if (version === requestVersion.current) setReceiptChart({
+              userId, days: [], error: missingDate
+                ? 'Το γράφημα δεν είναι διαθέσιμο: υπάρχουν συναλλαγές χωρίς αξιόπιστη ημερομηνία καταχώρισης.'
+                : 'Δεν φορτώθηκαν οι συναλλαγές του 7ημέρου. Πατήστε Ανανέωση.',
+            });
+          }
         } catch (err) {
           console.error('Dashboard financial summary failed:', err);
           if (version === requestVersion.current) setFinancialError(true);
@@ -593,6 +703,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
   const statusCount = (status: string) => statusStats.find(stat => stat.status === status)?.count || 0;
   const pendingCount = vehicleAlertGroups.length + (isAdmin ? pendingFuelWaivers.length : 0);
   const visibleFinancials = isAdmin && financials?.userId === user?.id ? financials : null;
+  const visibleReceiptChart = isAdmin && receiptChart?.userId === user?.id ? receiptChart : null;
   const fleetSegments: FleetSegment[] = [
     { label: 'Διαθέσιμα', count: fleetStats.available, color: '#34d399' },
     { label: 'Νοικιασμένα', count: fleetStats.rented, color: '#6380ff' },
@@ -648,28 +759,41 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
         {isAdmin && (
           <section aria-labelledby="dashboard-financial-title" className="min-w-0 rounded-2xl border border-slate-400/15 bg-[#0b223b] p-5">
             <div className="flex items-center justify-between gap-3">
-              <h2 id="dashboard-financial-title" className="text-base font-semibold text-white">Οικονομική Επισκόπηση</h2>
-              <CurrencyEuroIcon className="h-5 w-5 shrink-0 text-blue-300" />
+              <h2 id="dashboard-financial-title" className="text-base font-semibold tracking-tight text-white">Οικονομική Επισκόπηση</h2>
+              <CurrencyEuroIcon className="h-5 w-5 shrink-0 text-blue-300/80" />
             </div>
-            <p className="mt-1 text-xs text-slate-400">Σύνολο καταχωρισμένων συναλλαγών · Μόνο Admin</p>
+            <p className="mt-1 text-[11px] text-slate-400">Σύνολο καταχωρισμένων συναλλαγών · Μόνο Admin</p>
             {financialError ? (
               <p role="alert" className="mt-6 text-sm text-amber-200">Τα οικονομικά στοιχεία δεν είναι διαθέσιμα. Πατήστε Ανανέωση.</p>
             ) : visibleFinancials ? (
               <>
-                <p className="mt-6 text-sm text-slate-300">Καθαρές εισπράξεις</p>
-                <p className="mt-2 break-words text-3xl font-semibold tabular-nums tracking-tight text-white">{currency.format(visibleFinancials.netReceived)}</p>
-                <p className="mt-2 text-xs leading-5 text-slate-400">Έγκυρες πληρωμές μείον επιστροφές χρημάτων.</p>
-                <dl className="mt-6 grid grid-cols-1 gap-4 border-t border-slate-400/15 pt-4 sm:grid-cols-2">
-                  <div>
-                    <dt className="text-xs text-slate-400">Αξία κρατήσεων</dt>
-                    <dd className="mt-1 break-words text-lg font-semibold tabular-nums text-blue-100">{currency.format(visibleFinancials.bookingValue)}</dd>
+                <div className="mt-5 flex flex-wrap items-start gap-x-5 gap-y-4">
+                  <div className="min-w-0 flex-1 basis-40">
+                    <p className="text-xs text-slate-300">Καθαρές εισπράξεις</p>
+                    <p className="mt-2 break-words text-[2rem] font-semibold leading-tight tabular-nums tracking-tight text-white sm:text-4xl">{currency.format(visibleFinancials.netReceived)}</p>
+                    <p className="mt-1 text-[11px] text-slate-400">Μετά τις επιστροφές χρημάτων</p>
                   </div>
-                  <div>
-                    <dt className="text-xs text-slate-400">Ανεξόφλητα υπόλοιπα</dt>
-                    <dd className="mt-1 break-words text-lg font-semibold tabular-nums text-amber-200">{currency.format(visibleFinancials.outstanding)}</dd>
-                  </div>
-                </dl>
-                <p className="mt-3 text-xs leading-5 text-slate-400">Αξία και υπόλοιπα χωρίς ακυρωμένες κρατήσεις, με τις ισχύουσες πρόσθετες χρεώσεις.</p>
+                  <dl className="grid min-w-[240px] flex-[1.5] grid-cols-3 gap-3">
+                    <div className="min-w-0">
+                      <dt className="min-h-8 text-[11px] leading-4 text-slate-400">Αξία κρατήσεων</dt>
+                      <dd className="mt-1 break-words text-sm font-semibold tabular-nums text-blue-100">{currency.format(visibleFinancials.bookingValue)}</dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="min-h-8 text-[11px] leading-4 text-slate-400">Καθαρές εισπράξεις</dt>
+                      <dd className="mt-1 break-words text-sm font-semibold tabular-nums text-slate-100">{currency.format(visibleFinancials.netReceived)}</dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="min-h-8 text-[11px] leading-4 text-slate-400">Ανεξόφλητο υπόλοιπο</dt>
+                      <dd className="mt-1 break-words text-sm font-semibold tabular-nums text-amber-200">{currency.format(visibleFinancials.outstanding)}</dd>
+                    </div>
+                  </dl>
+                </div>
+                {visibleReceiptChart?.error ? (
+                  <p role="alert" className="mt-5 rounded-xl border border-amber-400/20 bg-amber-500/5 p-3 text-xs leading-5 text-amber-200">{visibleReceiptChart.error}</p>
+                ) : visibleReceiptChart ? <NetPaymentsChart days={visibleReceiptChart.days} /> : (
+                  <p role="status" className="mt-5 text-xs text-slate-400">Φόρτωση συναλλαγών 7ημέρου...</p>
+                )}
+                <p className="mt-3 text-[11px] leading-4 text-slate-400">Αξία και υπόλοιπα χωρίς ακυρωμένες κρατήσεις, με τις ισχύουσες πρόσθετες χρεώσεις.</p>
               </>
             ) : <p role="status" className="mt-6 text-sm text-slate-400">Φόρτωση οικονομικών στοιχείων...</p>}
           </section>
