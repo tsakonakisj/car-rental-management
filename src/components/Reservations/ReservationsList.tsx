@@ -860,15 +860,15 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
         </div>
       )}
 
-      <div className="grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(300px,1fr)]">
+      <div className="grid min-w-0 grid-cols-1 items-start gap-5 min-[1800px]:grid-cols-[minmax(0,1fr)_340px]">
       {/* Reservations table: existing actions are expanded within the table. */}
-      <section className="min-w-0 rounded-2xl border border-white/10 bg-[#101e35]">
+      <section className="min-w-0 max-w-full rounded-2xl border border-white/10 bg-[#101e35]">
         <div className="border-b border-white/10 px-4 py-4">
           <h2 className="text-base font-semibold text-white">Λίστα κρατήσεων</h2>
           <p className="mt-2 text-xs text-blue-100/55">Σύρετε οριζόντια για όλες τις στήλες και τις ενέργειες.</p>
           <p className="mt-1 text-xs text-blue-100/55">{filteredReservations.length} από {reservations.length} κρατήσεις · Επιλέξτε πελάτη για λεπτομέρειες</p>
         </div>
-        <div role="region" aria-label="Πίνακας κρατήσεων" tabIndex={0} className="relative overflow-x-auto rounded-b-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#55a8ff]">
+        <div role="region" aria-label="Πίνακας κρατήσεων" tabIndex={0} className="relative min-w-0 max-w-full overflow-x-auto rounded-b-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#55a8ff]">
           <table className="w-full min-w-[1050px] table-fixed text-left text-xs">
             <caption className="sr-only">Κρατήσεις με τα επιλεγμένα φίλτρα και τις υπάρχουσες ενέργειες</caption>
             <thead className="border-b border-white/10 bg-[#0c172b]/70 text-blue-100/60">
