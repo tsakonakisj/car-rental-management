@@ -15,14 +15,10 @@ import {
   ChevronDownIcon,
 } from '@heroicons/react/24/outline';
 
-interface SourceStat {
-  source: string;
-  count: number;
-}
-
 interface DashboardReservation {
   id: string;
   status: string;
+  created_at: string;
   total_amount?: number;
   pickup_date: string | null;
   return_date: string | null;
@@ -154,15 +150,25 @@ interface VehicleAlertGroup {
   highestLevel: ExpiryLevel;
 }
 
-const SOURCE_LABELS: Record<string, string> = {
-  'store': 'Κατάστημα',
-  'walk-in': 'Κατάστημα',
-  'phone': 'Τηλέφωνο',
-  'instagram': 'Instagram',
-  'whatsapp': 'WhatsApp',
-  'website': 'Ιστοσελίδα',
-  'repeat': 'Επαναλαμβανόμενος Πελάτης',
-  'other': 'Άλλο'
+type RecentReservation = Pick<DashboardReservation, 'id' | 'customer' | 'vehicle' | 'pickup_date' | 'return_date' | 'status'>;
+
+const RESERVATION_STATUS: Record<string, { label: string; className: string }> = {
+  upcoming: { label: 'Επερχόμενη', className: 'bg-blue-500/15 text-blue-200 ring-blue-400/25' },
+  active: { label: 'Ενεργή', className: 'bg-emerald-500/15 text-emerald-200 ring-emerald-400/25' },
+  completed: { label: 'Ολοκληρωμένη', className: 'bg-slate-500/20 text-slate-200 ring-slate-400/25' },
+  cancelled: { label: 'Ακυρωμένη', className: 'bg-rose-500/15 text-rose-200 ring-rose-400/25' },
+};
+
+const ReservationDate: React.FC<{ value: string | null }> = ({ value }) => {
+  if (!value) return <span className="text-blue-100/45">—</span>;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return <span className="text-blue-100/45">—</span>;
+  return (
+    <time dateTime={value} className="whitespace-nowrap">
+      <span className="block text-blue-100/85">{date.toLocaleDateString('el-GR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</span>
+      <span className="mt-0.5 block text-blue-100/45">{date.toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit' })}</span>
+    </time>
+  );
 };
 
 type DashboardCardTheme = {
@@ -256,7 +262,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
   const [reviewSaving, setReviewSaving] = useState(false);
   const [reviewError, setReviewError] = useState('');
   const [loading, setLoading] = useState(true);
-  const [sourceStats, setSourceStats] = useState<SourceStat[]>([]);
+  const [recentReservations, setRecentReservations] = useState<RecentReservation[]>([]);
   const [statusStats, setStatusStats] = useState<StatusStat[]>([]);
   const [fleetStats, setFleetStats] = useState<FleetStat>({ available: 0, reserved: 0, active: 0, service: 0, total: 0, rented: 0, inactive: 0, other: 0 });
   const [todayPickups, setTodayPickups] = useState<TodayEntry[]>([]);
@@ -285,16 +291,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
       }
       const today = new Date().toISOString().split('T')[0];
 
-      // Fetch reservations with customer source
+      // Reuse the reservation data for the latest five rows and existing dashboard totals.
       const { data: reservations, error: resError } = await supabase
         .from('reservations')
         .select(`
-          id, status, ${isAdmin ? 'total_amount,' : ''} pickup_date, return_date,
+          id, status, created_at, ${isAdmin ? 'total_amount,' : ''} pickup_date, return_date,
           customer:customers!reservations_customer_id_fkey(name, source),
           vehicle:vehicles!reservations_vehicle_id_fkey(plate, brand, model),
           pickup_station:stations!reservations_pickup_station_id_fkey(name),
           return_station:stations!reservations_return_station_id_fkey(name)
-        `);
+        `)
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false });
 
       if (resError) throw resError;
       const reservationRows = (reservations || []) as unknown as DashboardReservation[];
@@ -319,14 +327,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
         if (typeof v.warning_km === 'number' && v.warning_km > 0) serviceWarningKm = v.warning_km;
       }
 
-      // Source counts are operational data; financial queries run only for Admin.
-      const sourceMap = new Map<string, number>();
-      reservationRows.forEach((r) => {
-        const source = r.customer?.source || 'other';
-        sourceMap.set(source, (sourceMap.get(source) || 0) + 1);
-      });
       if (version !== requestVersion.current) return;
-      setSourceStats(Array.from(sourceMap, ([source, count]) => ({ source, count })));
+      // Keep financial fields out of the recent-reservations table state.
+      setRecentReservations(reservationRows.slice(0, 5).map(({ id, customer, vehicle, pickup_date, return_date, status }) => ({
+        id, customer, vehicle, pickup_date, return_date, status,
+      })));
 
       // Process status stats
       const statusMap = new Map<string, number>();
@@ -792,35 +797,49 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
       )}
       </div>
 
-      {/* Reservations by source — no financial data */}
+      {/* Recent reservations and existing daily operations */}
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-        <div className="overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
+        <section aria-labelledby="recent-reservations-title" className="min-w-0 overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
           <div className="border-b border-[#1e4e7d]/70 px-6 py-4">
-            <h3 className="text-base font-semibold text-white">Κρατήσεις ανά Πηγή</h3>
+            <h3 id="recent-reservations-title" className="text-base font-semibold text-white">Πρόσφατες Κρατήσεις</h3>
+            <p className="mt-1 text-xs text-blue-100/45">Οι 5 τελευταίες καταχωρίσεις</p>
           </div>
-          <div className="p-6">
-            {sourceStats.length === 0 ? (
-              <p className="py-4 text-center text-sm text-blue-100/45">Δεν υπάρχουν δεδομένα</p>
-            ) : (
-              <div className="space-y-3">
-                {sourceStats.map((s) => (
-                  <div key={s.source} className="flex items-center justify-between">
-                    <span className="text-sm text-blue-100/85">{SOURCE_LABELS[s.source] || s.source}</span>
-                    <div className="flex items-center space-x-3">
-                      <div className="w-24 overflow-hidden rounded-full bg-[#0b2949]/80 h-2">
-                        <div
-                          className="h-full rounded-full bg-[#2f8cff] transition-all duration-300"
-                          style={{ width: `${totalReservations > 0 ? (s.count / totalReservations) * 100 : 0}%` }}
-                        />
-                      </div>
-                      <span className="w-8 text-right text-sm font-semibold tabular-nums text-white">{s.count}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+          {recentReservations.length === 0 ? (
+            <p className="px-4 py-8 text-center text-sm text-blue-100/45">Δεν υπάρχουν κρατήσεις.</p>
+          ) : (
+            <div role="region" aria-label="Πίνακας πρόσφατων κρατήσεων" tabIndex={0} className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400">
+              <table className="w-full min-w-[520px] text-left text-xs">
+                <caption className="sr-only">Οι πέντε πιο πρόσφατες κρατήσεις κατά ημερομηνία δημιουργίας</caption>
+                <thead className="border-b border-[#1e4e7d]/50 bg-[#0b2949]/35 text-blue-100/55">
+                  <tr>
+                    <th scope="col" className="px-3 py-3 font-medium">Πελάτης</th>
+                    <th scope="col" className="px-3 py-3 font-medium">Όχημα</th>
+                    <th scope="col" className="px-3 py-3 font-medium">Παραλαβή</th>
+                    <th scope="col" className="px-3 py-3 font-medium">Επιστροφή</th>
+                    <th scope="col" className="px-3 py-3 font-medium">Κατάσταση</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#1e4e7d]/40">
+                  {recentReservations.map(reservation => {
+                    const status = RESERVATION_STATUS[reservation.status] || { label: 'Άγνωστη', className: 'bg-slate-500/20 text-slate-200 ring-slate-400/25' };
+                    return (
+                      <tr key={reservation.id} className="transition-colors hover:bg-[#0b2949]/30">
+                        <td className="px-3 py-3 align-top"><span className="block max-w-[140px] break-words font-medium text-white">{reservation.customer?.name || '—'}</span></td>
+                        <td className="px-3 py-3 align-top">
+                          <span className="block whitespace-nowrap font-medium text-blue-100/85">{reservation.vehicle?.plate || '—'}</span>
+                          {reservation.vehicle && <span className="mt-0.5 block max-w-[120px] break-words text-blue-100/45">{reservation.vehicle.brand} {reservation.vehicle.model}</span>}
+                        </td>
+                        <td className="px-3 py-3 align-top"><ReservationDate value={reservation.pickup_date} /></td>
+                        <td className="px-3 py-3 align-top"><ReservationDate value={reservation.return_date} /></td>
+                        <td className="px-3 py-3 align-top"><span className={`inline-flex whitespace-nowrap rounded-full px-2 py-1 text-[11px] font-medium ring-1 ring-inset ${status.className}`}>{status.label}</span></td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
 
         {/* Today\'s Pickups & Returns — compact right column */}
         <div className="grid min-w-0 grid-cols-1 gap-5">
