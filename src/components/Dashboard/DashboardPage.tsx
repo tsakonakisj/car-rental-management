@@ -793,7 +793,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
       </div>
 
       {/* Reservations by source — no financial data */}
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
         <div className="overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
           <div className="border-b border-[#1e4e7d]/70 px-6 py-4">
             <h3 className="text-base font-semibold text-white">Κρατήσεις ανά Πηγή</h3>
@@ -822,10 +822,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
           </div>
         </div>
 
-      </div>
-
-      {/* Today's Pickups & Returns */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Today\'s Pickups & Returns — compact right column */}
+        <div className="grid min-w-0 grid-cols-1 gap-5">
         <div className="overflow-hidden rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 shadow-[0_16px_40px_rgba(0,0,0,0.22)]">
           <div className="border-b border-[#1e4e7d]/70 px-6 py-4">
             <div className="flex items-center">
@@ -888,6 +886,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
               </div>
             )}
           </div>
+        </div>
         </div>
       </div>
 
