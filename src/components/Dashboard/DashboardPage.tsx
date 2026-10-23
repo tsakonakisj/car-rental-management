@@ -156,21 +156,22 @@ const STATUS_LABELS: Record<string, string> = {
 
 type DashboardCardTheme = {
   icon: string;
+  iconBackground: string;
 };
 
 const STATUS_CARD_THEMES: Record<string, DashboardCardTheme> = {
-  upcoming: { icon: 'text-blue-300' },
-  active: { icon: 'text-emerald-300' },
-  completed: { icon: 'text-slate-300' },
-  cancelled: { icon: 'text-rose-300' },
+  upcoming: { icon: 'text-blue-200', iconBackground: 'bg-blue-500/25 ring-blue-400/20' },
+  active: { icon: 'text-emerald-200', iconBackground: 'bg-emerald-500/25 ring-emerald-400/20' },
+  completed: { icon: 'text-slate-200', iconBackground: 'bg-slate-500/30 ring-slate-400/20' },
+  cancelled: { icon: 'text-rose-200', iconBackground: 'bg-rose-500/25 ring-rose-400/20' },
 };
 
 const FLEET_CARD_THEMES: Record<string, DashboardCardTheme> = {
-  total: { icon: 'text-slate-300' },
-  available: { icon: 'text-emerald-300' },
-  reserved: { icon: 'text-amber-300' },
-  active: { icon: 'text-blue-300' },
-  service: { icon: 'text-rose-300' },
+  total: { icon: 'text-slate-200', iconBackground: 'bg-slate-500/30 ring-slate-400/20' },
+  available: { icon: 'text-emerald-200', iconBackground: 'bg-emerald-500/25 ring-emerald-400/20' },
+  reserved: { icon: 'text-amber-200', iconBackground: 'bg-amber-500/25 ring-amber-400/20' },
+  active: { icon: 'text-blue-200', iconBackground: 'bg-blue-500/25 ring-blue-400/20' },
+  service: { icon: 'text-rose-200', iconBackground: 'bg-rose-500/25 ring-rose-400/20' },
 };
 
 interface DashboardMetricCardProps {
@@ -185,18 +186,20 @@ interface DashboardMetricCardProps {
 
 const DashboardMetricCard: React.FC<DashboardMetricCardProps> = ({ title, value, icon: Icon, theme, badge, showTitle = true, onClick }) => {
   const content = (
-    <>
-      <div className="flex items-center gap-2.5">
-        <Icon className={`h-5 w-5 flex-shrink-0 ${theme.icon}`} />
-        <span className="min-w-0 text-sm font-medium leading-5 text-slate-300">
-          {showTitle ? title : (badge || title)}
-        </span>
+    <div className="flex items-start gap-3 sm:gap-4">
+      <div className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl ring-1 ring-inset ${theme.iconBackground}`}>
+        <Icon className={`h-7 w-7 ${theme.icon}`} />
       </div>
-      <p className="mt-3 text-3xl font-semibold leading-none tabular-nums tracking-tight text-white">{value}</p>
-    </>
+      <div className="min-w-0 pt-0.5">
+        <p className="text-sm font-medium leading-5 text-slate-300">
+          {showTitle ? title : (badge || title)}
+        </p>
+        <p className="mt-2 text-3xl font-semibold leading-none tabular-nums tracking-tight text-white">{value}</p>
+      </div>
+    </div>
   );
 
-  const className = `min-h-[112px] rounded-2xl border border-slate-400/15 bg-[#0b223b] p-4 shadow-sm transition-colors ${onClick ? 'cursor-pointer hover:border-slate-400/30 hover:bg-[#102b47] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#061a35]' : ''}`;
+  const className = `min-h-[128px] rounded-2xl border border-slate-400/15 bg-[#0b223b] p-4 sm:p-5 shadow-sm transition-colors ${onClick ? 'cursor-pointer hover:border-slate-400/30 hover:bg-[#102b47] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-[#061a35]' : ''}`;
 
   return onClick ? <button type="button" onClick={onClick} className={`${className} w-full text-left`}>{content}</button> : <div className={className}>{content}</div>;
 };
