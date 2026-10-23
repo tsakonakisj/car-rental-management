@@ -773,16 +773,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
                     <p className="mt-2 break-words text-[2rem] font-semibold leading-tight tabular-nums tracking-tight text-white sm:text-4xl">{currency.format(visibleFinancials.netReceived)}</p>
                     <p className="mt-1 text-[11px] text-slate-400">Μετά τις επιστροφές χρημάτων</p>
                   </div>
-                  <dl className="flex min-w-0 flex-[1.5] flex-wrap gap-x-4 gap-y-3">
-                    <div className="min-w-[112px] flex-1">
+                  <dl className="grid w-full min-w-0 grid-cols-3 gap-3 min-[780px]:w-auto min-[780px]:min-w-[345px] min-[780px]:flex-[1.5]">
+                    <div className="min-w-0">
                       <dt className="min-h-8 text-[11px] leading-4 text-slate-400">Αξία κρατήσεων</dt>
                       <dd className="mt-1 whitespace-nowrap text-sm font-semibold tabular-nums text-blue-100">{currency.format(visibleFinancials.bookingValue)}</dd>
                     </div>
-                    <div className="min-w-[112px] flex-1">
+                    <div className="min-w-0">
                       <dt className="min-h-8 text-[11px] leading-4 text-slate-400">Καθαρές εισπράξεις</dt>
                       <dd className="mt-1 whitespace-nowrap text-sm font-semibold tabular-nums text-slate-100">{currency.format(visibleFinancials.netReceived)}</dd>
                     </div>
-                    <div className="min-w-[112px] flex-1">
+                    <div className="min-w-0">
                       <dt className="min-h-8 text-[11px] leading-4 text-slate-400">Ανεξόφλητο υπόλοιπο</dt>
                       <dd className="mt-1 whitespace-nowrap text-sm font-semibold tabular-nums text-amber-200">{currency.format(visibleFinancials.outstanding)}</dd>
                     </div>
