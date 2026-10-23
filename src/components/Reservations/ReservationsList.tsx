@@ -860,7 +860,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
         </div>
       )}
 
-      <div className="grid min-w-0 grid-cols-1 items-start gap-5 min-[1800px]:grid-cols-[minmax(0,1fr)_340px]">
+      <div className="grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
       {/* Reservations table: existing actions are expanded within the table. */}
       <section className="min-w-0 max-w-full rounded-2xl border border-white/10 bg-[#101e35]">
         <div className="border-b border-white/10 px-4 py-4">
