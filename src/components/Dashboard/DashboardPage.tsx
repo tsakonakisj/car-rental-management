@@ -276,8 +276,8 @@ const NetPaymentsChart: React.FC<{ days: DailyNetPayment[] }> = ({ days }) => {
         <span className="text-slate-400">Ημερομηνία καταχώρισης · Τοπική ώρα</span>
       </figcaption>
       <svg viewBox="0 0 420 126" role="img" aria-label={`Καθαρές εισπράξεις ανά ημέρα: ${days.map(day => `${day.date}: ${currency.format(day.net)}`).join(', ')}`} className="mt-3 block w-full">
-        <line x1="24" x2="414" y1="12" y2="12" stroke="#94a3b8" strokeOpacity="0.08" strokeDasharray="3 5" />
-        <line x1="24" x2="414" y1="53" y2="53" stroke="#94a3b8" strokeOpacity="0.08" strokeDasharray="3 5" />
+        <line x1="24" x2="414" y1="12" y2="12" stroke="#94a3b8" strokeOpacity="0.16" strokeDasharray="3 5" />
+        <line x1="24" x2="414" y1="53" y2="53" stroke="#94a3b8" strokeOpacity="0.16" strokeDasharray="3 5" />
         <line x1="24" x2="414" y1={baseline} y2={baseline} stroke="#94a3b8" strokeOpacity="0.25" />
         <text x="18" y={baseline + 3} textAnchor="end" fill="#94a3b8" fontSize="9">0</text>
         {days.map((day, index) => {
@@ -287,8 +287,8 @@ const NetPaymentsChart: React.FC<{ days: DailyNetPayment[] }> = ({ days }) => {
             <g key={day.date}>
               <title>{`${day.label}: ${currency.format(day.net)}`}</title>
               <rect x={center - 22} y="8" width="44" height="92" fill="transparent" />
-              <rect x={center - 13} y={Math.min(valueY, baseline)} width="26" height={Math.abs(baseline - valueY)} rx="3" fill="#6883ed" fillOpacity={day.net < 0 ? 0.45 : 0.7} />
-              <text x={center} y="116" textAnchor="middle" fill="#94a3b8" fontSize="10">{day.label}</text>
+              <rect x={center - 16} y={Math.min(valueY, baseline)} width="32" height={Math.abs(baseline - valueY)} rx="3" fill="#6883ed" fillOpacity={day.net < 0 ? 0.6 : 0.95} />
+              <text x={center} y="116" textAnchor="middle" fill="#cbd5e1" fontSize="10">{day.label}</text>
             </g>
           );
         })}
@@ -773,18 +773,18 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
                     <p className="mt-2 break-words text-[2rem] font-semibold leading-tight tabular-nums tracking-tight text-white sm:text-4xl">{currency.format(visibleFinancials.netReceived)}</p>
                     <p className="mt-1 text-[11px] text-slate-400">Μετά τις επιστροφές χρημάτων</p>
                   </div>
-                  <dl className="grid min-w-[240px] flex-[1.5] grid-cols-3 gap-3">
-                    <div className="min-w-0">
+                  <dl className="flex min-w-0 flex-[1.5] flex-wrap gap-x-4 gap-y-3">
+                    <div className="min-w-[112px] flex-1">
                       <dt className="min-h-8 text-[11px] leading-4 text-slate-400">Αξία κρατήσεων</dt>
-                      <dd className="mt-1 break-words text-sm font-semibold tabular-nums text-blue-100">{currency.format(visibleFinancials.bookingValue)}</dd>
+                      <dd className="mt-1 whitespace-nowrap text-sm font-semibold tabular-nums text-blue-100">{currency.format(visibleFinancials.bookingValue)}</dd>
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-[112px] flex-1">
                       <dt className="min-h-8 text-[11px] leading-4 text-slate-400">Καθαρές εισπράξεις</dt>
-                      <dd className="mt-1 break-words text-sm font-semibold tabular-nums text-slate-100">{currency.format(visibleFinancials.netReceived)}</dd>
+                      <dd className="mt-1 whitespace-nowrap text-sm font-semibold tabular-nums text-slate-100">{currency.format(visibleFinancials.netReceived)}</dd>
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-[112px] flex-1">
                       <dt className="min-h-8 text-[11px] leading-4 text-slate-400">Ανεξόφλητο υπόλοιπο</dt>
-                      <dd className="mt-1 break-words text-sm font-semibold tabular-nums text-amber-200">{currency.format(visibleFinancials.outstanding)}</dd>
+                      <dd className="mt-1 whitespace-nowrap text-sm font-semibold tabular-nums text-amber-200">{currency.format(visibleFinancials.outstanding)}</dd>
                     </div>
                   </dl>
                 </div>
