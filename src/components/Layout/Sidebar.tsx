@@ -168,7 +168,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, mobileOpen =
       {/* Mobile drawer */}
       <div
         className={`fixed left-0 top-0 z-50 h-full w-64 transform overflow-hidden border-r border-[#23344b]/70 bg-[#0b1728] shadow-[12px_0_40px_rgba(0,0,0,0.35)] transition-transform duration-200 ease-in-out lg:hidden ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+          mobileOpen ? 'visible translate-x-0' : 'invisible -translate-x-full'
         }`}
       >
         <div className="relative z-10 h-full overflow-y-auto">{navContent}</div>

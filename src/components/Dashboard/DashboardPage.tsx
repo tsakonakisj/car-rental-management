@@ -275,24 +275,28 @@ const NetPaymentsChart: React.FC<{ days: DailyNetPayment[] }> = ({ days }) => {
         <span className="font-medium text-slate-300">Καθαρές εισπράξεις · 7 ημέρες</span>
         <span className="text-slate-400">Ημερομηνία καταχώρισης · Τοπική ώρα</span>
       </figcaption>
-      <svg viewBox="0 0 420 126" role="img" aria-label={`Καθαρές εισπράξεις ανά ημέρα: ${days.map(day => `${day.date}: ${currency.format(day.net)}`).join(', ')}`} className="mt-3 block w-full">
-        <line x1="24" x2="414" y1="12" y2="12" stroke="#94a3b8" strokeOpacity="0.16" strokeDasharray="3 5" />
-        <line x1="24" x2="414" y1="53" y2="53" stroke="#94a3b8" strokeOpacity="0.16" strokeDasharray="3 5" />
-        <line x1="24" x2="414" y1={baseline} y2={baseline} stroke="#94a3b8" strokeOpacity="0.25" />
-        <text x="18" y={baseline + 3} textAnchor="end" fill="#94a3b8" fontSize="9">0</text>
-        {days.map((day, index) => {
-          const center = 51 + index * 55;
-          const valueY = day.net === 0 ? baseline : y(day.net);
-          return (
-            <g key={day.date}>
-              <title>{`${day.label}: ${currency.format(day.net)}`}</title>
-              <rect x={center - 22} y="8" width="44" height="92" fill="transparent" />
-              <rect x={center - 16} y={Math.min(valueY, baseline)} width="32" height={Math.abs(baseline - valueY)} rx="3" fill="#6883ed" fillOpacity={day.net < 0 ? 0.6 : 0.95} />
-              <text x={center} y="116" textAnchor="middle" fill="#cbd5e1" fontSize="10">{day.label}</text>
-            </g>
-          );
-        })}
-      </svg>
+      <div className="relative mt-3">
+        <span aria-hidden="true" className="pointer-events-none absolute left-0 -translate-y-1/2 text-[10px] leading-none text-slate-400" style={{ top: `${baseline / 106 * 100}%` }}>0</span>
+        <svg viewBox="0 0 420 106" role="img" aria-label={`Καθαρές εισπράξεις ανά ημέρα: ${days.map(day => `${day.date}: ${currency.format(day.net)}`).join(', ')}`} className="block w-full">
+          <line x1="24" x2="414" y1="12" y2="12" stroke="#94a3b8" strokeOpacity="0.16" strokeDasharray="3 5" />
+          <line x1="24" x2="414" y1="53" y2="53" stroke="#94a3b8" strokeOpacity="0.16" strokeDasharray="3 5" />
+          <line x1="24" x2="414" y1={baseline} y2={baseline} stroke="#94a3b8" strokeOpacity="0.25" />
+          {days.map((day, index) => {
+            const center = 51 + index * 55;
+            const valueY = day.net === 0 ? baseline : y(day.net);
+            return (
+              <g key={day.date}>
+                <title>{`${day.label}: ${currency.format(day.net)}`}</title>
+                <rect x={center - 22} y="8" width="44" height="92" fill="transparent" />
+                <rect x={center - 16} y={Math.min(valueY, baseline)} width="32" height={Math.abs(baseline - valueY)} rx="3" fill="#6883ed" fillOpacity={day.net < 0 ? 0.6 : 0.95} />
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+      <div aria-hidden="true" className="grid grid-cols-7 text-center text-[10px] leading-4 text-slate-300" style={{ paddingLeft: '5.7%', paddingRight: '1.4%' }}>
+        {days.map(day => <span key={day.date}>{day.label}</span>)}
+      </div>
       <p className="mt-1 text-[11px] leading-4 text-slate-400">Πληρωμές μείον επιστροφές ανά ημέρα, χωρίς ακυρωμένες πληρωμές. Αρνητικά ποσά εμφανίζονται κάτω από το 0.</p>
       {days.every(day => day.net === 0) && <p className="mt-2 text-xs text-slate-400">Οι καθαρές εισπράξεις του 7ημέρου είναι μηδενικές.</p>}
     </figure>
@@ -776,15 +780,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
                   <dl className="grid w-full min-w-0 grid-cols-3 gap-3 min-[780px]:w-auto min-[780px]:min-w-[345px] min-[780px]:flex-[1.5]">
                     <div className="min-w-0">
                       <dt className="min-h-8 text-[11px] leading-4 text-slate-400">Αξία κρατήσεων</dt>
-                      <dd className="mt-1 whitespace-nowrap text-sm font-semibold tabular-nums text-blue-100">{currency.format(visibleFinancials.bookingValue)}</dd>
+                      <dd className="mt-1 whitespace-normal text-sm font-semibold tabular-nums [overflow-wrap:anywhere] min-[780px]:whitespace-nowrap text-blue-100">{currency.format(visibleFinancials.bookingValue)}</dd>
                     </div>
                     <div className="min-w-0">
                       <dt className="min-h-8 text-[11px] leading-4 text-slate-400">Καθαρές εισπράξεις</dt>
-                      <dd className="mt-1 whitespace-nowrap text-sm font-semibold tabular-nums text-slate-100">{currency.format(visibleFinancials.netReceived)}</dd>
+                      <dd className="mt-1 whitespace-normal text-sm font-semibold tabular-nums [overflow-wrap:anywhere] min-[780px]:whitespace-nowrap text-slate-100">{currency.format(visibleFinancials.netReceived)}</dd>
                     </div>
                     <div className="min-w-0">
                       <dt className="min-h-8 text-[11px] leading-4 text-slate-400">Ανεξόφλητο υπόλοιπο</dt>
-                      <dd className="mt-1 whitespace-nowrap text-sm font-semibold tabular-nums text-amber-200">{currency.format(visibleFinancials.outstanding)}</dd>
+                      <dd className="mt-1 whitespace-normal text-sm font-semibold tabular-nums [overflow-wrap:anywhere] min-[780px]:whitespace-nowrap text-amber-200">{currency.format(visibleFinancials.outstanding)}</dd>
                     </div>
                   </dl>
                 </div>
@@ -829,7 +833,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
           {recentReservations.length === 0 ? (
             <p className="px-4 py-8 text-center text-sm text-blue-100/45">Δεν υπάρχουν κρατήσεις.</p>
           ) : (
-            <div role="region" aria-label="Πίνακας πρόσφατων κρατήσεων" tabIndex={0} className="overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400">
+            <div role="region" aria-label="Πίνακας πρόσφατων κρατήσεων" tabIndex={0} className="relative overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400">
               <table className="w-full min-w-[520px] text-left text-xs">
                 <caption className="sr-only">Οι πέντε πιο πρόσφατες κρατήσεις κατά ημερομηνία δημιουργίας</caption>
                 <thead className="border-b border-[#1e4e7d]/50 bg-[#0b2949]/35 text-blue-100/55">
@@ -887,13 +891,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
               <div className="divide-y divide-[#1e4e7d]/50">
                 {todayPickups.map((entry) => (
                   <button key={entry.id} type="button" disabled={!onViewReservation} onClick={() => onViewReservation?.(entry.id)} aria-label={`Προβολή κράτησης: ${entry.customerName}, ${entry.time}`} className="flex w-full items-center justify-between gap-3 rounded-lg px-2 py-3 text-left transition-colors hover:bg-[#0b2949]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400 disabled:cursor-default">
-                    <div>
-                      <p className="text-sm font-medium text-white">{entry.customerName}</p>
-                      <p className="text-xs text-blue-100/45">{entry.vehicleLabel}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="break-words text-sm font-medium text-white">{entry.customerName}</p>
+                      <p className="break-words text-xs text-blue-100/45">{entry.vehicleLabel}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium tabular-nums text-white">{entry.time}</p>
-                      <p className="text-xs text-blue-100/45">{entry.station}</p>
+                    <div className="max-w-[40%] shrink-0 text-right">
+                      <p className="whitespace-nowrap text-sm font-medium tabular-nums text-white">{entry.time}</p>
+                      <p className="break-words text-xs text-blue-100/45">{entry.station}</p>
                     </div>
                   </button>
                 ))}
@@ -919,13 +923,13 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
               <div className="divide-y divide-[#1e4e7d]/50">
                 {todayReturns.map((entry) => (
                   <button key={entry.id} type="button" disabled={!onViewReservation} onClick={() => onViewReservation?.(entry.id)} aria-label={`Προβολή κράτησης: ${entry.customerName}, ${entry.time}`} className="flex w-full items-center justify-between gap-3 rounded-lg px-2 py-3 text-left transition-colors hover:bg-[#0b2949]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400 disabled:cursor-default">
-                    <div>
-                      <p className="text-sm font-medium text-white">{entry.customerName}</p>
-                      <p className="text-xs text-blue-100/45">{entry.vehicleLabel}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="break-words text-sm font-medium text-white">{entry.customerName}</p>
+                      <p className="break-words text-xs text-blue-100/45">{entry.vehicleLabel}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium tabular-nums text-white">{entry.time}</p>
-                      <p className="text-xs text-blue-100/45">{entry.station}</p>
+                    <div className="max-w-[40%] shrink-0 text-right">
+                      <p className="whitespace-nowrap text-sm font-medium tabular-nums text-white">{entry.time}</p>
+                      <p className="break-words text-xs text-blue-100/45">{entry.station}</p>
                     </div>
                   </button>
                 ))}
@@ -976,28 +980,28 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
                     >
                       <div className="flex items-center gap-2">
                         <TruckIcon className="h-4 w-4 flex-shrink-0 text-blue-100/45" />
-                        <p className="text-sm font-medium text-white">{group.plate}</p>
-                        <span className="text-xs text-blue-100/45">{group.brand} {group.model}</span>
+                        <p className="shrink-0 text-sm font-medium text-white">{group.plate}</p>
+                        <span className="min-w-0 break-words text-xs text-blue-100/45">{group.brand} {group.model}</span>
                       </div>
                       <div className="ml-6 space-y-1.5">
                         {group.alerts.map((alert, aIdx) => (
-                          <div key={aIdx} className="flex items-center justify-between gap-2">
+                          <div key={aIdx} className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
                             <div className="min-w-0 flex-1">
                               <span className="text-xs text-blue-100/55">{alert.documentType}</span>
                               {alert.serviceReasons && alert.serviceReasons.length > 0
                                 ? <div className="space-y-0.5">
                                     {alert.serviceReasons.map((reason, i) => (
-                                      <p key={i} className="truncate text-xs text-blue-100/40">{reason}</p>
+                                      <p key={i} className="break-words text-xs text-blue-100/40">{reason}</p>
                                     ))}
                                   </div>
                                 : alert.expiryDate
-                                  ? <p className="truncate text-xs text-blue-100/40">{new Date(alert.expiryDate + 'T00:00:00').toLocaleDateString('el-GR')}</p>
+                                  ? <p className="break-words text-xs text-blue-100/40">{new Date(alert.expiryDate + 'T00:00:00').toLocaleDateString('el-GR')}</p>
                                   : alert.alertReason
-                                    ? <p className="truncate text-xs text-blue-100/40">{alert.alertReason}</p>
+                                    ? <p className="break-words text-xs text-blue-100/40">{alert.alertReason}</p>
                                     : null
                               }
                             </div>
-                            <span className={`inline-flex flex-shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-medium ${ALERT_STYLES[alert.level]}`}>
+                            <span className={`inline-flex max-w-full flex-shrink-0 items-center whitespace-normal break-words rounded-full px-2.5 py-1 text-xs font-medium ${ALERT_STYLES[alert.level]}`}>
                               {alert.serviceReasons
                                 ? alert.alertReason
                                 : alert.alertReason && !alert.expiryDate
