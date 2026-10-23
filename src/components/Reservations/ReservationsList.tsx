@@ -22,7 +22,6 @@ import BookingConfirmation from '../PDF/BookingConfirmation';
 import PaymentPanel from '../Payments/PaymentPanel';
 import ReturnEditSection from '../CheckIn/ReturnEditSection';
 import { returnLifecycleService, rentalActionError, type ReturnContext } from '../../lib/database';
-import PageHero from '../Layout/PageHero';
 import type { Station, Vehicle, Pricing, Season, Reservation, Insurance, Extra } from '../../types';
 
 interface ReservationRow {
@@ -748,12 +747,6 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
 
   return (
     <div className="space-y-5 text-blue-50">
-      <PageHero
-        eyebrow="Reservation desk"
-        title="Κρατήσεις"
-        subtitle="Διαχείριση κρατήσεων ανά σταθμό και ημερομηνία"
-      />
-
       {actionError && (
         <div className="rounded-xl border border-red-400/30 bg-red-950/45 p-3 text-sm text-red-100 shadow-lg">
           {actionError}
@@ -761,8 +754,8 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
       )}
 
       {/* Filters */}
-      <div className="rounded-2xl border border-[#1e4e7d]/70 bg-[#071d38]/90 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.22)] backdrop-blur-xl">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
+      <div className="rounded-2xl border border-white/10 bg-[#101e35] p-3 sm:p-4">
+        <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
           <div>
             <label className="mb-1 block text-xs font-semibold uppercase tracking-[0.12em] text-blue-100/65">
               Αναζήτηση
@@ -774,7 +767,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                 placeholder="Όνομα, τηλέφωνο, κατηγορία..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 py-2.5 pl-9 pr-3 text-sm text-white placeholder:text-blue-100/45 focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+                className="min-w-0 w-full rounded-xl border border-white/10 bg-[#0c172b] py-2.5 pl-9 pr-3 text-sm text-white placeholder:text-blue-100/45 focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
               />
             </div>
           </div>
@@ -785,7 +778,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+              className="min-w-0 w-full rounded-xl border border-white/10 bg-[#0c172b] px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
             >
               <option value="all">Όλες</option>
               {statusOptions.map(s => (
@@ -802,7 +795,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
             <select
               value={excelFilter}
               onChange={(e) => setExcelFilter(e.target.value)}
-              className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+              className="min-w-0 w-full rounded-xl border border-white/10 bg-[#0c172b] px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
             >
               <option value="all">Όλες</option>
               <option value="pending">Εκκρεμεί ενημέρωση</option>
@@ -817,19 +810,19 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
               type="date"
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
+              className="min-w-0 w-full rounded-xl border border-white/10 bg-[#0c172b] px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#2f8cff]/50"
             />
           </div>
-          <div className="flex items-end">
+          <div className="flex items-end sm:col-span-2 xl:col-span-1">
             <button
               onClick={() => { setFilter('all'); setExcelFilter('all'); setDateFilter(''); setSearchTerm(''); }}
-              className="rounded-xl border border-[#2b5b85]/80 bg-[#0b2949]/80 px-3 py-2 text-sm font-medium text-blue-100/75 transition-colors hover:border-[#4b8fc7] hover:bg-[#12375d] hover:text-white"
+              className="min-h-10 w-full rounded-xl border border-white/10 bg-[#0c172b] px-3 py-2 text-sm font-medium text-blue-100/75 transition-colors hover:border-[#4b8fc7] hover:bg-[#12375d] hover:text-white"
             >
               Καθαρισμός
             </button>
           </div>
         </div>
-        <div className="mt-4 flex flex-wrap gap-2 border-t border-[#2b5b85]/60 pt-4">
+        <div className="mt-3 flex flex-wrap gap-2 border-t border-white/10 pt-3">
           <button type="button" onClick={() => { setFilter('all'); setExcelFilter('all'); setDateFilter(''); setSearchTerm(''); }}
             className={`rounded-xl border px-3 py-2 text-sm font-medium transition-colors ${filter === 'all' && excelFilter === 'all' && !dateFilter && !searchTerm ? 'border-[#55a8ff]/70 bg-[#1268f3]/30 text-white' : 'border-[#2b5b85]/80 bg-[#0b2949]/75 text-blue-100/85 hover:border-[#55a8ff]/50'}`}>
             Όλες οι κρατήσεις

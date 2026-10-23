@@ -542,11 +542,11 @@ const MainApp: React.FC = () => {
       case 'bookings':
         return (
           <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col gap-3 border-b border-white/10 pb-4 sm:flex-row sm:items-center sm:justify-between">
               <h1 className="text-2xl font-semibold tracking-[-0.03em] text-white">{t('bookings')}</h1>
               <button
                 onClick={() => setShowBookingWizard(true)}
-                className="inline-flex items-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
+                className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl border border-transparent bg-[#1268f3] px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(18,104,243,0.28)] transition-colors hover:bg-[#2478ff]"
               >
                 {t('newBooking')}
               </button>
