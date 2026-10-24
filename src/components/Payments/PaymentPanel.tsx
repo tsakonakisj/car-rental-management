@@ -248,7 +248,7 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
                     )}
                   </div>
                 </div>
-                {!p.voided_at && user?.role === 'admin' && (
+                {!p.voided_at && (user?.role === 'admin' || user?.role === 'manager') && (
                   <div className="flex shrink-0 items-center gap-2">
                     {getRefundableAmount(p) > 0 && (
                       <button type="button"
