@@ -376,6 +376,8 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
   const [receiptChart, setReceiptChart] = useState<ReceiptChartState | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [pendingFuelWaivers, setPendingFuelWaivers] = useState<FuelWaiverRequest[]>([]);
+  const [recentRefunds, setRecentRefunds] = useState<Array<{ id: string; reservation_id: string; amount: number; reason: string; created_at: string }>>([]);
+  const [refundLoadError, setRefundLoadError] = useState(false);
   const [reviewTarget, setReviewTarget] = useState<FuelWaiverRequest | null>(null);
   const [reviewApprove, setReviewApprove] = useState(false);
   const [reviewNote, setReviewNote] = useState('');
@@ -407,8 +409,20 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
       if (isAdmin) {
         const pending = await fuelWaiverService.listPending();
         setPendingFuelWaivers(pending);
+        const { data: refundRows, error: refundError } = await supabase
+          .from('payment_refunds')
+          .select('id,reservation_id,amount,reason,created_at')
+          .order('created_at', { ascending: false })
+          .limit(10);
+        setRefundLoadError(!!refundError);
+        setRecentRefunds(refundError ? [] : (refundRows || []).map(row => ({
+          id: row.id, reservation_id: row.reservation_id, amount: Number(row.amount),
+          reason: row.reason, created_at: row.created_at,
+        })));
       } else {
         setPendingFuelWaivers([]);
+        setRecentRefunds([]);
+        setRefundLoadError(false);
       }
       const today = new Date().toISOString().split('T')[0];
 
@@ -1056,6 +1070,24 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
             );
           })()}
         </div>
+      )}
+
+      {isAdmin && (recentRefunds.length > 0 || refundLoadError) && (
+        <section className="rounded-2xl border border-sky-400/25 bg-[#071d38]/90 p-4 sm:p-5">
+          <h2 className="text-base font-semibold text-white">Ενημέρωση επιστροφών χρημάτων</h2>
+          <p className="mt-1 text-xs text-blue-100/60">Πρόσφατες καταχωρίσεις · ενημερωτικό ιστορικό, χωρίς έγκριση</p>
+          {refundLoadError ? <p className="mt-3 text-sm text-amber-200">Δεν ήταν δυνατή η φόρτωση επιστροφών χρημάτων.</p> : (
+            <div className="mt-3 space-y-2">
+              {recentRefunds.map(refund => (
+                <div key={refund.id} className="rounded-lg border border-white/10 bg-[#0b2949]/40 p-3 text-sm">
+                  <p className="font-semibold text-white">Επιστροφή €{refund.amount.toFixed(2)}</p>
+                  <p className="mt-1 break-words text-xs text-blue-100/70">{refund.reason}</p>
+                  <p className="mt-1 text-xs text-blue-100/45">Κράτηση #{refund.reservation_id.slice(0, 8).toUpperCase()} · {new Date(refund.created_at).toLocaleString('el-GR')}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
       )}
 
       {isAdmin && (
