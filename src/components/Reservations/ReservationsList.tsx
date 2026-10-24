@@ -139,6 +139,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<string>(initialFilter || 'all');
+  const [todayKindFilter, setTodayKindFilter] = useState<'all' | 'pickup' | 'return'>('all');
   const [excelFilter, setExcelFilter] = useState<string>('all');
   const [dateFilter, setDateFilter] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -670,6 +671,7 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
 
   const pendingTodayOperations = todayOperations.filter(item => !item.completed);
   const completedTodayOperations = todayOperations.filter(item => item.completed);
+  const visiblePendingTodayOperations = pendingTodayOperations.filter(item => todayKindFilter === 'all' || item.kind === todayKindFilter);
   const overduePickupsCount = reservations.filter(isOverduePickup).length;
   const overdueReturnsCount = reservations.filter(isOverdueReturn).length;
 
@@ -1099,18 +1101,18 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
           <div className="mt-3 grid grid-cols-2 gap-3">
             {(['pickup', 'return'] as const).map(kind => {
               const items = todayOperations.filter(item => item.kind === kind);
-              return <div key={kind} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0c172b] px-4 py-3">
+              return <button key={kind} type="button" aria-pressed={todayKindFilter === kind} onClick={() => setTodayKindFilter(current => current === kind ? 'all' : kind)} className={`flex w-full min-w-0 items-center justify-between gap-3 rounded-xl border px-3 py-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300 sm:px-4 ${todayKindFilter === kind ? 'border-blue-400 bg-blue-500/15' : 'border-white/10 bg-[#0c172b] hover:bg-blue-500/10'}`}>
                 <div><p className="text-sm font-medium text-blue-100/75">{kind === 'pickup' ? 'Παραλαβές' : 'Επιστροφές'}</p>
                 <p className="mt-1 text-xs text-blue-100/60">{items.filter(item => !item.completed).length} εκκρεμούν</p></div>
-                <p className="text-3xl font-semibold tabular-nums text-white">{items.length}</p>
-              </div>;
+                <p className="text-2xl font-semibold tabular-nums text-white sm:text-3xl">{items.length}</p>
+              </button>;
             })}
           </div>
         </div>
         <div className="space-y-5 p-4">
           <section>
-            <h3 className="mb-3 text-sm font-semibold text-white">Εκκρεμούν ({pendingTodayOperations.length})</h3>
-            {pendingTodayOperations.length ? <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{pendingTodayOperations.map(({ reservation, kind, date }) => (
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 className="text-sm font-semibold text-white">Εκκρεμούν ({visiblePendingTodayOperations.length})</h3>{todayKindFilter !== 'all' && <button type="button" onClick={() => setTodayKindFilter('all')} className="rounded-md px-2 py-1 text-xs text-blue-200 hover:bg-blue-500/15">Όλες οι εκκρεμότητες</button>}</div>
+            {visiblePendingTodayOperations.length ? <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{visiblePendingTodayOperations.map(({ reservation, kind, date }) => (
             <article key={`${reservation.id}-${kind}`} className={`min-w-0 rounded-xl border p-3 ${kind === 'pickup' ? 'border-emerald-400/20 bg-emerald-500/[0.03]' : 'border-blue-400/20 bg-blue-500/[0.03]'}`}>
               <button type="button" onClick={() => setViewReservation(reservation)} aria-label={`Προβολή κράτησης ${reservation.id.substring(0, 8).toUpperCase()}: ${kind === 'pickup' ? 'Παραλαβή' : 'Επιστροφή'}, ${reservation.customer?.name || 'Άγνωστος πελάτης'}`} className="block w-full min-w-0 rounded-lg text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#55a8ff]">
                 <span className="flex flex-wrap items-center gap-2 text-xs">
