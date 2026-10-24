@@ -663,10 +663,13 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
       const dateValue = kind === 'pickup' ? reservation.pickup_date : reservation.return_date;
       const date = new Date((dateValue || '').replace(' ', 'T'));
       if (Number.isNaN(date.getTime()) || date.toDateString() !== today.toDateString()) return [];
-      return [{ reservation, kind, date }];
+      const completed = kind === 'pickup' ? ['active', 'completed'].includes(reservation.status) : reservation.status === 'completed';
+       return [{ reservation, kind, date, completed }];
     });
   }).sort((a, b) => a.date.getTime() - b.date.getTime());
 
+  const pendingTodayOperations = todayOperations.filter(item => !item.completed);
+  const completedTodayOperations = todayOperations.filter(item => item.completed);
   const overduePickupsCount = reservations.filter(isOverduePickup).length;
   const overdueReturnsCount = reservations.filter(isOverdueReturn).length;
 
@@ -860,9 +863,9 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
         </div>
       )}
 
-      <div className="grid min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div className="flex min-w-0 flex-col gap-5">
       {/* Reservations table: existing actions are expanded within the table. */}
-      <section className="min-w-0 max-w-full rounded-2xl border border-white/10 bg-[#101e35]">
+      <section className="order-2 min-w-0 max-w-full rounded-2xl border border-white/10 bg-[#101e35]">
         <div className="border-b border-white/10 px-4 py-4">
           <h2 className="text-base font-semibold text-white">Λίστα κρατήσεων</h2>
           <p className="mt-2 text-xs text-blue-100/55">Σύρετε οριζόντια για όλες τις στήλες και τις ενέργειες.</p>
@@ -1089,19 +1092,25 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
         </div>
       </section>
 
-      <aside aria-labelledby="today-operations-title" className="min-w-0 rounded-2xl border border-white/10 bg-[#101e35]">
+      <aside aria-labelledby="today-operations-title" className="order-1 min-w-0 rounded-2xl border border-white/10 bg-[#101e35]">
         <div className="border-b border-white/10 p-4">
-          <div className="flex items-start gap-2">
-            <CalendarDaysIcon aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-blue-300" />
-            <h2 id="today-operations-title" className="min-w-0 flex-1 text-base font-semibold text-white">Σημερινές Παραλαβές &amp; Επιστροφές</h2>
-            <span className="rounded-full bg-blue-500/15 px-2 py-0.5 text-xs font-semibold text-blue-200">{todayOperations.length}</span>
+          <h2 id="today-operations-title" className="flex items-center gap-2 text-base font-semibold text-white"><CalendarDaysIcon className="h-5 w-5 text-blue-300" />Σημερινές Παραλαβές &amp; Επιστροφές</h2>
+          <p className="mt-2 text-xs text-blue-100/55">{today.toLocaleDateString('el-GR', { weekday: 'long', day: 'numeric', month: 'short' })}</p>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            {(['pickup', 'return'] as const).map(kind => {
+              const items = todayOperations.filter(item => item.kind === kind);
+              return <div key={kind} className="rounded-xl border border-white/10 bg-[#0c172b] p-4">
+                <p className="text-sm text-blue-100/75">{kind === 'pickup' ? 'Παραλαβές' : 'Επιστροφές'}</p>
+                <p className="mt-1 text-2xl font-semibold text-white">{items.length}</p>
+                <p className="text-xs text-blue-100/60">{items.filter(item => !item.completed).length} εκκρεμούν</p>
+              </div>;
+            })}
           </div>
-          <p className="mt-2 text-xs text-blue-100/55">{today.toLocaleDateString('el-GR', { weekday: 'long', day: 'numeric', month: 'short' })} · Όλες οι κρατήσεις της ημέρας</p>
         </div>
-        <div className="space-y-3 p-3">
-          {todayOperations.length === 0 ? (
-            <p className="px-2 py-6 text-center text-sm text-blue-100/55">Δεν υπάρχουν παραλαβές ή επιστροφές σήμερα.</p>
-          ) : todayOperations.map(({ reservation, kind, date }) => (
+        <div className="space-y-5 p-4">
+          <section>
+            <h3 className="mb-3 text-sm font-semibold text-white">Εκκρεμούν ({pendingTodayOperations.length})</h3>
+            {pendingTodayOperations.length ? <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{pendingTodayOperations.map(({ reservation, kind, date }) => (
             <article key={`${reservation.id}-${kind}`} className={`min-w-0 rounded-xl border p-3 ${kind === 'pickup' ? 'border-emerald-400/20 bg-emerald-500/[0.03]' : 'border-blue-400/20 bg-blue-500/[0.03]'}`}>
               <button type="button" onClick={() => setViewReservation(reservation)} aria-label={`Προβολή κράτησης ${reservation.id.substring(0, 8).toUpperCase()}: ${kind === 'pickup' ? 'Παραλαβή' : 'Επιστροφή'}, ${reservation.customer?.name || 'Άγνωστος πελάτης'}`} className="block w-full min-w-0 rounded-lg text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#55a8ff]">
                 <span className="flex flex-wrap items-center gap-2 text-xs">
@@ -1121,7 +1130,32 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                 <button type="button" onClick={() => handleCheckInClick(reservation)} className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#1268f3] px-3 py-2 text-xs font-semibold text-white hover:bg-[#2478ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300"><CheckIcon className="h-4 w-4 shrink-0" />Check-In · Παραλαβή οχήματος</button>
               )}
             </article>
-          ))}
+          ))}</div> : <p className="text-sm text-blue-100/55">Δεν εκκρεμούν εργασίες σήμερα.</p>}
+          </section>
+          <section className="border-t border-white/10 pt-4">
+            <h3 className="mb-3 text-sm font-semibold text-blue-100/65">Ολοκληρώθηκαν σήμερα ({completedTodayOperations.length})</h3>
+            {completedTodayOperations.length ? <div className="grid gap-3 opacity-75 sm:grid-cols-2 xl:grid-cols-3">{completedTodayOperations.map(({ reservation, kind, date }) => (
+            <article key={`${reservation.id}-${kind}`} className={`min-w-0 rounded-xl border p-3 ${kind === 'pickup' ? 'border-emerald-400/20 bg-emerald-500/[0.03]' : 'border-blue-400/20 bg-blue-500/[0.03]'}`}>
+              <button type="button" onClick={() => setViewReservation(reservation)} aria-label={`Προβολή κράτησης ${reservation.id.substring(0, 8).toUpperCase()}: ${kind === 'pickup' ? 'Παραλαβή' : 'Επιστροφή'}, ${reservation.customer?.name || 'Άγνωστος πελάτης'}`} className="block w-full min-w-0 rounded-lg text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#55a8ff]">
+                <span className="flex flex-wrap items-center gap-2 text-xs">
+                  <span className={`rounded-lg px-2 py-1 font-semibold ${kind === 'pickup' ? 'bg-emerald-500/15 text-emerald-300' : 'bg-blue-500/15 text-blue-200'}`}>{kind === 'pickup' ? 'Παραλαβή' : 'Επιστροφή'}</span>
+                  <time dateTime={kind === 'pickup' ? reservation.pickup_date : reservation.return_date} className="font-semibold tabular-nums text-white">{date.toLocaleTimeString('el-GR', { hour: '2-digit', minute: '2-digit', hour12: false })}</time>
+                  <span className="ml-auto break-all font-mono text-[10px] text-blue-100/45">#{reservation.id.substring(0, 8).toUpperCase()}</span>
+                </span>
+                <span className="mt-3 block break-words text-sm font-semibold text-white">{reservation.customer?.name || 'Άγνωστος πελάτης'}</span>
+                <span className="mt-1 block break-words text-xs text-blue-100/65">{reservation.vehicle ? `${reservation.vehicle.brand} ${reservation.vehicle.model}` : 'Όχημα μη διαθέσιμο'} · {reservation.vehicle?.plate || '-'}</span>
+                <span className="mt-2 block break-words text-xs text-blue-100/65">{kind === 'pickup' ? reservation.pickup_station?.name || '-' : reservation.return_station?.name || '-'}</span>
+                <span className={`mt-2 inline-flex rounded-lg px-2 py-1 text-[11px] font-medium ${getStatusColor(reservation.status)}`}>{getDisplayStatus(reservation)}</span>
+              </button>
+              {kind === 'pickup' && reservation.status === 'upcoming' && onCheckOut && (
+                <button type="button" onClick={() => onCheckOut(reservation.id)} className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#1268f3] px-3 py-2 text-xs font-semibold text-white hover:bg-[#2478ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300"><TruckIcon className="h-4 w-4 shrink-0" />Check-Out · Παράδοση οχήματος</button>
+              )}
+              {kind === 'return' && reservation.status === 'active' && onCheckIn && (
+                <button type="button" onClick={() => handleCheckInClick(reservation)} className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#1268f3] px-3 py-2 text-xs font-semibold text-white hover:bg-[#2478ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300"><CheckIcon className="h-4 w-4 shrink-0" />Check-In · Παραλαβή οχήματος</button>
+              )}
+            </article>
+          ))}</div> : <p className="text-sm text-blue-100/45">Δεν υπάρχουν ολοκληρωμένες σημερινές εργασίες.</p>}
+          </section>
         </div>
       </aside>
       </div>
