@@ -833,7 +833,31 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigateReservations, o
           {recentReservations.length === 0 ? (
             <p className="px-4 py-8 text-center text-sm text-blue-100/45">Δεν υπάρχουν κρατήσεις.</p>
           ) : (
-            <div role="region" aria-label="Πίνακας πρόσφατων κρατήσεων" tabIndex={0} className="relative overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400">
+            <div className="divide-y divide-[#1e4e7d]/40 sm:hidden">
+              {recentReservations.map(reservation => {
+                const status = RESERVATION_STATUS[reservation.status] || { label: 'Άγνωστη', className: 'bg-slate-500/20 text-slate-200 ring-slate-400/25' };
+                return (
+                  <button key={reservation.id} type="button" disabled={!onViewReservation}
+                    onClick={() => onViewReservation?.(reservation.id)}
+                    className="grid w-full min-w-0 grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] gap-2 px-3 py-3 text-left hover:bg-[#0b2949]/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 disabled:cursor-default">
+                    <span className="flex min-w-0 items-start gap-2">
+                      <CustomerAvatar name={reservation.customer?.name} />
+                      <span className="min-w-0 break-words text-xs font-medium text-white">{reservation.customer?.name || '—'}</span>
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block break-words text-xs font-semibold text-blue-100/85">{reservation.vehicle?.plate || '—'}</span>
+                      <span className="block break-words text-[11px] text-blue-100/55">{reservation.vehicle ? `${reservation.vehicle.brand} ${reservation.vehicle.model}` : '—'}</span>
+                    </span>
+                    <span className="col-span-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-blue-100/65">
+                      <span>Παραλαβή: <ReservationDate value={reservation.pickup_date} /></span>
+                      <span>Επιστροφή: <ReservationDate value={reservation.return_date} /></span>
+                      <span className={`rounded-full px-2 py-0.5 ring-1 ring-inset ${status.className}`}>{status.label}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div role="region" aria-label="Πίνακας πρόσφατων κρατήσεων" tabIndex={0} className="relative hidden overflow-x-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400 sm:block">
               <table className="w-full min-w-[520px] text-left text-xs">
                 <caption className="sr-only">Οι πέντε πιο πρόσφατες κρατήσεις κατά ημερομηνία δημιουργίας</caption>
                 <thead className="border-b border-[#1e4e7d]/50 bg-[#0b2949]/35 text-blue-100/55">
