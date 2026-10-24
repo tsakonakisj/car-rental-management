@@ -1096,13 +1096,13 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
         <div className="border-b border-white/10 p-4">
           <h2 id="today-operations-title" className="flex items-center gap-2 text-base font-semibold text-white"><CalendarDaysIcon className="h-5 w-5 text-blue-300" />Σημερινές Παραλαβές &amp; Επιστροφές</h2>
           <p className="mt-2 text-xs text-blue-100/55">{today.toLocaleDateString('el-GR', { weekday: 'long', day: 'numeric', month: 'short' })}</p>
-          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="mt-3 grid grid-cols-2 gap-3">
             {(['pickup', 'return'] as const).map(kind => {
               const items = todayOperations.filter(item => item.kind === kind);
-              return <div key={kind} className="rounded-xl border border-white/10 bg-[#0c172b] p-4">
-                <p className="text-sm text-blue-100/75">{kind === 'pickup' ? 'Παραλαβές' : 'Επιστροφές'}</p>
-                <p className="mt-1 text-2xl font-semibold text-white">{items.length}</p>
-                <p className="text-xs text-blue-100/60">{items.filter(item => !item.completed).length} εκκρεμούν</p>
+              return <div key={kind} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-[#0c172b] px-4 py-3">
+                <div><p className="text-sm font-medium text-blue-100/75">{kind === 'pickup' ? 'Παραλαβές' : 'Επιστροφές'}</p>
+                <p className="mt-1 text-xs text-blue-100/60">{items.filter(item => !item.completed).length} εκκρεμούν</p></div>
+                <p className="text-3xl font-semibold tabular-nums text-white">{items.length}</p>
               </div>;
             })}
           </div>
@@ -1132,8 +1132,12 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
             </article>
           ))}</div> : <p className="text-sm text-blue-100/55">Δεν εκκρεμούν εργασίες σήμερα.</p>}
           </section>
-          <section className="border-t border-white/10 pt-4">
-            <h3 className="mb-3 text-sm font-semibold text-blue-100/65">Ολοκληρώθηκαν σήμερα ({completedTodayOperations.length})</h3>
+          <details className="group border-t border-white/10 pt-4">
+            <summary className="mb-3 flex cursor-pointer list-none items-center gap-2 text-sm font-semibold text-blue-100/65 hover:text-white">
+              <span>Ολοκληρωμένες από τις σημερινές εργασίες ({completedTodayOperations.length})</span>
+              <span className="ml-auto text-xs font-normal group-open:hidden">Εμφάνιση ▾</span>
+              <span className="ml-auto hidden text-xs font-normal group-open:inline">Απόκρυψη ▴</span>
+            </summary>
             {completedTodayOperations.length ? <div className="grid gap-3 opacity-75 sm:grid-cols-2 xl:grid-cols-3">{completedTodayOperations.map(({ reservation, kind, date }) => (
             <article key={`${reservation.id}-${kind}`} className={`min-w-0 rounded-xl border p-3 ${kind === 'pickup' ? 'border-emerald-400/20 bg-emerald-500/[0.03]' : 'border-blue-400/20 bg-blue-500/[0.03]'}`}>
               <button type="button" onClick={() => setViewReservation(reservation)} aria-label={`Προβολή κράτησης ${reservation.id.substring(0, 8).toUpperCase()}: ${kind === 'pickup' ? 'Παραλαβή' : 'Επιστροφή'}, ${reservation.customer?.name || 'Άγνωστος πελάτης'}`} className="block w-full min-w-0 rounded-lg text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#55a8ff]">
@@ -1154,8 +1158,8 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                 <button type="button" onClick={() => handleCheckInClick(reservation)} className="mt-3 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg bg-[#1268f3] px-3 py-2 text-xs font-semibold text-white hover:bg-[#2478ff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-300"><CheckIcon className="h-4 w-4 shrink-0" />Check-In · Παραλαβή οχήματος</button>
               )}
             </article>
-          ))}</div> : <p className="text-sm text-blue-100/45">Δεν υπάρχουν ολοκληρωμένες σημερινές εργασίες.</p>}
-          </section>
+          ))}</div> : <p className="text-sm text-blue-100/45">Δεν υπάρχουν ολοκληρωμένες εργασίες στο σημερινό πρόγραμμα.</p>}
+          </details>
         </div>
       </aside>
       </div>
