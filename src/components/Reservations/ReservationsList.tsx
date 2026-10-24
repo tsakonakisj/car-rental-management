@@ -1196,6 +1196,50 @@ const ReservationsList: React.FC<ReservationsListProps> = ({ onCheckOut, onCheck
                 {!editing ? (
                   <>
                     {/* View Mode */}
+                    {(viewReservation.status === 'upcoming' || viewReservation.status === 'active') && (
+                      <div className="rounded-xl border border-blue-400/25 bg-blue-500/10 p-3 sm:p-4">
+                        <h3 className="mb-3 text-sm font-semibold text-white">Γρήγορες ενέργειες</h3>
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                          {viewReservation.status === 'upcoming' && (
+                            <>
+                              <BookingConfirmation
+                        compact
+                        issuedAt={viewReservation.booking_confirmation_issued_at}
+                        onIssued={(issuedAt) => setReservations(prev => prev.map(r =>
+                          r.id === viewReservation.id ? { ...r, booking_confirmation_issued_at: issuedAt } : r
+                        ))}
+                        onError={setActionError}
+                        data={{
+                          reservationId: viewReservation.id,
+                          customerName: viewReservation.customer?.name || '-',
+                          customerPhone: viewReservation.customer?.phone || '-',
+                          vehicleLabel: viewReservation.vehicle
+                            ? `${viewReservation.vehicle.brand} ${viewReservation.vehicle.model} (${viewReservation.vehicle.plate})`
+                            : `Κατηγορία ${viewReservation.category}`,
+                          vehicleCategory: viewReservation.vehicle?.category || viewReservation.category,
+                          pickupDate: viewReservation.pickup_date,
+                          returnDate: viewReservation.return_date,
+                          pickupStation: viewReservation.pickup_station?.name || '-',
+                          returnStation: viewReservation.return_station?.name || '-',
+                          totalAmount: Number(viewReservation.total_amount) || 0,
+                        }}
+                      />
+                              <button type="button" onClick={() => { setContractMode(true); startEditing(viewReservation); }}
+                                className="rounded-lg border border-emerald-400/40 bg-emerald-600/15 px-3 py-2.5 text-sm font-semibold text-emerald-200 hover:bg-emerald-600/25">
+                                {viewReservation.contract_issued_at ? 'Συμβόλαιο Εκδόθηκε ✓' : 'Έκδοση Συμβολαίου'}
+                              </button>
+                              <button type="button" disabled={!onCheckOut} onClick={() => onCheckOut?.(viewReservation.id)}
+                                className="rounded-lg bg-[#1268f3] px-3 py-2.5 text-sm font-semibold text-white hover:bg-[#2478ff] disabled:opacity-40">Check-Out · Παράδοση</button>
+                            </>
+                          )}
+                          {viewReservation.status === 'active' && (
+                            <button type="button" disabled={!onCheckIn} onClick={() => handleCheckInClick(viewReservation)}
+                              className="rounded-lg bg-emerald-600 px-3 py-2.5 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-40">Check-In · Επιστροφή</button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${isOverduePickup(viewReservation) || isOverdueReturn(viewReservation) ? 'bg-amber-500/15 text-amber-200 ring-1 ring-inset ring-amber-400/50' : getStatusColor(viewReservation.status)}`}>
                         {getDisplayStatus(viewReservation)}
