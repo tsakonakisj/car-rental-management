@@ -3,7 +3,7 @@ import { paymentService, paymentRefundService } from '../../lib/database';
 import type { PaymentRefund } from '../../lib/database';
 import { useAuth } from '../../contexts/AuthContext';
 import type { Payment } from '../../types';
-import { CurrencyEuroIcon, PlusIcon, TrashIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import { CurrencyEuroIcon, PlusIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 
 interface PaymentPanelProps {
   reservationId: string;
@@ -264,11 +264,10 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
                   <button
                     type="button"
                     onClick={() => { setVoidTarget(p); setVoidReason(''); setVoidError(''); }}
-                    className="text-blue-100/50 hover:text-amber-300 transition-colors p-1"
-                    title="Ακύρωση πληρωμής με ιστορικό"
-                    aria-label="Ακύρωση πληρωμής"
+                    className="rounded-lg border border-amber-400/30 px-2 py-1.5 text-xs font-semibold text-amber-200 transition-colors hover:bg-amber-500/15"
+                    title="Διόρθωση λανθασμένης καταχώρισης με διατήρηση ιστορικού"
                   >
-                    <TrashIcon className="h-4 w-4" />
+                    Διόρθωση πληρωμής
                   </button>
                   )}
                   </div>
@@ -456,9 +455,9 @@ const PaymentPanel: React.FC<PaymentPanelProps> = ({ reservationId, totalAmount,
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-[#020b18]/85 p-4 backdrop-blur-sm"
           onMouseDown={e => { if (e.target === e.currentTarget && !voidSubmitting) setVoidTarget(null); }}>
           <section role="dialog" aria-modal="true" aria-labelledby="payment-void-title" className="w-full max-w-md rounded-2xl border border-amber-400/30 bg-[#0b2949] p-6 text-white shadow-2xl">
-            <h2 id="payment-void-title" className="text-lg font-semibold">Ακύρωση καταχωρισμένης πληρωμής</h2>
+            <h2 id="payment-void-title" className="text-lg font-semibold">Διόρθωση πληρωμής</h2>
             <p className="mt-3 text-sm text-blue-100/80">
-              Πληρωμή €{voidTarget.amount.toFixed(2)}. Η κίνηση θα παραμείνει στο ιστορικό, αλλά δεν θα μετρά πλέον στο εισπραχθέν ποσό.
+              Για να διορθώσετε την καταχώριση των €{voidTarget.amount.toFixed(2)}, ακυρώστε την με αιτιολογία και έπειτα καταχωρίστε ξεχωριστά το σωστό ποσό. Η αρχική κίνηση παραμένει στο ιστορικό. Δεν πραγματοποιείται επιστροφή χρημάτων.
             </p>
             <label className="mt-4 block text-sm font-medium text-white" htmlFor="payment-void-reason">Αιτιολογία ακύρωσης (υποχρεωτική)</label>
             <textarea id="payment-void-reason" rows={3} value={voidReason} onChange={e => setVoidReason(e.target.value)}
